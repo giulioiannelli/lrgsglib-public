@@ -1,0 +1,8 @@
+setup.py
+LRGSG.egg-info/PKG-INFO
+LRGSG.egg-info/SOURCES.txt
+LRGSG.egg-info/dependency_links.txt
+LRGSG.egg-info/requires.txt
+LRGSG.egg-info/top_level.txt
+LRGSG_package/LRGSG.py
+LRGSG_package/__init__.py
