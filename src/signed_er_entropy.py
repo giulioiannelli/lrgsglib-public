@@ -25,8 +25,12 @@ for N, no_avg in zip(lsN, lsNavg):
             ax.set_xlabel(r'$\tau$')
             ax.set_xscale('log')
             for nvg in tqdm(range(no_avg)):
-                
                 G = nx.erdos_renyi_graph(N, p, seed=int(N*p), directed=False)
+                if (no_avg-1 == nvg):
+                    fignx, axnx = plt.subplots(figsize=(12, 9))
+                    nx.draw(G, ax=axnx, node_size=300, with_labels = True)
+                    fignx.savefig(f"{pltPath_Sm1C}ErdosReny_N={N}_p={p:.3g}_r={r:.3g}_eggraph{ePDF}")
+                    plt.close('all')
                 for e in G.edges():
                     G.add_edge(e[0], e[1], weight=1)
                     if np.random.random() < r:
@@ -40,6 +44,12 @@ for N, no_avg in zip(lsN, lsNavg):
                 ax2.plot(t11, dS1, '--', c=pSm1.get_color())
             fig.savefig(f"{pltPath_Sm1C}ErdosReny_N={N}_p={p:.3g}_r={r:.3g}_navg={no_avg}{ePDF}")
             plt.close('all')
+
+            colors = ['r' if G[u][v]['weight'] == -1 else 'k' for u,v in G.edges()]
+            fig, ax = plt.subplots(figsize=(12, 9))
+            nx.draw(G, ax=ax, edge_color=colors, node_size=300, with_labels = True)
+            fig.savefig(f"{pltPath_Sm1C}ErdosReny_N={N}_p={p:.3g}_r={r:.3g}_eggraph_r{ePDF}")
+            plt.close('all')
             fig, ax = plt.subplots(figsize=(12, 9))
             ax2 = ax.twinx()
             ax.set_ylabel(r'$1-S$')
@@ -47,8 +57,8 @@ for N, no_avg in zip(lsN, lsNavg):
             ax.set_xlabel(r'$\tau$')
             ax.set_xscale('log')
             tSm1, avgdSm1 = averaged_Sm1(entropy_full)
-            tCs, avgdCspec = averaged_Sm1(Cspec_full)
+            # tCs, avgdCspec = averaged_Sm1(Cspec_full)
             pSm1, = ax.plot(tSm1, avgdSm1, '-')
-            ax.plot(tCs, avgdCspec, '--', c=pSm1.get_color())
+            # ax.plot(tCs, avgdCspec, '--', c=pSm1.get_color())
             fig.savefig(f"{pltPath_Sm1C}ErdosReny_N={N}_p={p:.3g}_r={r:.3g}_avgd{ePDF}")
             plt.close('all')
