@@ -21,6 +21,22 @@ ePDF = ".pdf"
 #
 pltPath_Sm1C = "plot/Sm1_and_C/"
 #
+def smallest_prob_for_erconn(N, pstart=0.1, halving=0.8, testset=100):
+    p = pstart
+    while True:
+        areallconn = []
+        for _ in range(testset):
+            G = nx.erdos_renyi_graph(N, p, seed=None, directed=False)
+            areallconn.append(nx.is_connected(G))
+        if not all(areallconn):
+            lowest_prob = p
+            break
+        p *= halving
+    return lowest_prob
+def logpsace_prob_erconn(N, pHigh=0.5, pstart=0.1, halving=0.8, testset=100):
+    lowest_prob = smallest_prob_for_erconn(N, pstart, halving, testset)
+    lsp = np.logspace(np.log10(lowest_prob), np.log10(pHigh), num=10)
+    return lsp
 def get_graph_lspectrum(G, is_signed=False):
     if is_signed:
         A = nx.adjacency_matrix(G).toarray()
