@@ -1,5 +1,6 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+import random
 #
 import networkx as nx
 import numpy as np
@@ -54,8 +55,8 @@ def entropy(G, steps=600, is_signed=False, wTresh=1e-10):
     L, w = get_graph_lspectrum(G, is_signed=is_signed)
     wSig = w[w>wTresh]
     
-    t1 = np.log10(1. / np.max(wSig))
-    t2 = np.log10(10. / np.min(wSig))
+    t1 = -2#np.log10(1. / np.max(wSig))
+    t2 = 5#np.log10(10. / np.min(wSig))
     t = np.logspace(t1,t2, int(steps))
     S = np.zeros(len(t))
     VarL = np.zeros(len(t))
