@@ -13,7 +13,7 @@ from farrow_and_ball import *
 from numpy.linalg import eigvals
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
-from scipy.linalg import expm
+from scipy.linalg import expm, fractional_matrix_power
 from scipy.spatial.distance import squareform
 #
 from tqdm import tqdm
@@ -49,10 +49,20 @@ def get_graph_lspectrum(G, is_signed=False):
         w = nx.laplacian_spectrum(G)
     return L, w
 
-def entropy(G, steps=600, is_signed=False, wTresh=1e-10):
+def get_graph_lspectrum_rw(G, is_signed=False):
+    A = nx.adjacency_matrix(G).toarray()
+    D = np.diag(np.abs(A).sum(axis=1))
+    L = np.eye(D.shape[0]) - fractional_matrix_power(D, -.5)@A@fractional_matrix_power(D, -.5)
+    if is_signed:
+        w = eigvals(L)
+    else:
+        w = nx.laplacian_spectrum(G)
+    return L, w
+
+def entropy(G, steps=600, is_signed=False, wTresh=1e-15):
     N = G.number_of_nodes()
 
-    L, w = get_graph_lspectrum(G, is_signed=is_signed)
+    L, w = get_graph_lspectrum_rw(G, is_signed=is_signed)
     wSig = w[w>wTresh]
     
     t1 = -2#np.log10(1. / np.max(wSig))
