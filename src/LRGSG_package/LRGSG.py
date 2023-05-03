@@ -1,6 +1,7 @@
+#
+import os
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
-#
 import networkx as nx
 import numpy as np
 #
@@ -18,7 +19,9 @@ from scipy.spatial.distance import squareform
 from tqdm import tqdm
 #
 ePDF = ".pdf"
+eTXT = ".txt"
 #
+setPath_ERp = "conf/ERp/"
 pltPath_Sm1C = "plot/Sm1_and_C/"
 #
 def smallest_prob_for_erconn(N, pstart=0.1, halving=0.8, testset=100):
@@ -48,14 +51,14 @@ def get_graph_lspectrum(G, is_signed=False):
         w = nx.laplacian_spectrum(G)
     return L, w
 
-def entropy(G, steps=600, is_signed=False, wTresh=1e-10):
+def entropy(G, steps=1000, is_signed=False, wTresh=1e-10):
     N = G.number_of_nodes()
 
     L, w = get_graph_lspectrum(G, is_signed=is_signed)
     wSig = w[w>wTresh]
     
-    t1 = np.log10(1. / np.max(wSig))
-    t2 = np.log10(10. / np.min(wSig))
+    t1 = -2#np.log10(1. / np.max(wSig))
+    t2 = 3#np.log10(10. / np.min(wSig))
     t = np.logspace(t1,t2, int(steps))
     S = np.zeros(len(t))
     VarL = np.zeros(len(t))
@@ -86,7 +89,11 @@ def averaged_Sm1(t1Sm1Avg):
     # if avgSm1.shape != counts.shape:
     #     counts = np.delete(counts, 0)
     #     print(avgSm1, unique, counts)
-    avgSm1 /= counts
+    try:
+        avgSm1 /= counts
+    except ValueError:
+        print("counts has not the same dimensions of avgSm1.")
+        print(counts.shape, avgSm1.shape)
     return commonLs, avgSm1
 
 def lapl_dists(L, tau=1e-2, is_signed=False):
