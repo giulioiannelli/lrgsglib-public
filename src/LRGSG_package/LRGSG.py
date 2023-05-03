@@ -2,11 +2,8 @@
 import os
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
-<<<<<<< HEAD
-=======
 import random
 #
->>>>>>> f8f3303e86e60a47a72238248ed12a7c650c1ddb
 import networkx as nx
 import numpy as np
 #
@@ -56,9 +53,6 @@ def get_graph_lspectrum(G, is_signed=False):
         w = nx.laplacian_spectrum(G)
     return L, w
 
-<<<<<<< HEAD
-def entropy(G, steps=1000, is_signed=False, wTresh=1e-10):
-=======
 def get_graph_lspectrum_rw(G, is_signed=False):
     A = nx.adjacency_matrix(G).toarray()
     D = np.diag(np.abs(A).sum(axis=1))
@@ -70,18 +64,13 @@ def get_graph_lspectrum_rw(G, is_signed=False):
     return L, w
 
 def entropy(G, steps=600, is_signed=False, wTresh=1e-15):
->>>>>>> f8f3303e86e60a47a72238248ed12a7c650c1ddb
     N = G.number_of_nodes()
 
     L, w = get_graph_lspectrum_rw(G, is_signed=is_signed)
     wSig = w[w>wTresh]
     
     t1 = -2#np.log10(1. / np.max(wSig))
-<<<<<<< HEAD
-    t2 = 3#np.log10(10. / np.min(wSig))
-=======
     t2 = 5#np.log10(10. / np.min(wSig))
->>>>>>> f8f3303e86e60a47a72238248ed12a7c650c1ddb
     t = np.logspace(t1,t2, int(steps))
     S = np.zeros(len(t))
     VarL = np.zeros(len(t))
