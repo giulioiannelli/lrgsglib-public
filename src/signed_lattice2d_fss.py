@@ -17,6 +17,8 @@ for i,L in enumerate(ssize_list):
         savename = f"{path}p={p:.3g}.txt"
         if os.path.exists(savename):
             continue
+        f = open(savename, "x")
+        f.close()
         lmin = []
         for nr in tqdm(nrep_range[i], desc=f"replicas for L={L}, p={p}"):
             G = nx.grid_2d_graph(L, L, periodic=True)
