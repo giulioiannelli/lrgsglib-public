@@ -8,16 +8,25 @@ pow2_M = 13
 lsN = np.array([2**i for i in range(pow2_m, pow2_M)])
 lsNavg = 2 * np.array([2**(pow2_M-i) for i in range(pow2_m, pow2_M)])
 lsp = np.array([(1+i)/(no_p) for i in range(no_p-1)])
-dctp = {N: [(1+i/no_p*N)/((i/no_p+1)*N) for i in range(no_p-1)] for N in lsN}
+
+
+    
 
 lsrw = np.array([(1+i)/(no_rw) for i in range(no_rw-1)])
 
 plt.rcParams.update({'font.size': 30})
 
 for N, no_avg in zip(lsN, lsNavg):
-    lsp = logpsace_prob_erconn(N)
+    ERpPath = f"{setPath_ERp}N={N}{eTXT}"
+    if os.path.exists(ERpPath):
+        lsp = np.loadtxt(ERpPath)
+    else:
+        lsp = logpsace_prob_erconn(N)
+        np.savetxt(ERpPath)
     for p in lsp:
         for r in lsp:
+            # if os.path.exists(f"{pltPath_Sm1C}ErdosReny_N={N}_p={p:.3g}_r={r:.3g}_eggraph_r{ePDF}"):
+            #     continue
             print(N, p, r)
             entropy_full = []
             Cspec_full = []
@@ -51,8 +60,8 @@ for N, no_avg in zip(lsN, lsNavg):
             fignx.savefig(f"{pltPath_Sm1C}ErdosReny_N={N}_p={p:.3g}_r={r:.3g}_eggraph_r{ePDF}")
             plt.close(fignx)
             tSm1, avgdSm1 = averaged_Sm1(entropy_full)
-            # tCs, avgdCspec = averaged_Sm1(Cspec_full)
-            ax.plot(tSm1, avgdSm1, 'k-', lw=3)
-            # ax.plot(tCs, avgdCspec, '--', c=pSm1.get_color())
+            tCs, avgdCspec = averaged_Sm1(Cspec_full)
+            pSm1, = ax.plot(tSm1, avgdSm1, 'k-', lw=3)
+            ax.plot(tCs, avgdCspec, '--', c=pSm1.get_color())
             fig.savefig(f"{pltPath_Sm1C}ErdosReny_N={N}_p={p:.3g}_r={r:.3g}_navg={no_avg}{ePDF}")
             plt.close('all')

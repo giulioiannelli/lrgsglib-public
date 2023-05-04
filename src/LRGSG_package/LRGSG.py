@@ -1,3 +1,5 @@
+#
+import os
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import random
@@ -20,8 +22,10 @@ from scipy.spatial.distance import squareform
 from tqdm import tqdm
 #
 ePDF = ".pdf"
+eTXT = ".txt"
 #
 datPath_lmin = "data/lmin/"
+setPath_ERp = "conf/ERp/"
 pltPath_Sm1C = "plot/Sm1_and_C/"
 #
 def smallest_prob_for_erconn(N, pstart=0.1, halving=0.8, testset=100):
@@ -163,7 +167,11 @@ def averaged_Sm1(t1Sm1Avg):
     # if avgSm1.shape != counts.shape:
     #     counts = np.delete(counts, 0)
     #     print(avgSm1, unique, counts)
-    avgSm1 /= counts
+    try:
+        avgSm1 /= counts
+    except ValueError:
+        print("counts has not the same dimensions of avgSm1.")
+        print(counts.shape, avgSm1.shape)
     return commonLs, avgSm1
 
 def lapl_dists(L, tau=1e-2, is_signed=False):
