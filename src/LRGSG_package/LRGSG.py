@@ -24,7 +24,7 @@ from tqdm import tqdm
 ePDF = ".pdf"
 eTXT = ".txt"
 #
-datPath_lmin = "data/lmin/"
+datPath_lminl2d = "data/lmin_l2d/"
 setPath_ERp = "conf/ERp/"
 pltPath_Sm1C = "plot/Sm1_and_C/"
 #
