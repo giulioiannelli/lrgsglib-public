@@ -17,6 +17,8 @@ for i,L in enumerate(ssize_list):
         savename = f"{path}p={p:.3g}.txt"
         if os.path.exists(savename):
             continue
+        if not os.path.isdir(path):
+            os.makedirs(path)
         f = open(savename, "x")
         f.close()
         lmin = []
@@ -32,11 +34,10 @@ for i,L in enumerate(ssize_list):
             slapl = get_graph_lapl(G)
             try:
                 lmin_tmp, _ = eigsh(slapl, k=1, which='SM', tol=1e-10)
+                lmin.append(lmin_tmp)
             except ArpackNoConvergence:
                 pass
-            lmin.append(lmin_tmp)
         lminarr = np.array(lmin).flatten()
         d_lmin.append({'L': L, 'p':p, 'lmin': lminarr})
-        if not os.path.isdir(path):
-            os.makedirs(path)
+        
         np.savetxt(savename, lminarr)
