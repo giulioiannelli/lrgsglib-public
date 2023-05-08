@@ -31,6 +31,7 @@ for i,L in enumerate(ssize_list):
             #
             nx.set_edge_attributes(G, values=all_weights, name='weight')
             nx.set_edge_attributes(G, values=neg_weights, name='weight')
+            #
             slapl = get_graph_lapl(G)
             try:
                 lmin_tmp, _ = eigsh(slapl, k=1, which='SM', tol=1e-10)
