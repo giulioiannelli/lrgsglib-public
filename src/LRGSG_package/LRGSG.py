@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import scipy.special
 #
 from farrow_and_ball import *
-from numpy.linalg import eigvals
+from numpy.linalg import eigvals, eigvalsh
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.linalg import expm, fractional_matrix_power, ishermitian
@@ -46,9 +46,9 @@ def logpsace_prob_erconn(N, pHigh=0.5, pstart=0.1, halving=0.8, testset=100):
     return lsp
 def get_graph_lapl(G, is_signed=True):
     if is_signed:
-        lapl = slaplacian_matrix(G).asfptype()
+        lapl = slaplacian_matrix(G)
     else:
-        lapl = nx.laplacian_matrix(G).asfptype()
+        lapl = nx.laplacian_matrix(G)
     return lapl
 
 def get_graph_lspectrum(G, is_signed=False):
@@ -118,7 +118,7 @@ def slaplacian_matrix(G, nodelist=None, weight="weight"):
         nodelist = list(G)
     A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight, format="csr")
     n, m = A.shape
-    D = sp.sparse.csr_array(sp.sparse.spdiags(np.abs(A.sum(axis=1)), 0, m, n, format="csr"))
+    D = sp.sparse.csr_array(sp.sparse.spdiags(np.abs(A).sum(axis=1), 0, m, n, format="csr"))
     return D - A
 
 def get_graph_lspectrum_rw(G, is_signed=False):
