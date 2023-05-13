@@ -1,8 +1,8 @@
 #
 import os
+import random
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
-import random
 #
 import networkx as nx
 import numpy as np
@@ -10,12 +10,16 @@ import numpy as np
 import matplotlib.colors as mplc
 import matplotlib.pyplot as plt
 import scipy.special
+import scipy.sparse as scsp
 #
 from farrow_and_ball import *
+from networkx.classes.graph import Graph
+from numpy import ndarray
 from numpy.linalg import eigvals, eigvalsh
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.linalg import expm, fractional_matrix_power, ishermitian
+from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
 #
@@ -23,11 +27,235 @@ from tqdm import tqdm
 #
 ePDF = ".pdf"
 eTXT = ".txt"
+eBIN = ".bin"
 #
 datPath_lminl2d = "data/lmin_l2d/"
+datPath_l2d_sq = "data/l2d_sq/"
 setPath_ERp = "conf/ERp/"
 pltPath_Sm1C = "plot/Sm1_and_C/"
 #
+pflip_fmt = '.3g'
+#
+# networkx graph related functions
+def slaplacian_matrix(G: Graph, nodelist: list = None, weight: str = "weight"
+                      ) -> csr_array:
+    """Returns the signed Laplacian matrix of G.
+
+    The graph Laplacian is the matrix L = |D| - A, where
+    A is the adjacency matrix and |D| is the diagonal matrix of absolute values
+    of node degrees.
+
+    Parameters
+    ----------
+    G : graph
+       A NetworkX graph
+
+    nodelist : list, optional
+       The rows and columns are ordered according to the nodes in nodelist.
+       If nodelist is None, then the ordering is produced by G.nodes().
+
+    weight : string or None, optional (default='weight')
+       The edge data key used to compute each value in the matrix.
+       If None, then each edge has weight 1.
+
+    Returns
+    -------
+    L : SciPy sparse array
+      The Laplacian matrix of G.
+    """
+    if nodelist is None:
+        nodelist = list(G)
+    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight, format="csr")
+    n, m = A.shape
+    D = scsp.csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, m, n, format="csr"))
+    return D - A
+#
+def flip_random_fract_edges(G: Graph, p: float):
+    """Flips a fraction p of edges (+1 to -1) of a graph G.
+
+    Parameters
+    ----------
+    G : graph
+       A NetworkX graph
+
+    p : float
+       The fraction in [0, 1] of edges to be flipped.
+    """
+    eset = G.edges()
+    nedges = len(eset)
+    noflip = int(p*nedges)
+    #
+    if noflip < 1:
+        print('p too small')
+        exit()
+    rndsmpl = random.sample(range(nedges), noflip)
+    #
+    all_weights = {e: 1 for e in eset}
+    neg_weights = {e: -1 for i,e in enumerate(eset) if i in rndsmpl}
+    #
+    nx.set_edge_attributes(G, values=all_weights, name='weight')
+    nx.set_edge_attributes(G, values=neg_weights, name='weight')
+#
+class NflipError(Exception):
+    pass
+# renormalization group for heterogenous network functions
+class SignedLaplacianAnalysis:
+    slspectrum = None
+    Sm1 = None
+    VarL = None
+    Cspe = None
+    #
+    def __init__(self, system, pflip: float = None, is_signed: bool = True,
+                 steps: int = 1000, t1: float = -2, t2: float = 5,
+                 nreplica: int = 0) -> None:
+        self.system = system
+        self.is_signed = is_signed
+        #
+        self.nreplica = nreplica
+        self.steps = steps
+        self.t1 = t1
+        self.t2 = t2
+        #
+        self.N = system.G.number_of_nodes()
+        self.pflip = pflip
+        if pflip is not None:
+            self.nflip = int(self.pflip*self.system.nedges)
+            self.randsample = random.sample(range(self.system.nedges), 
+                                            self.nflip)
+        else:
+            self.nflip = 0
+            self.randsample = None
+        self.upd_graph_matrices()
+        self.init_weights()
+    #
+    def init_weights(self):
+        all_weights = {e: 1 for e in self.system.eset}
+        nx.set_edge_attributes(self.system.G, 
+                               values=all_weights, name='weight')
+    #
+    def upd_graph_matrices(self):
+        self.Adj = self.adjacency_matrix(self.system.G)
+        self.Deg = self.absolute_degree_matrix(self.Adj)
+        self.sLp = self.signed_laplacian_csr()
+    #
+    def check_pflip(self):
+        if self.nflip < 1:
+            raise NflipError("""The probability of flipping an edge times the 
+                             number of edges is < 1, then no edges would be
+                             flipped. Skipping the analysis for this value.""")
+    #
+    def flip_random_fract_edges(self):
+        """Flips a fraction p of edges (+1 to -1) of a graph G.
+
+        Parameters
+        ----------
+        G : graph
+        A NetworkX graph
+
+        p : float
+        The fraction in [0, 1] of edges to be flipped.
+        """
+        
+        #
+        try:
+            self.check_pflip()
+        except NflipError:
+            return None
+        neg_weights = {e: -1 for i,e in enumerate(self.system.eset)
+                       if i in self.randsample}
+        nx.set_edge_attributes(self.system.G, values=neg_weights, name='weight')
+        self.upd_graph_matrices()
+    #
+    def adjacency_matrix(self, G: Graph,
+                         nodelist: list = None, weight: str = "weight"):
+        if nodelist is None: nodelist = list(G)
+        return nx.to_scipy_sparse_array(G, nodelist=nodelist, 
+                                        weight=weight, format="csr")
+    #
+    def absolute_degree_matrix(self, A: csr_array) -> csr_array:
+        return csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 
+                                        0, *A.shape, format="csr"))
+    #
+    def signed_laplacian_csr(self) -> csr_array:
+        """Returns the signed Laplacian matrix of G.
+        The graph Laplacian is the matrix L = |D| - A, where
+        A is the adjacency matrix and |D| is the diagonal matrix of absolute 
+        values of node degrees
+
+        Returns
+        -------
+        L : SciPy sparse array
+        The Laplacian matrix of G.
+        """
+        return self.Deg - self.Adj
+    #
+    def compute_laplacian_spectrum(self, MODE_lapspec: str = 'numpy') -> None:
+        match MODE_lapspec:
+            case 'networkx':
+                self.slspectrum = nx.laplacian_spectrum(self.system.G)
+            case 'numpy':
+                self.slspectrum = eigvals(self.sLp.toarray())
+    #
+    def timescale_for_S(self) -> ndarray:
+        return np.logspace(self.t1, self.t2, self.steps)
+    #
+    def timescale_for_C(self) -> ndarray:
+        t = self.timescale_for_S()
+        return .5 * (t[1:] + t[:-1])
+    #
+    def compute_entropy(self) -> None:# tuple[ndarray, ndarray, ndarray, ndarray]
+        if self.slspectrum is None:
+            self.compute_laplacian_spectrum()
+        t = self.timescale_for_S()
+        w = self.slspectrum
+        S = np.zeros(len(t))
+        VarL = np.zeros(len(t))
+    
+        for i, tau in enumerate(t):
+            rhoTr = np.exp(-tau * w)
+            Tr = np.nansum(rhoTr)
+            rho = np.divide(rhoTr, Tr)
+            avgrho = np.nansum(np.multiply(w, rhoTr)) / Tr
+            av2rho = np.nansum(np.multiply(np.multiply(w,w), rhoTr)) / Tr
+            S[i] = -np.nansum(rho * np.log(rho)) / np.log(self.system.N)
+            VarL[i] = (av2rho - avgrho**2)
+        self.Sm1  = 1 - S
+        self.Cspe = np.log(self.system.N) * np.diff(1-S)/np.diff(np.log(t))
+        self.VarL = VarL
+#
+class Lattice2D(Graph):
+    def __init__(self, side1: int, geometry: str = 'squared', side2: int = 0,
+                 incoming_graph_data=None, **attr) -> None:
+        super().__init__(incoming_graph_data, **attr)
+        self.side1 = side1
+        self.side2 = side1
+        if side2:
+            self.side2 = side2
+        self.N = self.side1 * self.side2
+        self.geometry = geometry
+        self.G = self.lattice_selection()
+        self.eset = self.G.edges()
+        self.nedges = self.G.number_of_edges()
+
+    def lattice_selection(self) -> Graph:
+        match self.geometry:
+            case 'triangular':
+                nxfunc = nx.triangular_lattice_graph
+            case 'squared':
+                nxfunc = nx.grid_2d_graph
+            case 'hexagonal':
+                nxfunc = nx.hexagonal_lattice_graph
+        return nxfunc(self.side1, self.side2, periodic=True)
+
+    
+
+
+
+
+
+
+
+
 def smallest_prob_for_erconn(N, pstart=0.1, halving=0.8, testset=100):
     p = pstart
     while True:
@@ -62,64 +290,7 @@ def get_graph_lspectrum(G, is_signed=False):
         w = nx.laplacian_spectrum(G)
     return L, w
 
-def slaplacian_matrix(G, nodelist=None, weight="weight"):
-    """Returns the signed Laplacian matrix of G.
 
-    The graph Laplacian is the matrix L = D - A, where
-    A is the adjacency matrix and D is the diagonal matrix of node degrees.
-
-    Parameters
-    ----------
-    G : graph
-       A NetworkX graph
-
-    nodelist : list, optional
-       The rows and columns are ordered according to the nodes in nodelist.
-       If nodelist is None, then the ordering is produced by G.nodes().
-
-    weight : string or None, optional (default='weight')
-       The edge data key used to compute each value in the matrix.
-       If None, then each edge has weight 1.
-
-    Returns
-    -------
-    L : SciPy sparse array
-      The Laplacian matrix of G.
-
-    Notes
-    -----
-    For MultiGraph, the edges weights are summed.
-
-    See Also
-    --------
-    to_numpy_array
-    normalized_laplacian_matrix
-    laplacian_spectrum
-
-    Examples
-    --------
-    For graphs with multiple connected components, L is permutation-similar
-    to a block diagonal matrix where each block is the respective Laplacian
-    matrix for each component.
-
-    >>> G = nx.Graph([(1, 2), (2, 3), (4, 5)])
-    >>> print(nx.laplacian_matrix(G).toarray())
-    [[ 1 -1  0  0  0]
-     [-1  2 -1  0  0]
-     [ 0 -1  1  0  0]
-     [ 0  0  0  1 -1]
-     [ 0  0  0 -1  1]]
-
-    """
-    import scipy as sp
-    import scipy.sparse  # call as sp.sparse
-
-    if nodelist is None:
-        nodelist = list(G)
-    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight, format="csr")
-    n, m = A.shape
-    D = sp.sparse.csr_array(sp.sparse.spdiags(np.abs(A).sum(axis=1), 0, m, n, format="csr"))
-    return D - A
 
 def get_graph_lspectrum_rw(G, is_signed=False):
     A = nx.adjacency_matrix(G).toarray()
