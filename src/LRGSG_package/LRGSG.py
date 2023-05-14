@@ -31,6 +31,7 @@ eBIN = ".bin"
 #
 datPath_lminl2d = "data/lmin_l2d/"
 datPath_l2d_sq = "data/l2d_sq/"
+datPath_l2d = lambda geometry : f"data/l2d_{geometry}/";
 setPath_ERp = "conf/ERp/"
 pltPath_Sm1C = "plot/Sm1_and_C/"
 #
@@ -220,7 +221,7 @@ class SignedLaplacianAnalysis:
             S[i] = -np.nansum(rho * np.log(rho)) / np.log(self.system.N)
             VarL[i] = (av2rho - avgrho**2)
         self.Sm1  = 1 - S
-        self.Cspe = np.log(self.system.N) * np.diff(1-S)/np.diff(np.log(t))
+        self.Cspe = np.log(self.system.N) * np.diff(self.Sm1)/np.diff(np.log(t))
         self.VarL = VarL
 #
 class Lattice2D(Graph):
