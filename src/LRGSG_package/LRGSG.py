@@ -19,6 +19,7 @@ from numpy.linalg import eigvals, eigvalsh
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.linalg import expm, fractional_matrix_power, ishermitian
+from scipy.signal import argrelextrema
 from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
@@ -31,7 +32,9 @@ eBIN = ".bin"
 #
 datPath_lminl2d = "data/lmin_l2d/"
 datPath_l2d_sq = "data/l2d_sq/"
-datPath_l2d = lambda geometry : f"data/l2d_{geometry}/";
+lambdaPath_l2d = lambda geometry : f"l2d_{geometry}/"
+pltPath_l2d = lambda geometry : f"data/plot/{lambdaPath_l2d(geometry)}"
+datPath_l2d = lambda geometry : f"data/{lambdaPath_l2d(geometry)}"
 setPath_ERp = "conf/ERp/"
 pltPath_Sm1C = "plot/Sm1_and_C/"
 #
