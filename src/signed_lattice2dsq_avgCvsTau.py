@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore")
 #
 STEPS = 1500
 SPIKE_THRESHOLD = 0.1
-TAUSTOPEXT = 4
+TAUSTOPEXP = 5
 GEOMETRY = 'squared'
 #
 pow2_m, pow2_M, pow2_A = 6, 14, 16
@@ -40,7 +40,7 @@ for iL, iN, iA in zip(lsL, lsN, lsA):
                 SLRG_obj = SignedLaplacianAnalysis(#
                     system = lattice,
                     pflip = pflip,
-                    t2 = TAUSTOPEXT,
+                    t2 = TAUSTOPEXP,
                     steps = STEPS
                 )
                 SLRG_obj.flip_random_fract_edges()
