@@ -7,7 +7,7 @@ SPIKE_THRESHOLD = 0.1
 TAUSTOPEXT = 4
 GEOMETRY = 'squared'
 #
-pow2_m, pow2_M, pow2_A = 6, 14, 16
+pow2_m, pow2_M, pow2_A = 6, 15, 16
 ssize_range = range(pow2_m, pow2_M, 2)
 asize_range = range(pow2_m, pow2_M, 1)[:len(ssize_range)]
 #
