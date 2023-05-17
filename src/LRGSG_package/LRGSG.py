@@ -233,7 +233,8 @@ class Lattice2D(Graph):
     p_c = None
     lsp = None
     def __init__(self, side1: int, geometry: str = 'squared', side2: int = 0,
-                 incoming_graph_data=None, **attr) -> None:
+                 incoming_graph_data=None, lsp_mode: str = 'intervals', 
+                 **attr) -> None:
         super().__init__(incoming_graph_data, **attr)
         self.side1 = side1
         self.side2 = side1
@@ -244,25 +245,61 @@ class Lattice2D(Graph):
         self.G = self.lattice_selection()
         self.eset = self.G.edges()
         self.nedges = self.G.number_of_edges()
+        self.lsp_mode = lsp_mode
 
     def lattice_selection(self) -> Graph:
         match self.geometry:
             case 'triangular':
                 nxfunc = nx.triangular_lattice_graph
-                self.p_c = 0.103
-                start = 0.094
-                stop = 0.106
-                num = int(700*(stop-start))
-                self.lsp = np.concatenate([np.round(np.linspace(0.001, start, num=5, endpoint=False), 1),
-                                          np.round(np.linspace(start, stop, num=num), 3),
-                                          np.round(np.linspace(stop, 0.6, num=4), 1)])
-
+                self.p_c = 0.146
             case 'squared':
                 nxfunc = nx.grid_2d_graph
+                self.p_c = 0.103
             case 'hexagonal':
                 nxfunc = nx.hexagonal_lattice_graph
+                self.p_c = 0.0647
         return nxfunc(self.side1, self.side2, periodic=True)
-
+    
+    def lsp_selection(self, custom_list):
+        match self.lsp_mode:
+            case 'custom':
+                self.lsp = np.array(custom_list)
+            case 'intervals':
+                intervals = []
+                for vset in custom_list:
+                    match vset['kind']:
+                        case 'log':
+                            spacing_f = np.logspace
+                            vset['start'] = np.log10(vset['start'])
+                            vset['stop'] = np.log10(vset['stop'])
+                        case 'lin':
+                            spacing_f = np.linspace
+                    intervals.append(#
+                        round_sigfig_n(#
+                            spacing_f(vset['start'], vset['stop'],
+                                      num=vset['num'],
+                                      endpoint=False),
+                        vset['rsf'])
+                    )
+                intervals = np.concatenate(intervals)
+                self.lsp = intervals
+                tmp = 4
+                while set(self.lsp).__len__() == intervals.__len__():
+                    self.lsp = np.round(self.lsp , tmp)
+                    tmp = tmp - 1
+                tmp = tmp + 1
+                self.lsp = np.round(intervals, tmp)
+    
+    def default_dict_lsp(self, num_low = 3, num_at = 6, num_high = 3):
+        d = (#
+            {'kind': 'lin', 'start': 0.001, 'stop': self.p_c-self.p_c*num_at/100, 
+              'num': num_low, 'rsf': 1}, 
+             {'kind': 'lin', 'start': self.p_c-self.p_c*num_at/100, 
+              'stop': self.p_c+self.p_c*num_at/100, 'num': num_at, 'rsf': 5},
+              {'kind': 'lin', 'start': self.p_c+self.p_c*num_at/100, 
+              'stop': 1, 'num': num_high, 'rsf': 1},
+        )
+        return d
     
 
 
@@ -271,7 +308,10 @@ def round_sigfig_n(num, n: int = 1):
     if n not in range(1, MAX_DIGITS_ROUND_SIGFIG):
         raise ValueError("Significant figures number not in [1, 15].")
     expn = -np.floor(np.log10(np.abs(num))).astype('int')
-    rr = np.array([np.round(nn, ee+n-1) for nn,ee in zip(num, expn)])
+    if hasattr(num, "__len__"):
+        rr = np.array([np.round(nn, ee+n-1) for nn,ee in zip(num, expn)])
+    else:
+        rr = np.round(num, expn+n-1)
     return rr
 
 
@@ -386,3 +426,9 @@ def MakeLinkageMatrix(G, tau=1e-2, is_signed=False, method="ward"):
     tmax = linkage_matrix1[::, 2][-1]
     linkage_matrix = linkage(dists/tmax, method=method)
     return linkage_matrix, w
+
+
+def Cspe_plot_ax(ax):
+    ax.set_xlabel(r"$\tau$")
+    ax.set_ylabel(r"$\log(N)\langle{C}\rangle$")
+    ax.set_xscale('log')
