@@ -233,7 +233,7 @@ class Lattice2D(Graph):
     p_c = None
     lsp = None
     def __init__(self, side1: int, geometry: str = 'squared', side2: int = 0,
-                 incoming_graph_data=None, lsp_mode: str = 'intervals', 
+                 lsp_mode: str = 'intervals', incoming_graph_data=None, 
                  **attr) -> None:
         super().__init__(incoming_graph_data, **attr)
         self.side1 = side1
@@ -257,7 +257,7 @@ class Lattice2D(Graph):
                 self.p_c = 0.103
             case 'hexagonal':
                 nxfunc = nx.hexagonal_lattice_graph
-                self.p_c = 0.0647
+                self.p_c = 0.065
         return nxfunc(self.side1, self.side2, periodic=True)
     
     def lsp_selection(self, custom_list):

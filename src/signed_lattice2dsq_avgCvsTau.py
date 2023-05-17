@@ -14,8 +14,6 @@ asize_range = range(pow2_m, pow2_M, 1)[:len(ssize_range)]
 lsN = np.array([2**i for i in ssize_range])
 lsL = np.sqrt(lsN).astype('int')
 lsA = np.array([2**(pow2_A-i) for i in asize_range])
-lsp = np.round([0.001, 0.01, 0.025, 0.05, 0.075, 0.085, 0.095, 0.098, 0.100, 
-                0.102, 0.104, 0.106, 0.11, 0.2, 0.3, 0.4, 0.5], 3)
 #
 for iL, iN, iA in zip(lsL, lsN, lsA):
     #
@@ -27,7 +25,8 @@ for iL, iN, iA in zip(lsL, lsN, lsA):
         side1 = iL,
         geometry = GEOMETRY
     )
-    for pflip in lsp:
+    lattice.lsp_selection(lattice.default_dict_lsp(num_at=7))
+    for pflip in lattice.lsp:
         savename = lambda idstr : f"{path}p={pflip:{pflip_fmt}}_{idstr}{eBIN}"
         if os.path.exists(savename('Sm1')):
             continue
