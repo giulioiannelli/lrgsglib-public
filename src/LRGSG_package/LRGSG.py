@@ -26,6 +26,8 @@ from scipy.spatial.distance import squareform
 #
 from tqdm import tqdm
 #
+MAX_DIGITS_ROUND_SIGFIG = 18
+#
 ePDF = ".pdf"
 eTXT = ".txt"
 eBIN = ".bin"
@@ -228,6 +230,8 @@ class SignedLaplacianAnalysis:
         self.VarL = VarL
 #
 class Lattice2D(Graph):
+    p_c = None
+    lsp = None
     def __init__(self, side1: int, geometry: str = 'squared', side2: int = 0,
                  incoming_graph_data=None, **attr) -> None:
         super().__init__(incoming_graph_data, **attr)
@@ -245,6 +249,14 @@ class Lattice2D(Graph):
         match self.geometry:
             case 'triangular':
                 nxfunc = nx.triangular_lattice_graph
+                self.p_c = 0.103
+                start = 0.094
+                stop = 0.106
+                num = int(700*(stop-start))
+                self.lsp = np.concatenate([np.round(np.linspace(0.001, start, num=5, endpoint=False), 1),
+                                          np.round(np.linspace(start, stop, num=num), 3),
+                                          np.round(np.linspace(stop, 0.6, num=4), 1)])
+
             case 'squared':
                 nxfunc = nx.grid_2d_graph
             case 'hexagonal':
@@ -255,7 +267,12 @@ class Lattice2D(Graph):
 
 
 
-
+def round_sigfig_n(num, n: int = 1):
+    if n not in range(1, MAX_DIGITS_ROUND_SIGFIG):
+        raise ValueError("Significant figures number not in [1, 15].")
+    expn = -np.floor(np.log10(np.abs(num))).astype('int')
+    rr = np.array([np.round(nn, ee+n-1) for nn,ee in zip(num, expn)])
+    return rr
 
 
 
