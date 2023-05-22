@@ -1,5 +1,7 @@
 #
 import os
+import re
+
 import random
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -303,7 +305,28 @@ class Lattice2D(Graph):
     
 
 
-
+def lsp_read_values(folder_path):
+    file_pattern = r"p=(\d+\.\d+)_Sm1.bin"
+    value_pattern = r"p=(\d+\.\d+)"
+    #
+    # Get all files in the folder
+    #
+    files = os.listdir(folder_path)
+    #
+    # Filter files based on the pattern
+    file_names = [file_name for file_name in files if re.match(file_pattern, file_name)]
+    #
+    # Extract values from file names
+    values = []
+    for file_name in file_names:
+        match = re.search(value_pattern, file_name)
+        if match:
+            value = float(match.group(1))
+            values.append(value)
+    #
+    # Sort the values if needed
+    values.sort()
+    return np.array(values) 
 def round_sigfig_n(num, n: int = 1):
     if n not in range(1, MAX_DIGITS_ROUND_SIGFIG):
         raise ValueError("Significant figures number not in [1, 15].")
