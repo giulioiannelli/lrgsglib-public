@@ -13,7 +13,8 @@ asize_range = range(pow2_m, pow2_M, 1)[:len(ssize_range)]
 #
 lsN = np.array([2**i for i in ssize_range])
 lsL = np.sqrt(lsN).astype('int')
-lsA = np.array([1000 for i in range(len(ssize_range))])#np.array([2**(pow2_A-i) for i in asize_range])
+lsA = np.array([1000 for i in range(len(ssize_range))])
+#np.array([2**(pow2_A-i) for i in asize_range])
 #
 for iL, iN, iA in zip(lsL, lsN, lsA):
     #
