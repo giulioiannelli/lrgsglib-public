@@ -22,7 +22,8 @@ for iL, iN, iA in zip(lsL, lsN, lsA):
         os.makedirs(path)
     #
     lattice = Lattice2D(side1 = iL, geometry = GEOMETRY)
-    lattice.lsp_selection(lattice.default_dict_lsp(num_at=7))
+    lattice.lsp_selection([{'kind': 'lin', 'start': 0.089, 'stop': 0.096, 'num': 7, 'rsf':3}])#lattice.default_dict_lsp(num_at=7)
+    print(lattice.lsp)
     for pflip in lattice.lsp:
         savename = lambda idstr : f"{path}p={pflip:{pflip_fmt}}_{idstr}{eBIN}"
         if os.path.exists(savename('Sm1')):
