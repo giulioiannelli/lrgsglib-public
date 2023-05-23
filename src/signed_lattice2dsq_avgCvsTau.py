@@ -17,14 +17,10 @@ lsA = np.array([1000 for i in range(len(ssize_range))])#np.array([2**(pow2_A-i) 
 #
 for iL, iN, iA in zip(lsL, lsN, lsA):
     #
-    path = f"{datPath_l2d(GEOMETRY)}N={iN}_navg={iA}/"
-    if not os.path.isdir(path):
+    if not os.path.isdir((path := f"{datPath_l2d(GEOMETRY)}N={iN}_navg={iA}/")):
         os.makedirs(path)
     #
-    lattice = Lattice2D(#
-        side1 = iL,
-        geometry = GEOMETRY
-    )
+    lattice = Lattice2D(side1 = iL, geometry = GEOMETRY)
     lattice.lsp_selection(lattice.default_dict_lsp(num_at=7))
     for pflip in lattice.lsp:
         savename = lambda idstr : f"{path}p={pflip:{pflip_fmt}}_{idstr}{eBIN}"
