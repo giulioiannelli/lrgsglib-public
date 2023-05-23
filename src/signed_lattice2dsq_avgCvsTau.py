@@ -22,35 +22,36 @@ for iL, iN, iA in zip(lsL, lsN, lsA):
     #
     lattice = Lattice2D(side1 = iL, geometry = GEOMETRY)
     lattice.lsp_selection(lattice.default_dict_lsp(num_at=7))
-    for pflip in lattice.lsp:
-        savename = lambda idstr : f"{path}p={pflip:{pflip_fmt}}_{idstr}{eBIN}"
-        if os.path.exists(savename('Sm1')):
-            continue
-        Sm1File = open(savename('Sm1'), "wb")
-        # CspeFile = open(savename('Cspe'), "wb")
-        slspecFile = open(savename('slspec'), "wb")
-        #
-        for nr in tqdm(range(iA), desc=f"replicas for L={iL:3d}, p={pflip:6.3g}"):
-            while True:
-                SLRG_obj = SignedLaplacianAnalysis(#
-                    system = lattice,
-                    pflip = pflip,
-                    t2 = TAUSTOPEXP,
-                    steps = STEPS
-                )
-                SLRG_obj.flip_random_fract_edges()
-                SLRG_obj.compute_entropy()
-                index = np.where(np.diff(SLRG_obj.Cspe) > SPIKE_THRESHOLD)
-                if not index[0].size:
-                    break
-            #
-            Sm1BytesArray = bytes(SLRG_obj.Sm1)
-            # CspeBytesArray = bytes(SLRG_obj.Cspe)
-            slspecBytesArray = bytes(SLRG_obj.slspectrum)
-            #
-            Sm1File.write(Sm1BytesArray)
-            # CspeFile.write(CspeBytesArray)
-            slspecFile.write(slspecBytesArray)
-        Sm1File.close()
-        # CspeFile.close()
-        slspecFile.close()
+    print(lattice.lsp)
+    # for pflip in lattice.lsp:
+    #     savename = lambda idstr : f"{path}p={pflip:{pflip_fmt}}_{idstr}{eBIN}"
+    #     if os.path.exists(savename('Sm1')):
+    #         continue
+    #     Sm1File = open(savename('Sm1'), "wb")
+    #     # CspeFile = open(savename('Cspe'), "wb")
+    #     slspecFile = open(savename('slspec'), "wb")
+    #     #
+    #     for nr in tqdm(range(iA), desc=f"replicas for L={iL:3d}, p={pflip:6.3g}"):
+    #         while True:
+    #             SLRG_obj = SignedLaplacianAnalysis(#
+    #                 system = lattice,
+    #                 pflip = pflip,
+    #                 t2 = TAUSTOPEXP,
+    #                 steps = STEPS
+    #             )
+    #             SLRG_obj.flip_random_fract_edges()
+    #             SLRG_obj.compute_entropy()
+    #             index = np.where(np.diff(SLRG_obj.Cspe) > SPIKE_THRESHOLD)
+    #             if not index[0].size:
+    #                 break
+    #         #
+    #         Sm1BytesArray = bytes(SLRG_obj.Sm1)
+    #         # CspeBytesArray = bytes(SLRG_obj.Cspe)
+    #         slspecBytesArray = bytes(SLRG_obj.slspectrum)
+    #         #
+    #         Sm1File.write(Sm1BytesArray)
+    #         # CspeFile.write(CspeBytesArray)
+    #         slspecFile.write(slspecBytesArray)
+    #     Sm1File.close()
+    #     # CspeFile.close()
+    #     slspecFile.close()
