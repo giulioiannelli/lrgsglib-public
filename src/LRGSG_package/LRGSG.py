@@ -455,3 +455,13 @@ def Cspe_plot_ax(ax):
     ax.set_xlabel(r"$\tau$")
     ax.set_ylabel(r"$\log(N)\langle{C}\rangle$")
     ax.set_xscale('log')
+
+def log_binning(data, binnum=20):
+    log_data = np.log10(data)
+    min_val = int(np.floor(np.min(log_data)))
+    max_val = int(np.ceil(np.max(log_data)))
+    bins = np.logspace(min_val, max_val, num=binnum)
+    hist, _ = np.histogram(data, bins=bins)
+    bin_w = (bins[1:] + bins[:-1])
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist, bin_w
