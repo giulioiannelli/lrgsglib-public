@@ -1,9 +1,9 @@
 from LRGSG_package.LRGSG import *
-import warnings
 warnings.filterwarnings("ignore")
 #
+#
 STEPS = 1500
-SPIKE_THRESHOLD = 0.1
+SPIKE_THRESHOLD = 0.05
 TAUSTOPEXP = 5
 GEOMETRY = 'squared'
 #
