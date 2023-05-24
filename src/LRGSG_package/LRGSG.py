@@ -268,6 +268,7 @@ class Lattice2D(Graph):
                 self.lsp = np.array(custom_list)
             case 'intervals':
                 intervals = []
+                tmp = max([vset['rsf'] for vset in custom_list])
                 for vset in custom_list:
                     match vset['kind']:
                         case 'log':
@@ -283,12 +284,10 @@ class Lattice2D(Graph):
                                       endpoint=False),
                         vset['rsf'])
                     )
-                intervals = np.concatenate(intervals)
-                self.lsp = intervals
-                tmp = 4
+                self.lsp = (intervals := np.concatenate(intervals))
                 while set(self.lsp).__len__() == intervals.__len__():
-                    self.lsp = np.round(self.lsp , tmp)
                     tmp = tmp - 1
+                    self.lsp = np.round(self.lsp , tmp)
                 tmp = tmp + 1
                 self.lsp = np.round(intervals, tmp)
     
@@ -297,7 +296,7 @@ class Lattice2D(Graph):
             {'kind': 'lin', 'start': 0.001, 'stop': self.p_c-self.p_c*num_at/100, 
               'num': num_low, 'rsf': 1}, 
              {'kind': 'lin', 'start': self.p_c-self.p_c*num_at/100, 
-              'stop': self.p_c+self.p_c*num_at/100, 'num': num_at, 'rsf': 5},
+              'stop': self.p_c+self.p_c*num_at/100, 'num': num_at, 'rsf': 3},
               {'kind': 'lin', 'start': self.p_c+self.p_c*num_at/100, 
               'stop': 1, 'num': num_high, 'rsf': 1},
         )
