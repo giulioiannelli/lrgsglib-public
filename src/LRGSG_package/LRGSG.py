@@ -3,6 +3,7 @@ import argparse
 import random
 import re
 import os
+import sys
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 #
@@ -198,11 +199,10 @@ class SignedLaplacianAnalysis:
         return self.Deg - self.Adj
     #
     def compute_laplacian_spectrum(self, MODE_lapspec: str = 'numpy') -> None:
-        match MODE_lapspec:
-            case 'networkx':
-                self.slspectrum = nx.laplacian_spectrum(self.system.G)
-            case 'numpy':
-                self.slspectrum = eigvals(self.sLp.toarray())
+        if MODE_lapspec == 'networkx':
+            self.slspectrum = nx.laplacian_spectrum(self.system.G)
+        elif MODE_lapspec == 'numpy':
+            self.slspectrum = eigvals(self.sLp.toarray())
     #
     def timescale_for_S(self) -> ndarray:
         return np.logspace(self.t1, self.t2, self.steps)
@@ -250,46 +250,43 @@ class Lattice2D(Graph):
         self.lsp_mode = lsp_mode
 
     def lattice_selection(self) -> Graph:
-        match self.geometry:
-            case 'triangular':
-                nxfunc = nx.triangular_lattice_graph
-                self.p_c = 0.146
-            case 'squared':
-                nxfunc = nx.grid_2d_graph
-                self.p_c = 0.103
-            case 'hexagonal':
-                nxfunc = nx.hexagonal_lattice_graph
-                self.p_c = 0.065
+        if self.geometry == 'triangular':
+            nxfunc = nx.triangular_lattice_graph
+            self.p_c = 0.146
+        elif self.geometry == 'squared':
+            nxfunc = nx.grid_2d_graph
+            self.p_c = 0.103
+        elif self.geometry == 'hexagonal':
+            nxfunc = nx.hexagonal_lattice_graph
+            self.p_c = 0.065
         return nxfunc(self.side1, self.side2, periodic=True)
     
     def lsp_selection(self, custom_list):
-        match self.lsp_mode:
-            case 'custom':
+        if self.lsp_mode == 'custom':
                 self.lsp = np.array(custom_list)
-            case 'intervals':
-                intervals = []
-                tmp = max([vset['rsf'] for vset in custom_list])
-                for vset in custom_list:
-                    match vset['kind']:
-                        case 'log':
-                            spacing_f = np.logspace
-                            vset['start'] = np.log10(vset['start'])
-                            vset['stop'] = np.log10(vset['stop'])
-                        case 'lin':
-                            spacing_f = np.linspace
-                    intervals.append(#
-                        round_sigfig_n(#
-                            spacing_f(vset['start'], vset['stop'],
-                                      num=vset['num'],
-                                      endpoint=False),
-                        vset['rsf'])
-                    )
-                self.lsp = (intervals := np.concatenate(intervals))
-                while set(self.lsp).__len__() == intervals.__len__():
-                    tmp = tmp - 1
-                    self.lsp = np.round(self.lsp , tmp)
-                tmp = tmp + 1
-                self.lsp = np.round(intervals, tmp)
+        elif self.lsp_mode == 'intervals':
+            intervals = []
+            tmp = max([vset['rsf'] for vset in custom_list])
+            for vset in custom_list:
+                if vset['kind'] == 'log':
+                        spacing_f = np.logspace
+                        vset['start'] = np.log10(vset['start'])
+                        vset['stop'] = np.log10(vset['stop'])
+                elif vset['kind'] == 'lin':
+                        spacing_f = np.linspace
+                intervals.append(#
+                    round_sigfig_n(#
+                        spacing_f(vset['start'], vset['stop'],
+                                    num=vset['num'],
+                                    endpoint=False),
+                    vset['rsf'])
+                )
+            self.lsp = (intervals := np.concatenate(intervals))
+            while set(self.lsp).__len__() == intervals.__len__():
+                tmp = tmp - 1
+                self.lsp = np.round(self.lsp , tmp)
+            tmp = tmp + 1
+            self.lsp = np.round(intervals, tmp)
     
     def default_dict_lsp(self, num_low = 3, num_at = 6, num_high = 3):
         d = (#
