@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import scipy.special
 import scipy.sparse as scsp
 #
-from farrow_and_ball import *
 from networkx.classes.graph import Graph
 from numpy import ndarray
 from numpy.linalg import eigvals, eigvalsh
