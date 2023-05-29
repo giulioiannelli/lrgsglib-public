@@ -30,6 +30,12 @@ from scipy.spatial.distance import squareform
 from tqdm import tqdm
 #
 MAX_DIGITS_ROUND_SIGFIG = 18
+DEFAULT_ENTROPY_STEPS = 1000
+DEFAULT_ENTROPY_LEXPONENT = -3
+DEFAULT_ENTROPY_HEXPONENT = 6
+DEFAULT_NUNMBER_AVERAGES = 1000
+DEFAULT_SPIKE_THRESHOLD = 0.05
+DEFAULT_MAX_THRESHOLD = 2 * DEFAULT_SPIKE_THRESHOLD
 #
 ePDF = ".pdf"
 eTXT = ".txt"
@@ -45,6 +51,29 @@ pltPath_Sm1C = "plot/Sm1_and_C/"
 #
 pflip_fmt = '.3g'
 #
+# basic math functions
+def dv(f_x: ndarray, x: ndarray = None) -> ndarray:
+    """Compute the computational derivative of an array with respect to another.
+
+    Parameters
+    ----------
+    f_x : ndarray
+        A N dimensional NumPy array where the outer dimension is the one where
+        the `np.diff` method is applied.
+    x : ndarray, optional
+        An array with the same dimensions of the outer axis of `f_x`. If the
+        independent variable array is not passed the one assumed is the
+        `range(0, len(f(x)))`.
+    
+    Returns
+    -------
+    df_dx : ndarray 
+
+    """
+    if x is None:
+        x = np.linspace(0, f_x.shape[-1], num=f_x.shape[-1])
+    df_dx = np.diff(f_x, axis=-1) / np.diff(x)
+    return df_dx
 # networkx graph related functions
 def slaplacian_matrix(G: Graph, nodelist: list = None, weight: str = "weight"
                       ) -> csr_array:
@@ -113,9 +142,12 @@ class SignedLaplacianAnalysis:
     Sm1 = None
     VarL = None
     Cspe = None
+    taumax = None
+    taumax0 = None
     #
     def __init__(self, system, pflip: float = None, is_signed: bool = True,
-                 steps: int = 1000, t1: float = -2, t2: float = 5,
+                 steps: int = DEFAULT_ENTROPY_STEPS, t1: float = -2,
+                 t2: float = 5, maxThresh: float = DEFAULT_MAX_THRESHOLD, 
                  nreplica: int = 0) -> None:
         self.system = system
         self.is_signed = is_signed
@@ -124,18 +156,17 @@ class SignedLaplacianAnalysis:
         self.steps = steps
         self.t1 = t1
         self.t2 = t2
+        self.maxThresh = maxThresh
         #
-        self.N = system.G.number_of_nodes()
         self.pflip = pflip
         if pflip is not None:
-            self.nflip = int(self.pflip*self.system.nedges)
-            self.randsample = random.sample(range(self.system.nedges), 
+            self.nflip = int(self.pflip*self.system.Ne)
+            self.randsample = random.sample(range(self.system.Ne), 
                                             self.nflip)
         else:
             self.nflip = 0
             self.randsample = None
-        self.upd_graph_matrices()
-        self.init_weights()
+        
     #
     def init_weights(self):
         all_weights = {e: 1 for e in self.system.eset}
@@ -228,8 +259,25 @@ class SignedLaplacianAnalysis:
             S[i] = -np.nansum(rho * np.log(rho)) / np.log(self.system.N)
             VarL[i] = (av2rho - avgrho**2)
         self.Sm1  = 1 - S
-        self.Cspe = np.log(self.system.N) * np.diff(self.Sm1)/np.diff(np.log(t))
         self.VarL = VarL
+    #
+    def compute_Cspe(self) -> None:
+        if self.Sm1 is None:
+            self.compute_entropy()
+        N = self.system.N
+        Sm1 = self.Sm1
+        t = self.timescale_for_S()
+        self.Cspe = np.log(N) * dv(Sm1, np.log(t))
+    #
+    def compute_taumax_array(self) -> None:
+        if self.Cspe is None:
+            self.compute_Cspe()
+        t = self.timescale_for_C()
+        maxIdx = argrelextrema(self.Cspe, np.greater)[0]
+        maxIdxCondition = self.Cspe[maxIdx] > self.maxThresh
+        self.taumax = t[maxIdx[maxIdxCondition]]
+        self.taumax0 = t[maxIdx[maxIdxCondition][0]]
+
 #
 class Lattice2D(Graph):
     p_c = None
@@ -242,11 +290,11 @@ class Lattice2D(Graph):
         self.side2 = side1
         if side2:
             self.side2 = side2
-        self.N = self.side1 * self.side2
         self.geometry = geometry
         self.G = self.lattice_selection()
+        self.N = self.G.number_of_nodes()
         self.eset = self.G.edges()
-        self.nedges = self.G.number_of_edges()
+        self.Ne = self.G.number_of_edges()
         self.lsp_mode = lsp_mode
 
     def lattice_selection(self) -> Graph:
