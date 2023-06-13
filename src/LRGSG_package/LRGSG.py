@@ -9,7 +9,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 #
 import networkx as nx
 import numpy as np
-import pyfftlog
+# import pyfftlog
 #
 import matplotlib.colors as mplc
 import matplotlib.pyplot as plt
