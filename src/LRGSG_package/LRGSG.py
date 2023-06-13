@@ -16,16 +16,20 @@ import matplotlib.pyplot as plt
 import scipy.special
 import scipy.sparse as scsp
 #
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 from networkx.classes.graph import Graph
 from numpy import ndarray
 from numpy.linalg import eigvals, eigvalsh
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
+from scipy.interpolate import make_interp_spline
 from scipy.linalg import expm, fractional_matrix_power, ishermitian
 from scipy.signal import argrelextrema
 from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
+from scipy.stats import gaussian_kde
 #
 from tqdm import tqdm
 #
@@ -350,7 +354,8 @@ class Lattice2D(Graph):
 
 
 def lsp_read_values(folder_path):
-    file_pattern = r"p=(\d+\.\d+)_Sm1.bin"
+    #file_pattern = r"p=(\d+\.\d+)_Sm1.bin"
+    file_pattern = r"Sm1_avg_p=(\d+\.\d+)"
     value_pattern = r"p=(\d+\.\d+)"
     #
     # Get all files in the folder
@@ -509,3 +514,27 @@ def log_binning(data, binnum=20):
     bin_w = (bins[1:] + bins[:-1])
     bin_centers = (bins[1:] + bins[:-1]) / 2.0
     return bin_centers, hist, bin_w
+
+def neglog_binning(data, binnum=20):
+    abs_data = np.abs(data)
+    log_data = np.log10(abs_data)
+    min_val = int(np.floor(np.min(log_data)))
+    max_val = int(np.ceil(np.max(log_data)))
+    bins = -np.logspace(min_val, max_val, num=binnum)[::-1]  # Reverse the bins to have a negative x-scale
+    hist, _ = np.histogram(data, bins=bins)
+    bin_w = (bins[1:] + bins[:-1])
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist, bin_w
+
+
+def symlog_binning(full_data, binnum=20):
+    datap = full_data[full_data > 0]
+    datam = full_data[full_data < 0]
+    outp = log_binning(datap)
+    outm = neglog_binning(datam)
+    return outp, outm
+
+def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
+    colors = [c1, c2]  # Red to black
+    cmap = LinearSegmentedColormap.from_list('custom_colormap', colors)
+    return cmap
