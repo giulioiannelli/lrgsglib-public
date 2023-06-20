@@ -138,6 +138,22 @@ def flip_random_fract_edges(G: Graph, p: float):
     nx.set_edge_attributes(G, values=all_weights, name='weight')
     nx.set_edge_attributes(G, values=neg_weights, name='weight')
 #
+def flip_one_2dgraph(G, coord1, coord2):
+    all_weights = {e: 1 for e in G.edges()}
+    neg_weights = {(coord1, coord2): -1}
+    #
+    nx.set_edge_attributes(G, values=all_weights, name='weight')
+    nx.set_edge_attributes(G, values=neg_weights, name='weight')
+def get_kth_order_neighbours(G, node, order):
+    node = 0
+    # Set the desired order
+    order = 1
+    # Get the kth-order neighbors
+    neighbor_dict = nx.single_source_shortest_path_length(G, node, cutoff=order)
+    # Extract the nodes at the kth order
+    kth_order_neighbors = [n for n, d in neighbor_dict.items() if d == order]
+    return kth_order_neighbors
+#
 class NflipError(Exception):
     pass
 # renormalization group for heterogenous network functions
@@ -530,8 +546,14 @@ def neglog_binning(data, binnum=20):
 def symlog_binning(full_data, binnum=20):
     datap = full_data[full_data > 0]
     datam = full_data[full_data < 0]
-    outp = log_binning(datap)
-    outm = neglog_binning(datam)
+    if datap.size:
+        outp = log_binning(datap)
+    else:
+        outp = None
+    if datam.size:
+        outm = neglog_binning(datam)
+    else:
+        outm = None
     return outp, outm
 
 def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
