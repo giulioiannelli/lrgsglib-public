@@ -11,16 +11,20 @@ import networkx as nx
 import numpy as np
 # import pyfftlog
 #
+import matplotlib.animation as animation
 import matplotlib.colors as mplc
 import matplotlib.pyplot as plt
 import scipy.special
 import scipy.sparse as scsp
 #
+from itertools import product
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LinearSegmentedColormap, Normalize
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from networkx.classes.graph import Graph
 from numpy import ndarray
 from numpy.linalg import eigvals, eigvalsh
+from scipy import stats
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.interpolate import make_interp_spline
@@ -29,7 +33,6 @@ from scipy.signal import argrelextrema
 from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
-from scipy.stats import gaussian_kde
 #
 from tqdm import tqdm
 #
@@ -132,17 +135,15 @@ def flip_random_fract_edges(G: Graph, p: float):
         exit()
     rndsmpl = random.sample(range(nedges), noflip)
     #
-    all_weights = {e: 1 for e in eset}
+    # all_weights = {e: 1 for e in eset}
     neg_weights = {e: -1 for i,e in enumerate(eset) if i in rndsmpl}
     #
-    nx.set_edge_attributes(G, values=all_weights, name='weight')
+    nx.set_edge_attributes(G, values=1, name='weight')
     nx.set_edge_attributes(G, values=neg_weights, name='weight')
 #
 def flip_one_2dgraph(G, coord1, coord2):
-    all_weights = {e: 1 for e in G.edges()}
     neg_weights = {(coord1, coord2): -1}
     #
-    nx.set_edge_attributes(G, values=all_weights, name='weight')
     nx.set_edge_attributes(G, values=neg_weights, name='weight')
 def get_kth_order_neighbours(G, node, order):
     node = 0
@@ -560,3 +561,42 @@ def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
     colors = [c1, c2]  # Red to black
     cmap = LinearSegmentedColormap.from_list('custom_colormap', colors)
     return cmap
+
+def radial_correlation(field, neighbor_dict, central_index):
+    # Flatten the field array
+    flattened_field = field.flatten()
+    # Compute the mean of the field values
+    mean_field = np.mean(flattened_field)
+    # Compute the correlation function
+    correlation = []
+    for ord in range(1, int(np.sqrt(len(flattened_field)))):
+        kth_order_neighbors = [n for n, d in neighbor_dict.items() if d == ord]
+        for neighbor_index in kth_order_neighbors:
+            correlations_node = []
+            correlation_node = np.mean((flattened_field[central_index] - mean_field) * flattened_field[neighbor_index]) / np.std(flattened_field) ** 2
+            correlations_node.append(correlation_node)
+        correlation.append([ord, np.mean(correlations_node)])
+
+    return correlation
+# Define a function to calculate the Local Moran's I for a given cell
+def local_moran_i(i, field_array, adj):
+    N = len(field_array)
+    x_avg = np.mean(field_array)
+    x_i = field_array[i]
+    x_j = field_array
+    w_ij = adj[i]
+    m2 = np.sum((x_i-x_avg)**2)/N
+    I_i = (x_i-x_avg)/m2 * np.sum(w_ij*(x_j-x_avg))
+    # # Extract the values of the cell and its neighbors
+    # cell_value = field_array[row, col]
+    # cell_neighbors = field_array[max(0, row - window_size):min(n_rows, row + window_size + 1),
+    #                  max(0, col - window_size):min(n_cols, col + window_size + 1)].flatten()
+    # # Calculate the Moran's I numerator (sum of (x_i - x_mean) * (x_j - x_mean) for all i and j)
+    # numerator = (cell_value - field_mean) * np.sum(cell_neighbors - field_mean)
+    # # Calculate the Moran's I denominator (sum of (x_i - x_mean)^2 for all i)
+    # denominator = np.sum((cell_value - field_mean) ** 2)/(n_rows * n_cols)
+    # # Calculate Moran's I statistic
+    # moran_i = (window_size + 1) * numerator / denominator
+    return I_i
+
+
