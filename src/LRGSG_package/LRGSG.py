@@ -13,12 +13,14 @@ import numpy as np
 #
 import matplotlib.animation as animation
 import matplotlib.colors as mplc
+import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 import scipy.special
 import scipy.sparse as scsp
 #
 from itertools import product
 from matplotlib.cm import ScalarMappable
+from matplotlib.patches import Circle
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from networkx.classes.graph import Graph
@@ -29,6 +31,7 @@ from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.interpolate import make_interp_spline
 from scipy.linalg import expm, fractional_matrix_power, ishermitian
+from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema
 from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
@@ -58,6 +61,8 @@ pltPath_Sm1C = "plot/Sm1_and_C/"
 #
 pflip_fmt = '.3g'
 #
+def line(x, a, b):
+    return a * x + b
 # basic math functions
 def dv(f_x: ndarray, x: ndarray = None) -> ndarray:
     """Compute the computational derivative of an array with respect to another.
@@ -110,9 +115,10 @@ def slaplacian_matrix(G: Graph, nodelist: list = None, weight: str = "weight"
     """
     if nodelist is None:
         nodelist = list(G)
-    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight, format="csr")
-    n, m = A.shape
-    D = scsp.csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, m, n, format="csr"))
+    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight,
+                                 format="csr")
+    D = scsp.csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape,
+                                    format="csr"))
     return D - A
 #
 def flip_random_fract_edges(G: Graph, p: float):
@@ -169,7 +175,7 @@ class SignedLaplacianAnalysis:
     def __init__(self, system, pflip: float = None, is_signed: bool = True,
                  steps: int = DEFAULT_ENTROPY_STEPS, t1: float = -2,
                  t2: float = 5, maxThresh: float = DEFAULT_MAX_THRESHOLD, 
-                 nreplica: int = 0) -> None:
+                 nreplica: int = 0, initCond: str = 'gauss_1') -> None:
         self.system = system
         self.is_signed = is_signed
         #
@@ -178,6 +184,7 @@ class SignedLaplacianAnalysis:
         self.t1 = t1
         self.t2 = t2
         self.maxThresh = maxThresh
+        self.initCond = initCond
         #
         self.pflip = pflip
         if pflip is not None:
@@ -190,13 +197,13 @@ class SignedLaplacianAnalysis:
         
     #
     def init_weights(self):
-        all_weights = {e: 1 for e in self.system.eset}
-        nx.set_edge_attributes(self.system.G, 
-                               values=all_weights, name='weight')
+        nx.set_edge_attributes(self.system.G, values=1, name='weight')
     #
     def upd_graph_matrices(self):
         self.Adj = self.adjacency_matrix(self.system.G)
-        self.Deg = self.absolute_degree_matrix(self.Adj)
+        self.Deg = self.degree_matrix(self.Adj)
+        self.sDeg = self.absolute_degree_matrix(self.Adj)
+        self.Lap = self.laplacian_csr()
         self.sLp = self.signed_laplacian_csr()
     #
     def check_pflip(self):
@@ -207,14 +214,6 @@ class SignedLaplacianAnalysis:
     #
     def flip_random_fract_edges(self):
         """Flips a fraction p of edges (+1 to -1) of a graph G.
-
-        Parameters
-        ----------
-        G : graph
-        A NetworkX graph
-
-        p : float
-        The fraction in [0, 1] of edges to be flipped.
         """
         
         #
@@ -227,15 +226,39 @@ class SignedLaplacianAnalysis:
         nx.set_edge_attributes(self.system.G, values=neg_weights, name='weight')
         self.upd_graph_matrices()
     #
+    def flip_sel_edges(self, neg_weights_dict):
+        """Flips a specific edges of a graph G.
+        """
+        #
+        nx.set_edge_attributes(self.system.G, values=neg_weights_dict, 
+                               name='weight')
+        self.upd_graph_matrices()
+    #
     def adjacency_matrix(self, G: Graph,
                          nodelist: list = None, weight: str = "weight"):
         if nodelist is None: nodelist = list(G)
         return nx.to_scipy_sparse_array(G, nodelist=nodelist, 
                                         weight=weight, format="csr")
     #
+    def degree_matrix(self, A: csr_array) -> csr_array:
+        return csr_array(scsp.spdiags(A.sum(axis=1), 
+                                        0, *A.shape, format="csr"))
+    #
     def absolute_degree_matrix(self, A: csr_array) -> csr_array:
         return csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 
                                         0, *A.shape, format="csr"))
+    #
+    def laplacian_csr(self) -> csr_array:
+        """Returns the signed Laplacian matrix of G.
+        The graph Laplacian is the matrix L = D - A, where
+        A is the adjacency matrix and D is the diagonal matrix of node degrees
+
+        Returns
+        -------
+        L : SciPy sparse array
+        The Laplacian matrix of G.
+        """
+        return self.Deg - self.Adj
     #
     def signed_laplacian_csr(self) -> csr_array:
         """Returns the signed Laplacian matrix of G.
@@ -248,7 +271,7 @@ class SignedLaplacianAnalysis:
         L : SciPy sparse array
         The Laplacian matrix of G.
         """
-        return self.Deg - self.Adj
+        return self.sDeg - self.Adj
     #
     def compute_laplacian_spectrum(self, MODE_lapspec: str = 'numpy') -> None:
         if MODE_lapspec == 'networkx':
@@ -298,21 +321,43 @@ class SignedLaplacianAnalysis:
         maxIdxCondition = self.Cspe[maxIdx] > self.maxThresh
         self.taumax = t[maxIdx[maxIdxCondition]]
         self.taumax0 = t[maxIdx[maxIdxCondition][0]]
-
+    #
+    def laplacian_dynamics_init(self):
+        if self.initCond == 'uniform_1':
+            self.status_array = np.random.uniform(-1, 1, self.system.N)
+        elif self.initCond == 'delta_1':
+            self.status_array = np.zeros(self.system.N)
+            self.status_array[self.system.N//2] = self.system.N
+        elif self.initCond == 'gauss_1':
+            self.status_array = np.random.normal(-1, 1, self.system.N)
+        elif self.initCond == 'all_1':
+            self.status_array = np.ones(self.system.N)
+        elif self.initCond.startswith('ground_state'):
+            self.eigenModeInit = int(self.initCond.split('_')[-1])
+        #
+        if self.system.pbc is False:
+            L = int(np.sqrt(self.system.N))
+            self.fixed_border_idxs = np.array(sorted([i for i in range(L)] + \
+                        [(L-1) * L + i for i in range(L)] + \
+                        [i * L for i in range(1, L-1)] + 
+                        [(i+1) * L - 1 for i in range(1, L-1)]))
+            self.status_array[self.fixed_border_idxs] = self.fbc_val
 #
 class Lattice2D(Graph):
     p_c = None
     lsp = None
     def __init__(self, side1: int, geometry: str = 'squared', side2: int = 0,
-                 lsp_mode: str = 'intervals', incoming_graph_data=None, 
+                 lsp_mode: str = 'intervals', incoming_graph_data=None, pbc = True, 
                  **attr) -> None:
         super().__init__(incoming_graph_data, **attr)
         self.side1 = side1
-        self.side2 = side1
-        if side2:
-            self.side2 = side2
+        self.side2 = side2 if side2 else side1
         self.geometry = geometry
+        self.pbc = pbc
         self.G = self.lattice_selection()
+        self.H = nx.convert_node_labels_to_integers(self.G)
+        self.node_map = dict(zip(self.G, self.H))
+        self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
         self.N = self.G.number_of_nodes()
         self.eset = self.G.edges()
         self.Ne = self.G.number_of_edges()
@@ -328,7 +373,7 @@ class Lattice2D(Graph):
         elif self.geometry == 'hexagonal':
             nxfunc = nx.hexagonal_lattice_graph
             self.p_c = 0.065
-        return nxfunc(self.side1, self.side2, periodic=True)
+        return nxfunc(self.side1, self.side2, periodic=self.pbc)
     
     def lsp_selection(self, custom_list):
         if self.lsp_mode == 'custom':
