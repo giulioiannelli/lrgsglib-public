@@ -22,6 +22,7 @@ from itertools import product
 from matplotlib.cm import ScalarMappable
 from matplotlib.patches import Circle
 from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.ticker import ScalarFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from networkx.classes.graph import Graph
 from numpy import ndarray
@@ -171,11 +172,13 @@ class SignedLaplacianAnalysis:
     Cspe = None
     taumax = None
     taumax0 = None
+    frames_dynsys = []
+    ACCERR_LAPL_DYN = 1e-7
     #
     def __init__(self, system, pflip: float = None, is_signed: bool = True,
                  steps: int = DEFAULT_ENTROPY_STEPS, t1: float = -2,
                  t2: float = 5, maxThresh: float = DEFAULT_MAX_THRESHOLD, 
-                 nreplica: int = 0, initCond: str = 'gauss_1') -> None:
+                 nreplica: int = 0, initCond: str = 'gauss_1', t_steps = 10, no_obs = 1) -> None:
         self.system = system
         self.is_signed = is_signed
         #
@@ -185,6 +188,9 @@ class SignedLaplacianAnalysis:
         self.t2 = t2
         self.maxThresh = maxThresh
         self.initCond = initCond
+        #
+        self.t_steps = t_steps
+        self.no_obs = no_obs
         #
         self.pflip = pflip
         if pflip is not None:
@@ -323,11 +329,16 @@ class SignedLaplacianAnalysis:
         self.taumax0 = t[maxIdx[maxIdxCondition][0]]
     #
     def laplacian_dynamics_init(self):
+        self.Deltat = 1./self.t_steps
+        self.simulationTime = self.system.N*self.t_steps
+        self.sampling = 1/self.no_obs*self.t_steps
+        self.frames = self.simulationTime // self.sampling
+        #
         if self.initCond == 'uniform_1':
             self.status_array = np.random.uniform(-1, 1, self.system.N)
         elif self.initCond == 'delta_1':
             self.status_array = np.zeros(self.system.N)
-            self.status_array[self.system.N//2] = self.system.N
+            self.status_array[self.system.N//2] = 1
         elif self.initCond == 'gauss_1':
             self.status_array = np.random.normal(-1, 1, self.system.N)
         elif self.initCond == 'all_1':
@@ -341,21 +352,36 @@ class SignedLaplacianAnalysis:
                         [(L-1) * L + i for i in range(L)] + \
                         [i * L for i in range(1, L-1)] + 
                         [(i+1) * L - 1 for i in range(1, L-1)]))
-            self.status_array[self.fixed_border_idxs] = self.fbc_val
+            self.status_array[self.fixed_border_idxs] = self.system.fbc_val
+    #
+    def run_laplacian_dynamics(self):
+        eigv0, _ = scsp.linalg.eigsh(self.sLp.astype(np.float64), k=1, which='SM') 
+        for t in range(25*self.t_steps):
+            status_array_old = self.status_array
+            if (t % self.sampling == 0):
+                print(t, np.mean(self.status_array), np.var(self.status_array))
+            self.status_array = self.status_array - self.Deltat*((self.sLp - eigv0)@self.status_array) #+ np.sqrt(Deltat)*np.random.uniform(-1e-3, 1e-3, L**2)
+            if not self.system.pbc:
+                self.status_array[self.fixed_border_idxs] = self.fbc_val
+            if (np.abs(status_array_old - self.status_array) < self.ACCERR_LAPL_DYN*np.ones(self.system.N)).all():
+                print("Convergence reached.")
+
 #
 class Lattice2D(Graph):
     p_c = None
     lsp = None
     def __init__(self, side1: int, geometry: str = 'squared', side2: int = 0,
-                 lsp_mode: str = 'intervals', incoming_graph_data=None, pbc = True, 
+                 lsp_mode: str = 'intervals', incoming_graph_data=None, pbc = True, fbc_val = 1,
                  **attr) -> None:
         super().__init__(incoming_graph_data, **attr)
         self.side1 = side1
         self.side2 = side2 if side2 else side1
         self.geometry = geometry
         self.pbc = pbc
+        self.fbc_val = fbc_val
         self.G = self.lattice_selection()
         self.H = nx.convert_node_labels_to_integers(self.G)
+        self.posH = nx.get_node_attributes(self.H, 'pos')
         self.node_map = dict(zip(self.G, self.H))
         self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
         self.N = self.G.number_of_nodes()
@@ -373,7 +399,7 @@ class Lattice2D(Graph):
         elif self.geometry == 'hexagonal':
             nxfunc = nx.hexagonal_lattice_graph
             self.p_c = 0.065
-        return nxfunc(self.side1, self.side2, periodic=self.pbc)
+        return nxfunc(self.side1, self.side2, periodic=self.pbc, with_positions=True)
     
     def lsp_selection(self, custom_list):
         if self.lsp_mode == 'custom':
@@ -415,9 +441,9 @@ class Lattice2D(Graph):
     
 
 
-def lsp_read_values(folder_path):
+def lsp_read_values(folder_path, fpattern='Sm1_avg_p'):
     #file_pattern = r"p=(\d+\.\d+)_Sm1.bin"
-    file_pattern = r"Sm1_avg_p=(\d+\.\d+)"
+    file_pattern = fr"{fpattern}=(\d+\.\d+)"
     value_pattern = r"p=(\d+\.\d+)"
     #
     # Get all files in the folder
