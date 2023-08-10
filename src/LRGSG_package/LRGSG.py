@@ -25,12 +25,12 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.ticker import ScalarFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from networkx.classes.graph import Graph
-from numpy import ndarray
+from numpy import inf, ndarray
 from numpy.linalg import eigvals, eigvalsh
 from scipy import stats
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
-from scipy.interpolate import make_interp_spline
+from scipy.interpolate import make_interp_spline, pchip
 from scipy.linalg import expm, fractional_matrix_power, ishermitian
 from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema
@@ -47,13 +47,13 @@ DEFAULT_ENTROPY_HEXPONENT = 6
 DEFAULT_NUNMBER_AVERAGES = 1000
 DEFAULT_SPIKE_THRESHOLD = 0.05
 DEFAULT_MAX_THRESHOLD = 2 * DEFAULT_SPIKE_THRESHOLD
+DEFAULT_LATTICE2D_GEOMETRY = 'squared'
+AVAILABLE_LATTICE2D_GEOMETRIES = ['squared', 'triangular', 'hexagonal']
 #
 ePDF = ".pdf"
 eTXT = ".txt"
 eBIN = ".bin"
 #
-datPath_lminl2d = "data/lmin_l2d/"
-datPath_l2d_sq = "data/l2d_sq/"
 lambdaPath_l2d = lambda geometry : f"l2d_{geometry}/"
 pltPath_l2d = lambda geometry : f"data/plot/{lambdaPath_l2d(geometry)}"
 datPath_l2d = lambda geometry : f"data/{lambdaPath_l2d(geometry)}"
@@ -164,6 +164,8 @@ def get_kth_order_neighbours(G, node, order):
 #
 class NflipError(Exception):
     pass
+class Lattice2DError(Exception):
+    pass
 # renormalization group for heterogenous network functions
 class SignedLaplacianAnalysis:
     slspectrum = None
@@ -230,14 +232,20 @@ class SignedLaplacianAnalysis:
         neg_weights = {e: -1 for i,e in enumerate(self.system.eset)
                        if i in self.randsample}
         nx.set_edge_attributes(self.system.G, values=neg_weights, name='weight')
+        self.system.upd_H_graph()
         self.upd_graph_matrices()
     #
-    def flip_sel_edges(self, neg_weights_dict):
+    def flip_sel_edges(self, neg_weights_dict, on_graph='G'):
         """Flips a specific edges of a graph G.
         """
         #
-        nx.set_edge_attributes(self.system.G, values=neg_weights_dict, 
-                               name='weight')
+        if on_graph == 'G':
+            nx.set_edge_attributes(self.system.G, values=neg_weights_dict, 
+                                name='weight')
+            self.system.upd_H_graph()
+        elif on_graph == 'H':
+            nx.set_edge_attributes(self.system.H, values=neg_weights_dict, 
+                                name='weight')
         self.upd_graph_matrices()
     #
     def adjacency_matrix(self, G: Graph,
@@ -370,36 +378,72 @@ class SignedLaplacianAnalysis:
 class Lattice2D(Graph):
     p_c = None
     lsp = None
-    def __init__(self, side1: int, geometry: str = 'squared', side2: int = 0,
-                 lsp_mode: str = 'intervals', incoming_graph_data=None, pbc = True, fbc_val = 1,
-                 **attr) -> None:
+    #
+    def __init__(self, side1: int, geometry: str = DEFAULT_LATTICE2D_GEOMETRY, 
+                 side2: int = 0, lsp_mode: str = 'intervals', 
+                 incoming_graph_data=None, pbc: bool = True, 
+                 fbc_val: float = 1., **attr) -> None:
         super().__init__(incoming_graph_data, **attr)
+        try: 
+            self.geometry = geometry
+            if geometry not in AVAILABLE_LATTICE2D_GEOMETRIES:
+                raise Lattice2DError("""The selected geometry of the 2D lattice
+                                     is not available. Setting it to 'squared' 
+                                     for a 2d regular grid.""")
+        except:
+            self.geometry = self.DEFAULT_GEOMETRY
         self.side1 = side1
-        self.side2 = side2 if side2 else side1
-        self.geometry = geometry
+        if side2:
+            self.side2 = side2
+        else:
+            if self.geometry == 'triangular':
+                self.side2 = int(side1 * np.sqrt(3))
+            elif self.geometry == 'hexagonal':
+                self.side2 = int(side1 * np.sqrt(3))
+            elif self.geometry == 'squared':
+                self.side2 = self.side1
         self.pbc = pbc
         self.fbc_val = fbc_val
+        self.lsp_mode = lsp_mode
+        self.init_graph()
+        self.init_H_graph()
+        self.init_paths()
+    #
+    def init_graph(self):
         self.G = self.lattice_selection()
+        self.N = self.G.number_of_nodes()
+        self.eset = self.G.edges()
+        self.Ne = self.G.number_of_edges()
+    #
+    def init_paths(self):
+        self.lambdaPath = f"l2d_{self.geometry}/"
+        self.pltPath = f"data/plot/{self.lambdaPath}"
+        self.datPath = f"data/{self.lambdaPath}"
+    #
+    def init_H_graph(self):
+        self.upd_H_graph()
+    #
+    def upd_H_graph(self):
         self.H = nx.convert_node_labels_to_integers(self.G)
         self.posH = nx.get_node_attributes(self.H, 'pos')
         self.node_map = dict(zip(self.G, self.H))
         self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
-        self.N = self.G.number_of_nodes()
-        self.eset = self.G.edges()
-        self.Ne = self.G.number_of_edges()
-        self.lsp_mode = lsp_mode
-
+        self.esetH = self.H.edges()
+    
     def lattice_selection(self) -> Graph:
         if self.geometry == 'triangular':
             nxfunc = nx.triangular_lattice_graph
             self.p_c = 0.146
+            kwdict = {'with_positions': True}
         elif self.geometry == 'squared':
             nxfunc = nx.grid_2d_graph
             self.p_c = 0.103
+            kwdict = {}
         elif self.geometry == 'hexagonal':
             nxfunc = nx.hexagonal_lattice_graph
             self.p_c = 0.065
-        return nxfunc(self.side1, self.side2, periodic=self.pbc, with_positions=True)
+            kwdict = {'with_positions': True}
+        return nxfunc(self.side1, self.side2, periodic=self.pbc, **kwdict)
     
     def lsp_selection(self, custom_list):
         if self.lsp_mode == 'custom':
@@ -439,7 +483,9 @@ class Lattice2D(Graph):
         )
         return d
     
-
+def first_index_changing_condition(condition):
+    firstchange = np.where(condition[:-1] != condition[1:])[0][0]
+    return firstchange
 
 def lsp_read_values(folder_path, fpattern='Sm1_avg_p'):
     #file_pattern = r"p=(\d+\.\d+)_Sm1.bin"
@@ -593,6 +639,14 @@ def Cspe_plot_ax(ax):
     ax.set_ylabel(r"$\log(N)\langle{C}\rangle$")
     ax.set_xscale('log')
 
+def lin_binning(data, binnum=20):
+    min_val = int(np.floor(np.min(data)))
+    max_val = int(np.ceil(np.max(data)))
+    bins = np.linspace(min_val, max_val, num=binnum)
+    hist, _ = np.histogram(data, bins=bins)
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist
+
 def log_binning(data, binnum=20):
     log_data = np.log10(data)
     min_val = int(np.floor(np.min(log_data)))
@@ -671,3 +725,5 @@ def local_moran_i(i, field_array, adj):
     return I_i
 
 
+def set_alpha_torgb(rgbacol, alpha=0.5):
+    return (rgbacol[0], rgbacol[1], rgbacol[2], alpha)
