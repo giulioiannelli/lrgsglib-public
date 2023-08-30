@@ -20,7 +20,7 @@ import scipy.sparse as scsp
 #
 from itertools import product
 from matplotlib.cm import ScalarMappable
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Rectangle
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.ticker import ScalarFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -175,7 +175,9 @@ class SignedLaplacianAnalysis:
     taumax = None
     taumax0 = None
     frames_dynsys = []
-    ACCERR_LAPL_DYN = 1e-7
+    eigv = None
+    ACCERR_LAPL_DYN = 1e-9
+    MAXVAL_LAPL_DYN = 200
     #
     def __init__(self, system, pflip: float = None, is_signed: bool = True,
                  steps: int = DEFAULT_ENTROPY_STEPS, t1: float = -2,
@@ -206,9 +208,14 @@ class SignedLaplacianAnalysis:
     #
     def init_weights(self):
         nx.set_edge_attributes(self.system.G, values=1, name='weight')
+        self.system.upd_H_graph()
     #
-    def upd_graph_matrices(self):
-        self.Adj = self.adjacency_matrix(self.system.G)
+    def upd_graph_matrices(self, on_graph='H'):
+        if on_graph == 'G':
+            motherNx = self.system.G
+        elif on_graph == 'H':
+            motherNx = self.system.H
+        self.Adj = self.adjacency_matrix(motherNx)
         self.Deg = self.degree_matrix(self.Adj)
         self.sDeg = self.absolute_degree_matrix(self.Adj)
         self.Lap = self.laplacian_csr()
@@ -220,7 +227,25 @@ class SignedLaplacianAnalysis:
                              number of edges is < 1, then no edges would be
                              flipped. Skipping the analysis for this value.""")
     #
-    def flip_random_fract_edges(self):
+    def flip_sel_edges(self, neg_weights_dict=None, on_graph='H'):
+        """Flips a specific edges of a graph G.
+        """
+        #
+        if on_graph == 'G':
+            if neg_weights_dict is None:
+                neg_weights_dict = self.system.DEFAULT_NEG_WEIGHTS_DICT_G
+            nx.set_edge_attributes(self.system.G, values=neg_weights_dict, 
+                                name='weight')
+            self.system.upd_H_graph()
+        elif on_graph == 'H':
+            if neg_weights_dict is None:
+                neg_weights_dict = self.system.DEFAULT_NEG_WEIGHTS_DICT_H
+            nx.set_edge_attributes(self.system.H, values=neg_weights_dict, 
+                                name='weight')
+            self.system.upd_G_graph()
+        self.upd_graph_matrices()
+    #
+    def flip_random_fract_edges(self, on_graph='H'):
         """Flips a fraction p of edges (+1 to -1) of a graph G.
         """
         
@@ -229,24 +254,12 @@ class SignedLaplacianAnalysis:
             self.check_pflip()
         except NflipError:
             return None
-        neg_weights = {e: -1 for i,e in enumerate(self.system.eset)
-                       if i in self.randsample}
-        nx.set_edge_attributes(self.system.G, values=neg_weights, name='weight')
-        self.system.upd_H_graph()
-        self.upd_graph_matrices()
-    #
-    def flip_sel_edges(self, neg_weights_dict, on_graph='G'):
-        """Flips a specific edges of a graph G.
-        """
-        #
         if on_graph == 'G':
-            nx.set_edge_attributes(self.system.G, values=neg_weights_dict, 
-                                name='weight')
-            self.system.upd_H_graph()
+            eset = self.system.esetG
         elif on_graph == 'H':
-            nx.set_edge_attributes(self.system.H, values=neg_weights_dict, 
-                                name='weight')
-        self.upd_graph_matrices()
+            eset = self.system.esetH
+        neg_weights = {e: -1 for i,e in enumerate(eset) if i in self.randsample}
+        self.flip_sel_edges(neg_weights_dict=neg_weights, on_graph=on_graph)
     #
     def adjacency_matrix(self, G: Graph,
                          nodelist: list = None, weight: str = "weight"):
@@ -336,43 +349,136 @@ class SignedLaplacianAnalysis:
         self.taumax = t[maxIdx[maxIdxCondition]]
         self.taumax0 = t[maxIdx[maxIdxCondition][0]]
     #
-    def laplacian_dynamics_init(self):
+    def compute_k_eigvV(self, MODE_dynspec: str = 'scipy', howmany: int = 1):
+        if MODE_dynspec == 'scipy':
+            self.eigv, self.eigV = scsp.linalg.eigsh(self.sLp.astype(np.float64), k=howmany, which='SM') 
+    #
+    def laplacian_dynamics_init(self, window_size=0, window_shift_x=0,
+                                window_shift_y=0, win_val=0.001):
+        N = self.system.N
+        #
         self.Deltat = 1./self.t_steps
-        self.simulationTime = self.system.N*self.t_steps
-        self.sampling = 1/self.no_obs*self.t_steps
-        self.frames = self.simulationTime // self.sampling
+        self.simulationTime = N*self.t_steps
+        self.sampling = 1/self.no_obs*self.simulationTime
         #
         if self.initCond == 'uniform_1':
-            self.status_array = np.random.uniform(-1, 1, self.system.N)
+            self.status_array = np.random.uniform(-1, 1, N)
         elif self.initCond == 'delta_1':
-            self.status_array = np.zeros(self.system.N)
-            self.status_array[self.system.N//2] = 1
+            self.status_array = np.zeros(N)
+            self.status_array[N//2+self.system.side1//2] = 1
         elif self.initCond == 'gauss_1':
-            self.status_array = np.random.normal(-1, 1, self.system.N)
+            self.status_array = np.random.normal(-1, 1, N)
         elif self.initCond == 'all_1':
-            self.status_array = np.ones(self.system.N)
+            self.status_array = np.ones(N)
         elif self.initCond.startswith('ground_state'):
             self.eigenModeInit = int(self.initCond.split('_')[-1])
+            self.compute_k_eigvV()
+            self.status_array = self.eigV.T[self.eigenModeInit]
+        elif self.initCond.startswith('window'):
+            s22 = self.system.side2//2
+            wndwS = s22-1 if window_size > (s22-1) else window_size
+            hS, hE = s22-wndwS-1, s22+wndwS+1
+            initStatus = np.zeros(N)
+            
+            #
+            if self.initCond.startswith('window_multiple'):
+                self.nsquares = int(self.initCond.split('_')[-1])
+                wndwSa = np.array([wndwS, -wndwS])
+                sqTmp = np.random.randint(wndwS, self.system.side1-wndwS, 
+                                            size=(self.nsquares, 2)) - wndwSa
+                sqIdx = np.concatenate([
+                    np.concatenate([
+                        [j+i*self.system.side1 
+                         for j in range(iSq[0])] 
+                         for i in range(iSq[1])]) 
+                    for iSq in sqTmp])
+                initStatus[sqIdx] = np.ones(len(sqIdx))*win_val
+                print(self.nsquares, wndwSa, sqTmp, sqIdx, )
+            else:
+                shiftsX = [hS+window_shift_x, hE+window_shift_x]
+                shiftsY = [hS+window_shift_y, hE+window_shift_y]
+                sqIdx = np.concatenate([
+                    [j+i*self.system.side1 
+                     for j in range(*shiftsX)] 
+                     for i in range(*shiftsY)])
+                if self.initCond == 'window_1':
+                    initStatus[sqIdx] = np.ones(len(sqIdx))
+                elif self.initCond == 'window_gauss_1':
+                    initStatus[sqIdx] = np.random.normal(-1, 1, len(sqIdx))
+                elif self.initCond.startswith('window_ground_state'):
+                    self.eigenModeInit = int(self.initCond.split('_')[-1])
+                    self.compute_k_eigvV(howmany=self.eigenModeInit+1)
+                    initStatus = self.eigV.T[self.eigenModeInit]
+                    outIdx = np.setxor1d(np.arange(N), sqIdx)
+                    initStatus[outIdx] = np.random.uniform(initStatus.min(), 
+                                                           initStatus.max(), 
+                                                           len(outIdx))
+                else:
+                    print('Error, no mode for init laplacian dynamic chosen.')
+            self.status_array = initStatus
         #
         if self.system.pbc is False:
-            L = int(np.sqrt(self.system.N))
+            L = int(np.sqrt(N))
             self.fixed_border_idxs = np.array(sorted([i for i in range(L)] + \
                         [(L-1) * L + i for i in range(L)] + \
                         [i * L for i in range(1, L-1)] + 
                         [(i+1) * L - 1 for i in range(1, L-1)]))
             self.status_array[self.fixed_border_idxs] = self.system.fbc_val
     #
-    def run_laplacian_dynamics(self):
-        eigv0, _ = scsp.linalg.eigsh(self.sLp.astype(np.float64), k=1, which='SM') 
-        for t in range(25*self.t_steps):
-            status_array_old = self.status_array
-            if (t % self.sampling == 0):
-                print(t, np.mean(self.status_array), np.var(self.status_array))
-            self.status_array = self.status_array - self.Deltat*((self.sLp - eigv0)@self.status_array) #+ np.sqrt(Deltat)*np.random.uniform(-1e-3, 1e-3, L**2)
-            if not self.system.pbc:
-                self.status_array[self.fixed_border_idxs] = self.fbc_val
-            if (np.abs(status_array_old - self.status_array) < self.ACCERR_LAPL_DYN*np.ones(self.system.N)).all():
-                print("Convergence reached.")
+    def run_laplacian_dynamics(self, rescaled=True, t_stepsMultiplier=1, 
+                               saveFrames=False):
+        x = self.status_array
+        def stop_conditions_lapdyn(self, x_tm1, xx):
+            error_tolerance = self.ACCERR_LAPL_DYN*np.ones(self.system.N)
+            C1 = (np.abs(x_tm1/x_tm1.max() - xx/xx.max()) < error_tolerance).all()
+            C2 = (np.abs(np.log10(np.max(np.abs(xx)))) > self.MAXVAL_LAPL_DYN)
+            return C1, C2
+        if rescaled:
+            if self.eigv is None:
+                self.compute_k_eigvV()
+            eigv0 = np.array([self.eigv[0]])
+            lap = lambda t: np.exp(-eigv0*t)*self.sLp#(self.sLp - eigv0)
+        else:
+            lap = self.sLp
+        if not self.system.pbc:
+            def set_boundary_condition(self):
+                x[self.fixed_border_idxs] = self.fbc_val
+        else:
+            def set_boundary_condition():
+                pass
+        if saveFrames:
+            def save_frames(self, x, t):
+                if (t % self.sampling == 0):
+                    xshape = (self.system.side1, self.system.side2)
+                    self.frames_dynsys.append(x.reshape(xshape))
+        else:
+            def save_frames(*_):
+                pass
+            #     print(t, np.mean(x), np.var(x))
+        print("Beginning Laplacian dynamics.")
+        for t in tqdm(range(t_stepsMultiplier*self.simulationTime)):
+            x_tm1 = x
+            x = x - self.Deltat*(lap(t)@x) #+ np.sqrt(Deltat)*np.random.uniform(-1e-3, 1e-3, L**2)
+            set_boundary_condition()
+            save_frames(self, x, t)
+            C1, C2 = stop_conditions_lapdyn(self, x_tm1, x)
+            if C1 or C2:
+                if C1: 
+                    print("Convergence reached.")
+                if C2: 
+                    print("Max val. reached.")
+                break
+        self.status_array = x
+            # if (t % self.sampling == 0):
+            #     print(t, np.mean(x), np.var(x))
+    #
+    def rescaled_field_regularization(self):
+        status = self.status_array.reshape(self.system.side1, self.system.side2)
+        restatus = np.log10(np.max(status)-status)
+        nnans = restatus[(restatus != np.inf) & (restatus != -np.inf)]
+        self.restatus =  np.nan_to_num(restatus, posinf=np.max(nnans), neginf=np.min(nnans))
+        
+
 
 #
 class Lattice2D(Graph):
@@ -397,9 +503,10 @@ class Lattice2D(Graph):
             self.side2 = side2
         else:
             if self.geometry == 'triangular':
-                self.side2 = int(side1 * np.sqrt(3))
+                self.side2 = int(self.side1 * np.sqrt(3))
             elif self.geometry == 'hexagonal':
-                self.side2 = int(side1 * np.sqrt(3))
+                self.side1 = int(self.side1 * np.sqrt(3))
+                self.side2 = side1
             elif self.geometry == 'squared':
                 self.side2 = self.side1
         self.pbc = pbc
@@ -408,11 +515,16 @@ class Lattice2D(Graph):
         self.init_graph()
         self.init_H_graph()
         self.init_paths()
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG)//2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH)//2]: -1}
     #
     def init_graph(self):
         self.G = self.lattice_selection()
+        if self.geometry == 'squared':
+            self.posG = dict(zip(self.G, self.G))
+            nx.set_node_attributes(self.G, values=self.posG, name='pos')
         self.N = self.G.number_of_nodes()
-        self.eset = self.G.edges()
+        self.esetG = list(self.G.edges())
         self.Ne = self.G.number_of_edges()
     #
     def init_paths(self):
@@ -428,9 +540,20 @@ class Lattice2D(Graph):
         self.posH = nx.get_node_attributes(self.H, 'pos')
         self.node_map = dict(zip(self.G, self.H))
         self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
-        self.esetH = self.H.edges()
+        self.esetH = list(self.H.edges())
     
-    def lattice_selection(self) -> Graph:
+    def upd_G_graph(self):
+        self.invnode_map = {v: k for k, v in self.node_map.items()}
+        self.invedge_map = {v: k for k, v in self.edge_map.items()}
+        self.G = nx.relabel_nodes(self.H, self.invnode_map)
+        self.posG = nx.get_node_attributes(self.G, 'pos')
+        self.esetG = list(self.G.edges())
+    
+    def lattice_selection(self, pbc=None) -> Graph:
+        if pbc is None:
+            pbc = self.pbc
+        else:
+            pbc = False
         if self.geometry == 'triangular':
             nxfunc = nx.triangular_lattice_graph
             self.p_c = 0.146
@@ -443,7 +566,7 @@ class Lattice2D(Graph):
             nxfunc = nx.hexagonal_lattice_graph
             self.p_c = 0.065
             kwdict = {'with_positions': True}
-        return nxfunc(self.side1, self.side2, periodic=self.pbc, **kwdict)
+        return nxfunc(self.side1, self.side2, periodic=pbc, **kwdict)
     
     def lsp_selection(self, custom_list):
         if self.lsp_mode == 'custom':
@@ -482,7 +605,12 @@ class Lattice2D(Graph):
               'stop': 1, 'num': num_high, 'rsf': 1},
         )
         return d
-    
+
+    def number_of_negative_links(self):
+        self.Ne_n = (np.array(list(nx.get_edge_attributes(self.H, 'weight').values())) < 0).sum()
+        return self.Ne_n
+
+
 def first_index_changing_condition(condition):
     firstchange = np.where(condition[:-1] != condition[1:])[0][0]
     return firstchange
@@ -714,16 +842,51 @@ def local_moran_i(i, field_array, adj):
     I_i = (x_i-x_avg)/m2 * np.sum(w_ij*(x_j-x_avg))
     # # Extract the values of the cell and its neighbors
     # cell_value = field_array[row, col]
-    # cell_neighbors = field_array[max(0, row - window_size):min(n_rows, row + window_size + 1),
-    #                  max(0, col - window_size):min(n_cols, col + window_size + 1)].flatten()
+    # cell_neighbors = field_array[max(0, row - wndwS):min(n_rows, row + wndwS + 1),
+    #                  max(0, col - wndwS):min(n_cols, col + wndwS + 1)].flatten()
     # # Calculate the Moran's I numerator (sum of (x_i - x_mean) * (x_j - x_mean) for all i and j)
     # numerator = (cell_value - field_mean) * np.sum(cell_neighbors - field_mean)
     # # Calculate the Moran's I denominator (sum of (x_i - x_mean)^2 for all i)
     # denominator = np.sum((cell_value - field_mean) ** 2)/(n_rows * n_cols)
     # # Calculate Moran's I statistic
-    # moran_i = (window_size + 1) * numerator / denominator
+    # moran_i = (wndwS + 1) * numerator / denominator
     return I_i
 
 
 def set_alpha_torgb(rgbacol, alpha=0.5):
     return (rgbacol[0], rgbacol[1], rgbacol[2], alpha)
+
+def ising_spinglass_pmJ_2D_Tcrit(L):
+    return L**(-1./2)
+
+def boolean_overlap_fraction(boolist1, boolist2):
+    return sum(~(boolist1 ^ boolist2))/len(boolist1)
+
+def make_animation_fromFrames(frames, savename="output.mp4", fps=10, dpi=200):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    # I like to position my colorbars this way, but you don't have to
+    div = make_axes_locatable(ax)
+    cax = div.append_axes('right', '5%', '5%')
+
+
+    cv0 = frames[0]
+    im = ax.imshow(cv0, origin='lower') # Here make an AxesImage rather than contour
+    cb = fig.colorbar(im, cax=cax)
+    # tx = ax.set_title('Frame 0')
+
+    def animate(i):
+        arr = frames[i]
+        vmax     = np.max(arr)
+        vmin     = np.min(arr)
+        im.set_data(arr)
+        im.set_clim(vmin, vmax)
+        # tx.set_text('Frame {0}'.format(i))
+        # In this version you don't have to do anything to the colorbar,
+        # it updates itself when the mappable it watches (im) changes
+    print("# of frames: ", len(frames))
+    ani = animation.FuncAnimation(fig, animate, frames=len(frames))
+    fig.tight_layout()
+    writervideo = animation.FFMpegWriter(fps=fps) 
+    ani.save(savename, writer=writervideo, dpi=dpi)
