@@ -184,6 +184,7 @@ class SignedLaplacianAnalysis:
                  t2: float = 5, maxThresh: float = DEFAULT_MAX_THRESHOLD, 
                  nreplica: int = 0, initCond: str = 'gauss_1', t_steps = 10, no_obs = 1) -> None:
         self.system = system
+        self.set_syshape()
         self.is_signed = is_signed
         #
         self.nreplica = nreplica
@@ -205,6 +206,10 @@ class SignedLaplacianAnalysis:
             self.nflip = 0
             self.randsample = None
         
+    #
+    def set_syshape(self):
+        if type(self.system) is Lattice2D:
+            self.syshape = (self.system.side1, self.system.side2)
     #
     def init_weights(self):
         nx.set_edge_attributes(self.system.G, values=1, name='weight')
@@ -353,15 +358,21 @@ class SignedLaplacianAnalysis:
         if MODE_dynspec == 'scipy':
             self.eigv, self.eigV = scsp.linalg.eigsh(self.sLp.astype(np.float64), k=howmany, which='SM') 
     #
-    def laplacian_dynamics_init(self, window_size=0, window_shift_x=0,
-                                window_shift_y=0, win_val=0.001):
+    def laplacian_dynamics_init(self, t_stepsMultiplier=1, window_size=0, window_shift_x=0,
+                                window_shift_y=0, win_val=1):
         N = self.system.N
         #
         self.Deltat = 1./self.t_steps
-        self.simulationTime = N*self.t_steps
-        self.sampling = 1/self.no_obs*self.simulationTime
+        self.simulationTime = N*self.t_steps*t_stepsMultiplier
+        self.sampling = np.logspace(0, np.log10(self.simulationTime), num=200, dtype=int)
         #
-        if self.initCond == 'uniform_1':
+        if not 'ground_state' in self.initCond:
+            self.compute_k_eigvV()
+        if self.initCond.startswith('ground_state'):
+            self.eigenModeInit = int(self.initCond.split('_')[-1])
+            self.compute_k_eigvV(howmany=self.eigenModeInit+1)
+            self.status_array = self.eigV.T[self.eigenModeInit]
+        elif self.initCond == 'uniform_1':
             self.status_array = np.random.uniform(-1, 1, N)
         elif self.initCond == 'delta_1':
             self.status_array = np.zeros(N)
@@ -370,10 +381,6 @@ class SignedLaplacianAnalysis:
             self.status_array = np.random.normal(-1, 1, N)
         elif self.initCond == 'all_1':
             self.status_array = np.ones(N)
-        elif self.initCond.startswith('ground_state'):
-            self.eigenModeInit = int(self.initCond.split('_')[-1])
-            self.compute_k_eigvV()
-            self.status_array = self.eigV.T[self.eigenModeInit]
         elif self.initCond.startswith('window'):
             s22 = self.system.side2//2
             wndwS = s22-1 if window_size > (s22-1) else window_size
@@ -383,17 +390,34 @@ class SignedLaplacianAnalysis:
             #
             if self.initCond.startswith('window_multiple'):
                 self.nsquares = int(self.initCond.split('_')[-1])
+
+                # wndwSa = np.array([wndwS, -wndwS])
+                # sqTmp = np.random.randint(wndwS, self.system.side1-wndwS, 
+                #                             size=(self.nsquares, 2)) - wndwSa
+                # sqIdx = np.concatenate([
+                #     np.concatenate([
+                #         [j+i*self.system.side1 
+                #          for j in range(iSq[0])] 
+                #          for i in range(iSq[1])]) 
+                #     for iSq in sqTmp])
                 wndwSa = np.array([wndwS, -wndwS])
-                sqTmp = np.random.randint(wndwS, self.system.side1-wndwS, 
-                                            size=(self.nsquares, 2)) - wndwSa
+                sqTmp = np.random.randint(wndwS, self.system.side1-wndwS, size=(self.nsquares, 2))
+                result = np.column_stack((sqTmp, sqTmp + wndwS))
+                result[:, [1, 2]] = result[:, [2, 1]]
+                result = result.reshape(-1, 2, 2)
+
                 sqIdx = np.concatenate([
                     np.concatenate([
-                        [j+i*self.system.side1 
-                         for j in range(iSq[0])] 
-                         for i in range(iSq[1])]) 
-                    for iSq in sqTmp])
+                        [j+i*self.system.side1
+                         for j in range(*iSq[0])] 
+                         for i in range(*iSq[1])]) 
+                    for iSq in result])
+                if type(win_val) is str:
+                    if win_val == 'gauss':
+                        win_val = np.random.normal(0, 1, size=len(sqIdx))
+                    elif win_val == 'uniform':
+                        win_val = np.random.uniform(-1, 1, len(sqIdx))
                 initStatus[sqIdx] = np.ones(len(sqIdx))*win_val
-                print(self.nsquares, wndwSa, sqTmp, sqIdx, )
             else:
                 shiftsX = [hS+window_shift_x, hE+window_shift_x]
                 shiftsY = [hS+window_shift_y, hE+window_shift_y]
@@ -403,6 +427,8 @@ class SignedLaplacianAnalysis:
                      for i in range(*shiftsY)])
                 if self.initCond == 'window_1':
                     initStatus[sqIdx] = np.ones(len(sqIdx))
+                elif self.initCond == 'window_val':
+                    initStatus[sqIdx] = np.ones(len(sqIdx))*win_val
                 elif self.initCond == 'window_gauss_1':
                     initStatus[sqIdx] = np.random.normal(-1, 1, len(sqIdx))
                 elif self.initCond.startswith('window_ground_state'):
@@ -425,7 +451,7 @@ class SignedLaplacianAnalysis:
                         [(i+1) * L - 1 for i in range(1, L-1)]))
             self.status_array[self.fixed_border_idxs] = self.system.fbc_val
     #
-    def run_laplacian_dynamics(self, rescaled=True, t_stepsMultiplier=1, 
+    def run_laplacian_dynamics(self, rescaled=False, t_stepsMultiplier=1, 
                                saveFrames=False):
         x = self.status_array
         def stop_conditions_lapdyn(self, x_tm1, xx):
@@ -434,12 +460,15 @@ class SignedLaplacianAnalysis:
             C2 = (np.abs(np.log10(np.max(np.abs(xx)))) > self.MAXVAL_LAPL_DYN)
             return C1, C2
         if rescaled:
-            if self.eigv is None:
-                self.compute_k_eigvV()
             eigv0 = np.array([self.eigv[0]])
-            lap = lambda t: np.exp(-eigv0*t)*self.sLp#(self.sLp - eigv0)
+            if rescaled == 'field':
+                lapt = (self.sLp - eigv0)#lambda _: (self.sLp - eigv0)
+                def lap(*_):
+                    return lapt
+            elif rescaled == 'dynamic':
+                lap = lambda t: np.exp(-eigv0*t)*self.sLp#(self.sLp - eigv0)
         else:
-            lap = self.sLp
+            lap = lambda _: self.sLp
         if not self.system.pbc:
             def set_boundary_condition(self):
                 x[self.fixed_border_idxs] = self.fbc_val
@@ -448,7 +477,7 @@ class SignedLaplacianAnalysis:
                 pass
         if saveFrames:
             def save_frames(self, x, t):
-                if (t % self.sampling == 0):
+                if (t in self.sampling):
                     xshape = (self.system.side1, self.system.side2)
                     self.frames_dynsys.append(x.reshape(xshape))
         else:
@@ -456,11 +485,11 @@ class SignedLaplacianAnalysis:
                 pass
             #     print(t, np.mean(x), np.var(x))
         print("Beginning Laplacian dynamics.")
-        for t in tqdm(range(t_stepsMultiplier*self.simulationTime)):
+        for t in tqdm(range(self.simulationTime)):
             x_tm1 = x
+            save_frames(self, x, t)
             x = x - self.Deltat*(lap(t)@x) #+ np.sqrt(Deltat)*np.random.uniform(-1e-3, 1e-3, L**2)
             set_boundary_condition()
-            save_frames(self, x, t)
             C1, C2 = stop_conditions_lapdyn(self, x_tm1, x)
             if C1 or C2:
                 if C1: 
@@ -477,7 +506,57 @@ class SignedLaplacianAnalysis:
         restatus = np.log10(np.max(status)-status)
         nnans = restatus[(restatus != np.inf) & (restatus != -np.inf)]
         self.restatus =  np.nan_to_num(restatus, posinf=np.max(nnans), neginf=np.min(nnans))
-        
+    #
+#     def run_ising_dynamics(self):
+#         import random as rd
+
+# N = SLRG_obj.system.N
+# nmax= 1000
+# T = 0.001
+# eigV = SLRG_obj.eigV
+# H = SLRG_obj.system.H
+
+# def calcEnergy(m, H):
+#     '''Energy of a given configuration'''
+#     energy = 0
+#     for i in range(N):
+#         neigh=[w['weight']*m[nn] for nn, w in dict(H[i]).items()]
+#         energy += -m[i]*np.sum(neigh)
+#     return energy/4.
+
+# #Initialize magnetization
+# labels=np.where((eigV[0] < 0))[0]
+# lista=['red' if i in labels else 'blue' for i in range(H.number_of_nodes())]
+# bigene = []
+# for replica in range(1):
+#     if replica != 0:
+#         m=[1 if i in labels else -1 for i in range(H.number_of_nodes())]
+#     else:
+#         m = np.random.choice([-1, 1], size=N)
+
+#     #Metropolis
+#     magn = []
+#     ene = []
+#     sample = rd.sample(H.nodes, N)
+#     for nsteps in tqdm(range(100)):
+#         magn.append(np.sum(m))
+#         ene.append(calcEnergy(m, H))
+#         for i in range(N):
+#             node=sample[i]
+#             m_new = -m[node]
+
+#             #Metropolis thing
+#             neigh=[w['weight']*m[nn] for nn, w in dict(H[node]).items()]
+#             E_old=-m[node]*np.sum(neigh)
+#             E_new=-m_new*np.sum(neigh)
+
+#             if E_new<E_old:
+#                 m[node]=m_new
+#             else:
+#                 r=rd.uniform(0, 1)
+#                 if (r<np.exp(-(E_new-E_old)/T)):
+#                     m[node]=m_new
+#     bigene.append(ene)
 
 
 #
@@ -872,7 +951,7 @@ def make_animation_fromFrames(frames, savename="output.mp4", fps=10, dpi=200):
 
 
     cv0 = frames[0]
-    im = ax.imshow(cv0, origin='lower') # Here make an AxesImage rather than contour
+    im = ax.imshow(cv0) # Here make an AxesImage rather than contour
     cb = fig.colorbar(im, cax=cax)
     # tx = ax.set_title('Frame 0')
 
@@ -890,3 +969,9 @@ def make_animation_fromFrames(frames, savename="output.mp4", fps=10, dpi=200):
     fig.tight_layout()
     writervideo = animation.FFMpegWriter(fps=fps) 
     ani.save(savename, writer=writervideo, dpi=dpi)
+
+def imshow_colorbar_caxdivider(im, ax, position="right", size="5%", pad=0.05):
+    div = make_axes_locatable(ax)
+    cax = div.append_axes(position, size=size, pad=pad)
+    clb = plt.colorbar(im, cax=cax)
+    return div, cax, clb
