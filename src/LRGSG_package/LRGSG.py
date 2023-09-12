@@ -453,6 +453,7 @@ class SignedLaplacianAnalysis:
     #
     def run_laplacian_dynamics(self, rescaled=False, t_stepsMultiplier=1, 
                                saveFrames=False):
+        self.frames_dynsys = []
         x = self.status_array
         def stop_conditions_lapdyn(self, x_tm1, xx):
             error_tolerance = self.ACCERR_LAPL_DYN*np.ones(self.system.N)
@@ -478,16 +479,15 @@ class SignedLaplacianAnalysis:
         if saveFrames:
             def save_frames(self, x, t):
                 if (t in self.sampling):
-                    xshape = (self.system.side1, self.system.side2)
-                    self.frames_dynsys.append(x.reshape(xshape))
+                    self.frames_dynsys.append(x)
         else:
             def save_frames(*_):
                 pass
             #     print(t, np.mean(x), np.var(x))
         print("Beginning Laplacian dynamics.")
         for t in tqdm(range(self.simulationTime)):
-            x_tm1 = x
             save_frames(self, x, t)
+            x_tm1 = x
             x = x - self.Deltat*(lap(t)@x) #+ np.sqrt(Deltat)*np.random.uniform(-1e-3, 1e-3, L**2)
             set_boundary_condition()
             C1, C2 = stop_conditions_lapdyn(self, x_tm1, x)
@@ -559,6 +559,44 @@ class SignedLaplacianAnalysis:
 #     bigene.append(ene)
 
 
+#
+class FullyConnected(Graph):
+    p_c = None
+    lsp = None
+    def __init__(self, side1: int, incoming_graph_data = None, **attr):
+        super().__init__(incoming_graph_data, **attr)
+        self.side1 = side1
+        self.init_graph()
+        self.pbc = False
+    
+    def init_graph(self):
+        self.G = nx.complete_graph(self.side1)
+        self.N = self.G.number_of_nodes()
+        self.esetG = list(self.G.edges())
+        self.Ne = self.G.number_of_edges()
+    
+    def init_paths(self):
+        self.lambdaPath = f"fc_{self.geometry}/"
+        self.pltPath = f"data/plot/{self.lambdaPath}"
+        self.datPath = f"data/{self.lambdaPath}"
+    #
+    def init_H_graph(self):
+        self.upd_H_graph()
+    #
+    def upd_H_graph(self):
+        self.H = nx.convert_node_labels_to_integers(self.G)
+        self.node_map = dict(zip(self.G, self.H))
+        self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
+        self.esetH = list(self.H.edges())
+    
+    def upd_G_graph(self):
+        self.invnode_map = {v: k for k, v in self.node_map.items()}
+        self.invedge_map = {v: k for k, v in self.edge_map.items()}
+        self.G = nx.relabel_nodes(self.H, self.invnode_map)
+        self.esetG = list(self.G.edges())
+    def number_of_negative_links(self):
+        self.Ne_n = (np.array(list(nx.get_edge_attributes(self.H, 'weight').values())) < 0).sum()
+        return self.Ne_n
 #
 class Lattice2D(Graph):
     p_c = None
