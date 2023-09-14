@@ -40,6 +40,8 @@ from scipy.spatial.distance import squareform
 #
 from tqdm import tqdm
 #
+from src.LRGSG_package.nx_patches import *
+#
 MAX_DIGITS_ROUND_SIGFIG = 18
 DEFAULT_ENTROPY_STEPS = 1000
 DEFAULT_ENTROPY_LEXPONENT = -3
@@ -87,40 +89,6 @@ def dv(f_x: ndarray, x: ndarray = None) -> ndarray:
         x = np.linspace(0, f_x.shape[-1], num=f_x.shape[-1])
     df_dx = np.diff(f_x, axis=-1) / np.diff(x)
     return df_dx
-# networkx graph related functions
-def slaplacian_matrix(G: Graph, nodelist: list = None, weight: str = "weight"
-                      ) -> csr_array:
-    """Returns the signed Laplacian matrix of G.
-
-    The graph Laplacian is the matrix L = |D| - A, where
-    A is the adjacency matrix and |D| is the diagonal matrix of absolute values
-    of node degrees.
-
-    Parameters
-    ----------
-    G : graph
-       A NetworkX graph
-
-    nodelist : list, optional
-       The rows and columns are ordered according to the nodes in nodelist.
-       If nodelist is None, then the ordering is produced by G.nodes().
-
-    weight : string or None, optional (default='weight')
-       The edge data key used to compute each value in the matrix.
-       If None, then each edge has weight 1.
-
-    Returns
-    -------
-    L : SciPy sparse array
-      The Laplacian matrix of G.
-    """
-    if nodelist is None:
-        nodelist = list(G)
-    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight,
-                                 format="csr")
-    D = scsp.csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape,
-                                    format="csr"))
-    return D - A
 #
 def flip_random_fract_edges(G: Graph, p: float):
     """Flips a fraction p of edges (+1 to -1) of a graph G.
@@ -152,15 +120,6 @@ def flip_one_2dgraph(G, coord1, coord2):
     neg_weights = {(coord1, coord2): -1}
     #
     nx.set_edge_attributes(G, values=neg_weights, name='weight')
-def get_kth_order_neighbours(G, node, order):
-    node = 0
-    # Set the desired order
-    order = 1
-    # Get the kth-order neighbors
-    neighbor_dict = nx.single_source_shortest_path_length(G, node, cutoff=order)
-    # Extract the nodes at the kth order
-    kth_order_neighbors = [n for n, d in neighbor_dict.items() if d == order]
-    return kth_order_neighbors
 #
 class NflipError(Exception):
     pass
