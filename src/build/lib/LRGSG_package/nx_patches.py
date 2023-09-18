@@ -1,6 +1,5 @@
 import networkx as nx
 import numpy as np
-import scipy as sp
 #
 import scipy.sparse as scsp
 #
@@ -87,7 +86,7 @@ def slaplacian_matrix(G: Graph, nodelist: list = None, weight: str = "weight"
     return D - A
 
 def signed_spectral_layout(G, weight="weight", scale=1, center=None, dim=2):
-    """Position nodes using the eigenvectors of the graph signed Laplacian.
+    """Position nodes using the eigenvectors of the graph Laplacian.
 
     Using the unnormalized Laplacian, the layout shows possible clusters of
     nodes which are an approximation of the ratio cut. If dim is the number of
@@ -214,31 +213,3 @@ def _sparse_spectral_signed(A, dim=2):
     eigenvalues, eigenvectors = sp.sparse.linalg.eigsh(L, k, which="SM", ncv=ncv)
     index = np.argsort(eigenvalues)[1:k]  # 0 index is zero eigenvalue
     return np.real(eigenvectors[:, index])
-
-def signedlaplacian_spectrum(G, weight="weight"):
-    """Returns eigenvalues of the signed Laplacian of G
-
-    Parameters
-    ----------
-    G : graph
-       A NetworkX graph
-
-    weight : string or None, optional (default='weight')
-       The edge data key used to compute each value in the matrix.
-       If None, then each edge has weight 1.
-
-    Returns
-    -------
-    evals : NumPy array
-      Eigenvalues
-
-    Notes
-    -----
-    For MultiGraph/MultiDiGraph, the edges weights are summed.
-    See to_numpy_array for other options.
-
-    See Also
-    --------
-    laplacian_matrix
-    """
-    return sp.linalg.eigvalsh(slaplacian_matrix(G, weight=weight).todense())

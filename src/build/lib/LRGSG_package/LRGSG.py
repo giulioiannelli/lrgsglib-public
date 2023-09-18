@@ -21,7 +21,9 @@ import scipy.sparse as scsp
 from itertools import product
 from matplotlib.cm import ScalarMappable
 from matplotlib.patches import Circle, Rectangle
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.ticker import ScalarFormatter
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from networkx.classes.graph import Graph
 from numpy import inf, ndarray
 from numpy.linalg import eigvals, eigvalsh
@@ -35,19 +37,95 @@ from scipy.signal import argrelextrema
 from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
-from typing import Any, Optional, Union
 #
 from tqdm import tqdm
 #
-from .nx_patches import *
-from .nx_objects import *
-from .LRGSG_const import *
-from .LRGSG_errwar import *
-from .LRGSG_plots import *
+from nx_patches import *
+from nx_objects import *
 #
-__all__ = ['np', 'nx', 'plt',
-    'SignedLaplacianAnalysis', 'FullyConnected', 'Lattice2D']
+MAX_DIGITS_ROUND_SIGFIG = 18
+DEFAULT_ENTROPY_STEPS = 1000
+DEFAULT_ENTROPY_LEXPONENT = -3
+DEFAULT_ENTROPY_HEXPONENT = 6
+DEFAULT_NUNMBER_AVERAGES = 1000
+DEFAULT_SPIKE_THRESHOLD = 0.05
+DEFAULT_MAX_THRESHOLD = 2 * DEFAULT_SPIKE_THRESHOLD
+DEFAULT_LATTICE2D_GEOMETRY = 'squared'
+AVAILABLE_LATTICE2D_GEOMETRIES = ['squared', 'triangular', 'hexagonal']
 #
+ePDF = ".pdf"
+eTXT = ".txt"
+eBIN = ".bin"
+#
+lambdaPath_l2d = lambda geometry : f"l2d_{geometry}/"
+pltPath_l2d = lambda geometry : f"data/plot/{lambdaPath_l2d(geometry)}"
+datPath_l2d = lambda geometry : f"data/{lambdaPath_l2d(geometry)}"
+setPath_ERp = "conf/ERp/"
+pltPath_Sm1C = "plot/Sm1_and_C/"
+#
+pflip_fmt = '.3g'
+#
+def line(x, a, b):
+    return a * x + b
+# basic math functions
+def dv(f_x: ndarray, x: ndarray = None) -> ndarray:
+    """Compute the computational derivative of an array with respect to another.
+
+    Parameters
+    ----------
+    f_x : ndarray
+        A N dimensional NumPy array where the outer dimension is the one where
+        the `np.diff` method is applied.
+    x : ndarray, optional
+        An array with the same dimensions of the outer axis of `f_x`. If the
+        independent variable array is not passed the one assumed is the
+        `range(0, len(f(x)))`.
+    
+    Returns
+    -------
+    df_dx : ndarray 
+
+    """
+    if x is None:
+        x = np.linspace(0, f_x.shape[-1], num=f_x.shape[-1])
+    df_dx = np.diff(f_x, axis=-1) / np.diff(x)
+    return df_dx
+#
+def flip_random_fract_edges(G: Graph, p: float):
+    """Flips a fraction p of edges (+1 to -1) of a graph G.
+
+    Parameters
+    ----------
+    G : graph
+       A NetworkX graph
+
+    p : float
+       The fraction in [0, 1] of edges to be flipped.
+    """
+    eset = G.edges()
+    nedges = len(eset)
+    noflip = int(p*nedges)
+    #
+    if noflip < 1:
+        print('p too small')
+        exit()
+    rndsmpl = random.sample(range(nedges), noflip)
+    #
+    # all_weights = {e: 1 for e in eset}
+    neg_weights = {e: -1 for i,e in enumerate(eset) if i in rndsmpl}
+    #
+    nx.set_edge_attributes(G, values=1, name='weight')
+    nx.set_edge_attributes(G, values=neg_weights, name='weight')
+#
+def flip_one_2dgraph(G, coord1, coord2):
+    neg_weights = {(coord1, coord2): -1}
+    #
+    nx.set_edge_attributes(G, values=neg_weights, name='weight')
+#
+class NflipError(Exception):
+    pass
+class Lattice2DError(Exception):
+    pass
 # renormalization group for heterogenous network functions
 class SignedLaplacianAnalysis:
     slspectrum = None
@@ -240,8 +318,7 @@ class SignedLaplacianAnalysis:
         if MODE_dynspec == 'scipy':
             self.eigv, self.eigV = scsp.linalg.eigsh(self.sLp.astype(np.float64), k=howmany, which='SM') 
     #
-    def laplacian_dynamics_init(self, t_stepsMultiplier: int = 1, 
-                                window_size=0, window_shift_x=0,
+    def laplacian_dynamics_init(self, t_stepsMultiplier=1, window_size=0, window_shift_x=0,
                                 window_shift_y=0, win_val=1):
         N = self.system.N
         #
@@ -259,7 +336,7 @@ class SignedLaplacianAnalysis:
             self.status_array = np.random.uniform(-1, 1, N)
         elif self.initCond == 'delta_1':
             self.status_array = np.zeros(N)
-            self.status_array[N//2] = 1
+            self.status_array[N//2+self.system.side1//2] = 1
         elif self.initCond == 'gauss_1':
             self.status_array = np.random.normal(-1, 1, N)
         elif self.initCond == 'all_1':
@@ -366,6 +443,7 @@ class SignedLaplacianAnalysis:
         else:
             def save_frames(*_):
                 pass
+            #     print(t, np.mean(x), np.var(x))
         print("Beginning Laplacian dynamics.")
         for t in tqdm(range(1, self.simulationTime)):
             save_frames(self, x, t)
@@ -380,7 +458,8 @@ class SignedLaplacianAnalysis:
                     print("Max val. reached.")
                 break
         self.status_array = x
-
+            # if (t % self.sampling == 0):
+            #     print(t, np.mean(x), np.var(x))
     #
     def rescaled_field_regularization(self):
         status = self.status_array.reshape(self.system.side1, self.system.side2)
@@ -400,55 +479,9 @@ class SignedLaplacianAnalysis:
         fig.tight_layout()
         ani.save(savename, writer=animation.FFMpegWriter(fps=fps), dpi=dpi)
         plt.close(fig)
-#
 
 
-
-
-#                           ,((((((((((((((((((((((((.                          
-#                      @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                     
-#                    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                   
-#                   @@@@@@                              @@@@@@                  
-#                  @@@@@@                               *@@@@@/                 
-#    /@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,    
-#   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#                                #    TRASH CODE                                                                                                         
-#   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
-#   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
-#   *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,   
-#    @@@@@@@@@@@@@@    @@@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    
-#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    
-#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    
-#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    
-#    &@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@&    
-#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    .@@@@@@@@@@@@@     
-#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    (@@@@@@@@@@@@@     
-#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    @@@@@@@@@@@@@@     
-#     @@@@@@@@@@@@@.    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    @@@@@@@@@@@@@@     
-#     @@@@@@@@@@@@@/    @@@@@@@@@@@@@@     @@@@@@@@@@@@@&    @@@@@@@@@@@@@@     
-#     *@@@@@@@@@@@@@    @@@@@@@@@@@@@@     @@@@@@@@@@@@@(    @@@@@@@@@@@@@.     
-#      @@@@@@@@@@@@@    &@@@@@@@@@@@@@     @@@@@@@@@@@@@.    @@@@@@@@@@@@@      
-#      @@@@@@@@@@@@@    *@@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@      
-#      @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@      
-#      @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@      
-#      &@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@#      
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@       
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@       
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@       
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@       
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@       
-#       *@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@        
-#        @@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@        
-#        @@@@@@@@@@@@    @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@        
-#        @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@        
-#        @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@        
-#         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&         
-#          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&     
-
-
+    #
 #     def run_ising_dynamics(self):
 #         import random as rd
 
@@ -501,6 +534,163 @@ class SignedLaplacianAnalysis:
 #     bigene.append(ene)
 
 
+#
+
+
+#
+class Lattice2D(Graph):
+    p_c = None
+    lsp = None
+    #
+    def __init__(self, side1: int, geometry: str = DEFAULT_LATTICE2D_GEOMETRY, 
+                 side2: int = 0, lsp_mode: str = 'intervals', 
+                 incoming_graph_data=None, pbc: bool = True, 
+                 fbc_val: float = 1., **attr) -> None:
+        super().__init__(incoming_graph_data, **attr)
+        try: 
+            self.geometry = geometry
+            if geometry not in AVAILABLE_LATTICE2D_GEOMETRIES:
+                raise Lattice2DError("""The selected geometry of the 2D lattice
+                                     is not available. Setting it to 'squared' 
+                                     for a 2d regular grid.""")
+        except:
+            self.geometry = self.DEFAULT_GEOMETRY
+        self.side1 = side1
+        if side2:
+            self.side2 = side2
+        else:
+            if self.geometry == 'triangular':
+                self.side2 = int(self.side1 * np.sqrt(3))
+            elif self.geometry == 'hexagonal':
+                self.side1 = int(self.side1 * np.sqrt(3))
+                self.side2 = side1
+            elif self.geometry == 'squared':
+                self.side2 = self.side1
+        self.pbc = pbc
+        self.fbc_val = fbc_val
+        self.lsp_mode = lsp_mode
+        self.init_graph()
+        self.init_H_graph()
+        self.init_paths()
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG)//2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH)//2]: -1}
+    #
+    def init_graph(self):
+        self.G = self.lattice_selection()
+        if self.geometry == 'squared':
+            self.posG = dict(zip(self.G, self.G))
+            nx.set_node_attributes(self.G, values=self.posG, name='pos')
+        self.N = self.G.number_of_nodes()
+        self.esetG = list(self.G.edges())
+        self.Ne = self.G.number_of_edges()
+    #
+    def init_paths(self):
+        self.lambdaPath = f"l2d_{self.geometry}/"
+        self.pltPath = f"data/plot/{self.lambdaPath}"
+        self.datPath = f"data/{self.lambdaPath}"
+    #
+    def init_H_graph(self):
+        self.upd_H_graph()
+    #
+    def upd_H_graph(self):
+        self.H = nx.convert_node_labels_to_integers(self.G)
+        self.posH = nx.get_node_attributes(self.H, 'pos')
+        self.node_map = dict(zip(self.G, self.H))
+        self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
+        self.esetH = list(self.H.edges())
+    
+    def upd_G_graph(self):
+        self.invnode_map = {v: k for k, v in self.node_map.items()}
+        self.invedge_map = {v: k for k, v in self.edge_map.items()}
+        self.G = nx.relabel_nodes(self.H, self.invnode_map)
+        self.posG = nx.get_node_attributes(self.G, 'pos')
+        self.esetG = list(self.G.edges())
+    
+    def lattice_selection(self, pbc=None) -> Graph:
+        if pbc is None:
+            pbc = self.pbc
+        else:
+            pbc = False
+        if self.geometry == 'triangular':
+            nxfunc = nx.triangular_lattice_graph
+            self.p_c = 0.146
+            kwdict = {'with_positions': True}
+        elif self.geometry == 'squared':
+            nxfunc = nx.grid_2d_graph
+            self.p_c = 0.103
+            kwdict = {}
+        elif self.geometry == 'hexagonal':
+            nxfunc = nx.hexagonal_lattice_graph
+            self.p_c = 0.065
+            kwdict = {'with_positions': True}
+        return nxfunc(self.side1, self.side2, periodic=pbc, **kwdict)
+    
+    def lsp_selection(self, custom_list):
+        if self.lsp_mode == 'custom':
+                self.lsp = np.array(custom_list)
+        elif self.lsp_mode == 'intervals':
+            intervals = []
+            tmp = max([vset['rsf'] for vset in custom_list])
+            for vset in custom_list:
+                if vset['kind'] == 'log':
+                        spacing_f = np.logspace
+                        vset['start'] = np.log10(vset['start'])
+                        vset['stop'] = np.log10(vset['stop'])
+                elif vset['kind'] == 'lin':
+                        spacing_f = np.linspace
+                intervals.append(#
+                    round_sigfig_n(#
+                        spacing_f(vset['start'], vset['stop'],
+                                    num=vset['num'],
+                                    endpoint=False),
+                    vset['rsf'])
+                )
+            self.lsp = (intervals := np.concatenate(intervals))
+            while set(self.lsp).__len__() == intervals.__len__():
+                tmp = tmp - 1
+                self.lsp = np.round(self.lsp , tmp)
+            tmp = tmp + 1
+            self.lsp = np.round(intervals, tmp)
+    
+    def default_dict_lsp(self, num_low = 3, num_at = 6, num_high = 3):
+        d = (#
+            {'kind': 'lin', 'start': 0.001, 'stop': self.p_c-self.p_c*num_at/100, 
+              'num': num_low, 'rsf': 1}, 
+             {'kind': 'lin', 'start': self.p_c-self.p_c*num_at/100, 
+              'stop': self.p_c+self.p_c*num_at/100, 'num': num_at, 'rsf': 3},
+              {'kind': 'lin', 'start': self.p_c+self.p_c*num_at/100, 
+              'stop': 1, 'num': num_high, 'rsf': 1},
+        )
+        return d
+
+    def number_of_negative_links(self):
+        self.Ne_n = (np.array(list(nx.get_edge_attributes(self.H, 'weight').values())) < 0).sum()
+        return self.Ne_n
+    #
+    def make_animation(self, fig, ax, frames):
+        # I like to position my colorbars this way, but you don't have to
+        div = make_axes_locatable(ax)
+        cax = div.append_axes('right', '5%', '5%')
+
+        cv0 = frames[0]
+        im = ax.imshow(cv0) # Here make an AxesImage rather than contour
+        fig.colorbar(im, cax=cax)
+        # tx = ax.set_title('Frame 0')
+
+        def animate(i):
+            arr = frames[i]
+            vmax = np.max(arr)
+            vmin = np.min(arr)
+            im.set_data(arr)
+            im.set_clim(vmin, vmax)
+            # tx.set_text('Frame {0}'.format(i))
+            # In this version you don't have to do anything to the colorbar,
+            # it updates itself when the mappable it watches (im) changes
+        return animate
+
+def first_index_changing_condition(condition):
+    firstchange = np.where(condition[:-1] != condition[1:])[0][0]
+    return firstchange
 
 def lsp_read_values(folder_path, fpattern='Sm1_avg_p'):
     #file_pattern = r"p=(\d+\.\d+)_Sm1.bin"
@@ -525,6 +715,16 @@ def lsp_read_values(folder_path, fpattern='Sm1_avg_p'):
     # Sort the values if needed
     values.sort()
     return np.array(values) 
+def round_sigfig_n(num, n: int = 1):
+    if n not in range(1, MAX_DIGITS_ROUND_SIGFIG):
+        raise ValueError("Significant figures number not in [1, 15].")
+    expn = -np.floor(np.log10(np.abs(num))).astype('int')
+    if hasattr(num, "__len__"):
+        rr = np.array([np.round(nn, ee+n-1) for nn,ee in zip(num, expn)])
+    else:
+        rr = np.round(num, expn+n-1)
+    return rr
+
 
 
 
@@ -644,7 +844,53 @@ def Cspe_plot_ax(ax):
     ax.set_ylabel(r"$\log(N)\langle{C}\rangle$")
     ax.set_xscale('log')
 
+def lin_binning(data, binnum=20):
+    min_val = int(np.floor(np.min(data)))
+    max_val = int(np.ceil(np.max(data)))
+    bins = np.linspace(min_val, max_val, num=binnum)
+    hist, _ = np.histogram(data, bins=bins)
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist
 
+def log_binning(data, binnum=20):
+    log_data = np.log10(data)
+    min_val = int(np.floor(np.min(log_data)))
+    max_val = int(np.ceil(np.max(log_data)))
+    bins = np.logspace(min_val, max_val, num=binnum)
+    hist, _ = np.histogram(data, bins=bins)
+    bin_w = (bins[1:] + bins[:-1])
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist, bin_w
+
+def neglog_binning(data, binnum=20):
+    abs_data = np.abs(data)
+    log_data = np.log10(abs_data)
+    min_val = int(np.floor(np.min(log_data)))
+    max_val = int(np.ceil(np.max(log_data)))
+    bins = -np.logspace(min_val, max_val, num=binnum)[::-1]  # Reverse the bins to have a negative x-scale
+    hist, _ = np.histogram(data, bins=bins)
+    bin_w = (bins[1:] + bins[:-1])
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist, bin_w
+
+
+def symlog_binning(full_data, binnum=20):
+    datap = full_data[full_data > 0]
+    datam = full_data[full_data < 0]
+    if datap.size:
+        outp = log_binning(datap)
+    else:
+        outp = None
+    if datam.size:
+        outm = neglog_binning(datam)
+    else:
+        outm = None
+    return outp, outm
+
+def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
+    colors = [c1, c2]  # Red to black
+    cmap = LinearSegmentedColormap.from_list('custom_colormap', colors)
+    return cmap
 
 def radial_correlation(field, neighbor_dict, central_index):
     # Flatten the field array
@@ -690,17 +936,23 @@ def set_alpha_torgb(rgbacol, alpha=0.5):
 def ising_spinglass_pmJ_2D_Tcrit(L):
     return L**(-1./2)
 
+def boolean_overlap_fraction(boolist1, boolist2):
+    return sum(~(boolist1 ^ boolist2))/len(boolist1)
 
 def make_animation_fromFrames(frames, savename="output.mp4", fps=10, dpi=200):
     fig = plt.figure()
     ax = fig.add_subplot(111)
+
     # I like to position my colorbars this way, but you don't have to
     div = make_axes_locatable(ax)
     cax = div.append_axes('right', '5%', '5%')
+
+
     cv0 = frames[0]
     im = ax.imshow(cv0) # Here make an AxesImage rather than contour
     cb = fig.colorbar(im, cax=cax)
     # tx = ax.set_title('Frame 0')
+
     def animate(i):
         arr = frames[i]
         vmax     = np.max(arr)
@@ -716,45 +968,8 @@ def make_animation_fromFrames(frames, savename="output.mp4", fps=10, dpi=200):
     writervideo = animation.FFMpegWriter(fps=fps) 
     ani.save(savename, writer=writervideo, dpi=dpi)
 
-#
-def flip_random_fract_edges(G: Graph, p: float):
-    """Flips a fraction p of edges (+1 to -1) of a graph G.
-
-    Parameters
-    ----------
-    G : graph
-       A NetworkX graph
-
-    p : float
-       The fraction in [0, 1] of edges to be flipped.
-    """
-    eset = G.edges()
-    nedges = len(eset)
-    noflip = int(p*nedges)
-    #
-    if noflip < 1:
-        print('p too small')
-        exit()
-    rndsmpl = random.sample(range(nedges), noflip)
-    #
-    # all_weights = {e: 1 for e in eset}
-    neg_weights = {e: -1 for i,e in enumerate(eset) if i in rndsmpl}
-    #
-    nx.set_edge_attributes(G, values=1, name='weight')
-    nx.set_edge_attributes(G, values=neg_weights, name='weight')
-#
-def flip_one_2dgraph(G, coord1, coord2):
-    neg_weights = {(coord1, coord2): -1}
-    #
-    nx.set_edge_attributes(G, values=neg_weights, name='weight')
-
-
-
-#
-lambdaPath_l2d = lambda geometry : f"l2d_{geometry}/"
-pltPath_l2d = lambda geometry : f"data/plot/{lambdaPath_l2d(geometry)}"
-datPath_l2d = lambda geometry : f"data/{lambdaPath_l2d(geometry)}"
-setPath_ERp = "conf/ERp/"
-pltPath_Sm1C = "plot/Sm1_and_C/"
-#
-pflip_fmt = '.3g'
+def imshow_colorbar_caxdivider(im, ax, position="right", size="5%", pad=0.05):
+    div = make_axes_locatable(ax)
+    cax = div.append_axes(position, size=size, pad=pad)
+    clb = plt.colorbar(im, cax=cax)
+    return div, cax, clb

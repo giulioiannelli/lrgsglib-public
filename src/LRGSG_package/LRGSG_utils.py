@@ -1,0 +1,442 @@
+import numpy as np
+#
+from .LRGSG_const import *
+from .LRGSG_errwar import *
+#
+from numpy import ndarray
+from os import chdir, getcwd
+
+def move_to_rootf(print_tf: bool = False):
+    """
+    Move to the root directory of the current working directory.
+
+    Parameters:
+    -----------
+    print_tf : bool, optional
+        If True, print the current working directory after moving to the root.
+        Default is False.
+
+    Notes:
+    ------
+    - The function continuously moves up the directory hierarchy ('../') until it reaches
+      a directory with the name specified by the 'PATH_ROOTF' constant.
+    - If 'print_tf' is set to True, it prints the current working directory after the move.
+
+    Example:
+    --------
+    To move to the root directory of the current working directory and print the path:
+    move_to_rootf(print_tf=True)
+    """
+    while getcwd()[-len(PATH_ROOTF):] != PATH_ROOTF:
+        chdir('../')
+    if print_tf:
+        print('cwd:', getcwd())
+
+def boolean_overlap_fraction(boolist1, boolist2):
+    """
+    Calculate the fraction of overlapping True values between two boolean lists.
+
+    Parameters:
+    -----------
+    boolist1 : list of bool
+        The first boolean list.
+
+    boolist2 : list of bool
+        The second boolean list.
+
+    Returns:
+    --------
+    float
+        The fraction of overlapping True values between the two boolean lists.
+
+    Notes:
+    ------
+    - The function computes the overlap fraction by first performing a bitwise XOR (^)
+      operation between the two boolean lists, which results in a new boolean list where
+      True represents differences and False represents matches.
+    - The bitwise NOT (~) operator is then applied to invert the differences,
+      turning them into True values.
+    - The 'sum' function counts the number of True values in the inverted list,
+      representing the number of overlapping True values.
+    - Finally, this count is divided by the length of 'boolist1' to obtain the overlap fraction.
+
+    Example:
+    --------
+    boolist1 = [True, False, True, False, True]
+    boolist2 = [True, True, False, False, True]
+    overlap_fraction = boolean_overlap_fraction(boolist1, boolist2)
+    # The result is 0.4, indicating 40% overlap of True values between the two lists.
+
+    """
+    return sum(~(boolist1 ^ boolist2))/len(boolist1)
+
+def first_index_changing_condition(condition):
+    """
+    Find the index of the first change in a boolean condition.
+
+    Parameters:
+    -----------
+    condition : numpy.ndarray of bool
+        A boolean condition represented as a NumPy array.
+
+    Returns:
+    --------
+    int
+        The index of the first change in the condition.
+
+    Notes:
+    ------
+    - The function compares adjacent elements in the 'condition' array and returns
+      the index of the first change from True to False or vice versa.
+    - If there are no changes in the condition, the function returns 0.
+
+    Example:
+    --------
+    condition = np.array([True, True, True, False, False, True])
+    first_change_index = first_index_changing_condition(condition)
+    # The result is 3, indicating the first change from True to False occurred at index 3.
+
+    """
+    return np.where(condition[:-1] != condition[1:])[0][0]
+
+# basic math functions
+def line(x, a, b):
+    """
+    Calculate the values of a straight line equation for given 'x' values.
+
+    Parameters:
+    -----------
+    x : float or array-like
+        The input values of 'x' for which the corresponding 'y' values are calculated.
+
+    a : float
+        The slope of the straight line.
+
+    b : float
+        The y-intercept of the straight line.
+
+    Returns:
+    --------
+    float or numpy.ndarray
+        The calculated 'y' values for the given 'x' values based on the straight line equation.
+
+    Notes:
+    ------
+    - The straight line equation is 'y = a * x + b', where 'a' is the slope and 'b' is the y-intercept.
+    - The function computes 'y' values for single 'x' values or arrays of 'x' values.
+
+    Example:
+    --------
+    x_value = 2.0
+    slope = 1.5
+    y_intercept = 2.0
+    y_result = line(x_value, slope, y_intercept)
+    # The result is 5.0, which is the 'y' value for 'x' = 2.0 in the given line equation.
+
+    """
+    return a * x + b
+
+#
+def dv(f_x: ndarray, x: ndarray = None) -> ndarray:
+    """
+    Compute the derivative of an array with respect to another array.
+
+    Parameters:
+    -----------
+    f_x : ndarray
+        A NumPy array of N dimensions where the outermost dimension is the one
+        where the derivative is computed using the `np.diff` method.
+
+    x : ndarray, optional
+        An array with the same dimensions as the outermost axis of 'f_x'.
+        If not provided, it is assumed to be the range [0, len(f_x)].
+
+    Returns:
+    --------
+    df_dx : ndarray
+        The computed derivative of 'f_x' with respect to 'x'.
+
+    Notes:
+    ------
+    - This function calculates the derivative of 'f_x' with respect to 'x' using
+      the finite difference method. It computes the derivative along the outermost axis.
+    - If 'x' is not provided, it is assumed to be the range [0, len(f_x)].
+
+    Example:
+    --------
+    f_x = np.array([[1, 2, 3], [4, 5, 6]])
+    x = np.array([0, 1, 2])
+    df_dx = dv(f_x, x)
+    # The result 'df_dx' contains the computed derivatives along the outermost axis.
+
+    """
+    if x is None:
+        x = np.linspace(0, f_x.shape[-1], num=f_x.shape[-1])
+    df_dx = np.diff(f_x, axis=-1) / np.diff(x)
+    return df_dx
+
+def lin_binning(data, binnum=20):
+    """
+    Perform linear binning on data and calculate the histogram.
+
+    Parameters:
+    -----------
+    data : numpy.ndarray or list
+        The input data for which the histogram is to be computed.
+
+    binnum : int, optional
+        The number of bins to use for the histogram. Default is 20.
+
+    Returns:
+    --------
+    bin_centers : numpy.ndarray
+        The center values of each bin in the histogram.
+
+    hist : numpy.ndarray
+        The histogram values for each bin.
+
+    Notes:
+    ------
+    - Linear binning divides the data range into 'binnum' equal-width bins and
+      calculates the histogram based on the bin counts.
+    - The function returns the center values of the bins and the corresponding histogram values.
+
+    Example:
+    --------
+    data = np.array([1, 2, 2, 3, 4, 4, 4, 5, 6, 7])
+    bin_centers, hist = lin_binning(data, binnum=5)
+    # The result provides the center values and histogram counts for 5 bins.
+
+    """
+
+    min_val = int(np.floor(np.min(data)))
+    max_val = int(np.ceil(np.max(data)))
+    bins = np.linspace(min_val, max_val, num=binnum)
+    hist, _ = np.histogram(data, bins=bins)
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist
+
+def log_binning(data, binnum=20):
+    """
+    Perform logarithmic binning on data and calculate the histogram.
+
+    Parameters:
+    -----------
+    data : numpy.ndarray or list
+        The input data for which the histogram is to be computed.
+
+    binnum : int, optional
+        The number of bins to use for the histogram. Default is 20.
+
+    Returns:
+    --------
+    bin_centers : numpy.ndarray
+        The center values of each bin in the histogram.
+
+    hist : numpy.ndarray
+        The histogram values for each bin.
+
+    bin_w : numpy.ndarray
+        The bin widths for each bin in the histogram.
+
+    Notes:
+    ------
+    - Logarithmic binning divides the logarithmic range of the data into 'binnum' bins and
+      calculates the histogram based on the bin counts.
+    - The function returns the center values of the bins, the corresponding histogram values,
+      and the bin widths.
+
+    Example:
+    --------
+    data = np.array([1, 10, 100, 1000, 10000])
+    bin_centers, hist, bin_w = log_binning(data, binnum=5)
+    # The result provides the center values, histogram counts, and bin widths for 5 log bins.
+
+    """
+    log_data = np.log10(data)
+    min_val = int(np.floor(np.min(log_data)))
+    max_val = int(np.ceil(np.max(log_data)))
+    bins = np.logspace(min_val, max_val, num=binnum)
+    hist, _ = np.histogram(data, bins=bins)
+    bin_w = (bins[1:] - bins[:-1])
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist, bin_w
+
+def neglog_binning(data, binnum=20):
+    """
+    Perform negative logarithmic binning on data and calculate the histogram.
+
+    Parameters:
+    -----------
+    data : numpy.ndarray or list
+        The input data for which the histogram is to be computed.
+
+    binnum : int, optional
+        The number of bins to use for the histogram. Default is 20.
+
+    Returns:
+    --------
+    bin_centers : numpy.ndarray
+        The center values of each bin in the histogram.
+
+    hist : numpy.ndarray
+        The histogram values for each bin.
+
+    bin_w : numpy.ndarray
+        The bin widths for each bin in the histogram.
+
+    Notes:
+    ------
+    - Negative logarithmic binning divides the negative logarithmic range of the absolute data
+      into 'binnum' bins and calculates the histogram based on the bin counts.
+    - The function returns the center values of the bins, the corresponding histogram values,
+      and the bin widths.
+    - Bins are reversed to have a negative x-scale for visualization.
+
+    Example:
+    --------
+    data = np.array([-1, -10, -100, -1000, -10000])
+    bin_centers, hist, bin_w = neglog_binning(data, binnum=5)
+    # The result provides the center values, histogram counts, and bin widths for 5 neglog bins.
+
+    """
+    abs_data = np.abs(data)
+    log_data = np.log10(abs_data)
+    min_val = int(np.floor(np.min(log_data)))
+    max_val = int(np.ceil(np.max(log_data)))
+    bins = -np.logspace(min_val, max_val, num=binnum)[::-1]  # Reverse the bins for negative x-scale
+    hist, _ = np.histogram(data, bins=bins)
+    bin_w = (bins[1:] - bins[:-1])
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
+    return bin_centers, hist, bin_w
+
+
+def symlog_binning(full_data, binnum=20):
+    """
+    Perform symmetric logarithmic binning on positive and negative data separately
+    and calculate histograms.
+
+    Parameters:
+    -----------
+    full_data : numpy.ndarray or list
+        The input data containing both positive and negative values.
+
+    binnum : int, optional
+        The number of bins to use for the histograms. Default is 20.
+
+    Returns:
+    --------
+    outp : tuple or None
+        A tuple containing the result of log_binning for positive data or None
+        if there are no positive values in the input.
+
+    outm : tuple or None
+        A tuple containing the result of neglog_binning for negative data or None
+        if there are no negative values in the input.
+
+    Notes:
+    ------
+    - The function splits the input data into positive and negative components
+      and performs logarithmic binning separately on each component.
+    - If there are no positive or negative values, the corresponding result is None.
+    - 'outp' and 'outm' are tuples containing the center values, histogram values,
+      and bin widths for positive and negative data, respectively.
+
+    Example:
+    --------
+    full_data = np.array([1, 10, -0.1, -100, 10000])
+    outp, outm = symlog_binning(full_data, binnum=5)
+    # The result provides log_binning and neglog_binning results for positive and negative data.
+
+    """
+    datap = full_data[full_data > 0]
+    datam = full_data[full_data < 0]
+    if datap.size:
+        outp = log_binning(datap)
+    else:
+        outp = None
+    if datam.size:
+        outm = neglog_binning(datam)
+    else:
+        outm = None
+    return outp, outm
+
+
+def round_sigfig_n(num, n: int = 1):
+    """
+    Round a number or array of numbers to a specified number of significant figures.
+
+    Parameters:
+    -----------
+    num : float or array-like
+        The number or array of numbers to be rounded to 'n' significant figures.
+
+    n : int, optional
+        The desired number of significant figures (default is 1).
+        Must be within the range [1, 15].
+
+    Returns:
+    --------
+    float or numpy.ndarray
+        The rounded number or array of numbers with 'n' significant figures.
+
+    Raises:
+    -------
+    ValueError
+        If 'n' is not within the valid range [1, 15].
+
+    Notes:
+    ------
+    - The function calculates the exponent required to obtain 'n' significant figures
+      based on the absolute value of 'num'.
+    - It then applies the rounding operation to 'num' with the calculated exponent
+      to achieve the desired number of significant figures.
+    - If 'num' is an array-like object, it processes each element separately.
+
+    Example:
+    --------
+    num = 123.456789
+    n = 3
+    rounded_num = round_sigfig_n(num, n)
+    # The result is 123.0, rounded to 3 significant figures.
+
+    num_array = [123.456789, 0.00123456789]
+    rounded_array = round_sigfig_n(num_array, n)
+    # The result is [123.0, 0.00123], with each element rounded to 3 significant figures.
+
+    """
+    if n not in range(1, DEFAULT_MAX_DIGITS_ROUND_SIGFIG):
+        raise ValueError("Significant figures number not in [1, 15].")
+    expn = -np.floor(np.log10(np.abs(num))).astype('int')
+    if hasattr(num, "__len__"):
+        rr = np.array([np.round(nn, ee+n-1) for nn,ee in zip(num, expn)])
+    else:
+        rr = np.round(num, expn+n-1)
+    return rr
+
+def width_interval(a, b):
+    """
+    Calculate the width of an interval between two values.
+
+    Parameters:
+    -----------
+    a : float or numeric
+        The first value defining the interval.
+
+    b : float or numeric
+        The second value defining the interval.
+
+    Returns:
+    --------
+    float or numeric
+        The width of the interval, which is the absolute difference between 'a' and 'b'.
+
+    Example:
+    --------
+    a = 5
+    b = 8
+    interval_width = width_interval(a, b)
+    # The result is 3, representing the width of the interval [5, 8].
+
+    """
+    return np.abs(a - b)

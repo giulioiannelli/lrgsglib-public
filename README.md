@@ -20,6 +20,10 @@ conda env create -f LRG-Signed_env.yml
 ```
 conda activate LRG-Signed
 ``` 
+4. For installing in [development mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html) the package just move to the package directory with `cd src` and then run
+```
+pip install --editable .
+```
 ## How to use
 ### Signed 2D lattices
 A full description of these scripts can be read off by executing them with the `-h` flag. Note that the script must run from the parent folder (the root folder of the project).
