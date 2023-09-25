@@ -13,5 +13,6 @@ DEFLIST_LATTICE2D_GEOMETRIES = ['squared', 'triangular', 'hexagonal']
 ePDF = ".pdf"
 eTXT = ".txt"
 eBIN = ".bin"
+eMP4 = ".mp4"
 # paths
 PATH_ROOTF = 'LRG-Signed'

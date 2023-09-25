@@ -1,12 +1,38 @@
 import matplotlib.pyplot as plt
 #
 from matplotlib.axes import Axes
+from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
 
 from typing import Any, Optional, Union
+
+def set_alpha_torgb(rgbacol, alpha=0.5):
+    """
+    Sets the alpha (transparency) channel of an RGBA color tuple and returns a new RGBA color tuple.
+
+    Parameters:
+        rgbacol (tuple): A tuple representing an RGBA color in the format (R, G, B, A), where R, G, B, and A
+                         are integers between 0 and 255.
+        alpha (float, optional): The alpha (transparency) value to set for the RGBA color. Default is 0.5.
+
+    Returns:
+        tuple: A new RGBA color tuple in the format (R, G, B, alpha), where R, G, B are the same as in the
+               input tuple, and alpha is the specified transparency value.
+
+    Example:
+        >>> set_alpha_torgb((255, 0, 0, 255), 0.2)
+        (255, 0, 0, 0.2)
+
+    Note:
+        - This function creates a new RGBA color tuple with the specified alpha value while preserving the
+          original RGB color components.
+        - The alpha value should be a float between 0.0 (fully transparent) and 1.0 (fully opaque).
+    """
+    return (rgbacol[0], rgbacol[1], rgbacol[2], alpha)
+
 
 def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
     """

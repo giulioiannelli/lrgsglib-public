@@ -5,6 +5,8 @@ from .LRGSG_errwar import *
 #
 from numpy import ndarray
 from os import chdir, getcwd
+#
+from scipy.interpolate import pchip
 
 def move_to_rootf(print_tf: bool = False):
     """

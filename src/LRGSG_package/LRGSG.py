@@ -9,6 +9,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 #
 import networkx as nx
 import numpy as np
+import random as rd
 # import pyfftlog
 #
 import matplotlib.animation as animation
@@ -19,7 +20,6 @@ import scipy.special
 import scipy.sparse as scsp
 #
 from itertools import product
-from matplotlib.cm import ScalarMappable
 from matplotlib.patches import Circle, Rectangle
 from matplotlib.ticker import ScalarFormatter
 from networkx.classes.graph import Graph
@@ -28,7 +28,7 @@ from numpy.linalg import eigvals, eigvalsh
 from scipy import stats
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
-from scipy.interpolate import make_interp_spline, pchip
+from scipy.interpolate import make_interp_spline
 from scipy.linalg import expm, fractional_matrix_power, ishermitian
 from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema
@@ -44,9 +44,11 @@ from .nx_objects import *
 from .LRGSG_const import *
 from .LRGSG_errwar import *
 from .LRGSG_plots import *
+from .LRGSG_utils import *
 #
 __all__ = ['np', 'nx', 'plt',
-    'SignedLaplacianAnalysis', 'FullyConnected', 'Lattice2D']
+    'SignedLaplacianAnalysis', 'lsp_read_values',
+    'FullyConnected', 'Lattice2D']
 #
 # renormalization group for heterogenous network functions
 class SignedLaplacianAnalysis:
@@ -58,7 +60,7 @@ class SignedLaplacianAnalysis:
     taumax0 = None
     frames_dynsys = []
     eigv = None
-    ACCERR_LAPL_DYN = 1e-9
+    ACCERR_LAPL_DYN = 1e-10
     MAXVAL_LAPL_DYN = 200
     #
     def __init__(self, system, pflip: float = None, is_signed: bool = True,
@@ -66,7 +68,6 @@ class SignedLaplacianAnalysis:
                  t2: float = 5, maxThresh: float = DEFAULT_MAX_THRESHOLD, 
                  nreplica: int = 0, initCond: str = 'gauss_1', t_steps = 10, no_obs = 1) -> None:
         self.system = system
-        self.set_syshape()
         self.is_signed = is_signed
         #
         self.nreplica = nreplica
@@ -89,12 +90,9 @@ class SignedLaplacianAnalysis:
             self.randsample = None
         
     #
-    def set_syshape(self):
-        if type(self.system) is Lattice2D:
-            self.syshape = (self.system.side1, self.system.side2)
-    #
     def init_weights(self):
         nx.set_edge_attributes(self.system.G, values=1, name='weight')
+        nx.set_edge_attributes(self.system.H, values=1, name='weight')
         self.system.upd_H_graph()
     #
     def upd_graph_matrices(self, on_graph='H'):
@@ -123,13 +121,13 @@ class SignedLaplacianAnalysis:
                 neg_weights_dict = self.system.DEFAULT_NEG_WEIGHTS_DICT_G
             nx.set_edge_attributes(self.system.G, values=neg_weights_dict, 
                                 name='weight')
-            self.system.upd_H_graph()
+            self.system.upd_G_graph()
         elif on_graph == 'H':
             if neg_weights_dict is None:
                 neg_weights_dict = self.system.DEFAULT_NEG_WEIGHTS_DICT_H
             nx.set_edge_attributes(self.system.H, values=neg_weights_dict, 
                                 name='weight')
-            self.system.upd_G_graph()
+            self.system.upd_H_graph()
         self.upd_graph_matrices()
     #
     def flip_random_fract_edges(self, on_graph='H'):
@@ -334,8 +332,7 @@ class SignedLaplacianAnalysis:
                         [(i+1) * L - 1 for i in range(1, L-1)]))
             self.status_array[self.fixed_border_idxs] = self.system.fbc_val
     #
-    def run_laplacian_dynamics(self, rescaled=False, t_stepsMultiplier=1, 
-                               saveFrames=False):
+    def run_laplacian_dynamics(self, rescaled=False, saveFrames=False):
         self.frames_dynsys = []
         x = self.status_array
         def stop_conditions_lapdyn(self, x_tm1, xx):
@@ -344,13 +341,19 @@ class SignedLaplacianAnalysis:
             C2 = (np.abs(np.log10(np.max(np.abs(xx)))) > self.MAXVAL_LAPL_DYN)
             return C1, C2
         if rescaled:
-            eigv0 = np.array([self.eigv[0]])
+            eigv0 = self.eigv[0]
             if rescaled == 'field':
-                lapt = (self.sLp - eigv0)#lambda _: (self.sLp - eigv0)
-                def lap(*_):
-                    return lapt
+                self.resLp = (self.sLp - eigv0*scsp.identity(self.system.N))#lambda _: (self.sLp - eigv0)
+                lap = lambda _: self.resLp
             elif rescaled == 'dynamic':
                 lap = lambda t: np.exp(-eigv0*t)*self.sLp#(self.sLp - eigv0)
+            elif rescaled == 'double':
+                self.resLp = (self.sLp - np.array([eigv0]))
+                new_eigv0 = scipy.linalg.eigvalsh(self.resLp.astype(np.float64), 
+                                              subset_by_index=[0, 0])
+                self.resLp = (self.resLp - new_eigv0*np.identity(self.system.N))
+                lap = lambda _: self.resLp
+
         else:
             lap = lambda _: self.sLp
         if not self.system.pbc:
@@ -373,14 +376,53 @@ class SignedLaplacianAnalysis:
             x = x - self.Deltat*(lap(t)@x) #+ np.sqrt(Deltat)*np.random.uniform(-1e-3, 1e-3, L**2)
             set_boundary_condition()
             C1, C2 = stop_conditions_lapdyn(self, x_tm1, x)
-            if C1 or C2:
+            if C2 or C1:
                 if C1: 
                     print("Convergence reached.")
                 if C2: 
                     print("Max val. reached.")
                 break
         self.status_array = x
-
+    #
+    def run_ising_dynamics(self, T=0.1, nstepsIsing=100, IsingIC='uniform'):
+        magn = []
+        ene = []
+        if (IsingIC == 'uniform'):
+            m = np.random.choice([-1, 1], size=self.system.N)
+        elif (IsingIC == 'ground_state'):
+            bin_eigV = np.where((self.eigV[0] < 0))[0]
+            m = [1 if i in bin_eigV else -1 for i in range(self.system.N)]
+        #
+        def boltzmann_factor(energy, temp):
+            return np.exp(-energy/temp)
+        def neigh_weight_magn(i, graph):
+            return [w['weight']*m[nn] for nn, w in dict(graph.H[i]).items()]
+        def neigh_ene(m_i, neigh):
+            return -m_i*np.sum(neigh)/len(neigh)
+        def calc_full_energy(m, graph):
+            '''Energy of a given configuration'''
+            return np.array([neigh_ene(m[i], neigh_weight_magn(i, graph)) 
+                      for i in range(graph.N)]).sum()
+        def flip_spin(node, m, graph, T):
+            m_flp = -m[node]
+            neigh = neigh_weight_magn(node, graph)
+            E_old = neigh_ene(m[node], neigh)
+            E_new = neigh_ene(m_flp, neigh)
+            DeltaE = E_new-E_old
+            if (DeltaE < 0):
+                m[node] = m_flp
+            elif (np.random.uniform() < boltzmann_factor(DeltaE, T)):
+                m[node] = m_flp
+        #
+        for _ in tqdm(range(nstepsIsing)):
+            magn.append(np.sum(m))
+            ene.append(calc_full_energy(m, self.system))
+            sample = rd.sample(self.system.H.nodes(), self.system.N)
+            for i in range(self.system.N):
+                node=sample[i]
+                flip_spin(node, m, self.system, T)
+        self.magn_array = m
+        return magn, ene
     #
     def rescaled_field_regularization(self):
         status = self.status_array.reshape(self.system.side1, self.system.side2)
@@ -388,7 +430,7 @@ class SignedLaplacianAnalysis:
         nnans = restatus[(restatus != np.inf) & (restatus != -np.inf)]
         self.restatus =  np.nan_to_num(restatus, posinf=np.max(nnans), neginf=np.min(nnans))
     #
-    def make_animation_fromFrames(self, savename="output.mp4", fps=10, dpi=200):
+    def make_animation_fromFrames(self, savename="output", fps=10, dpi=200):
         no_frames = len(self.frames_dynsys)
         print("# of frames: ", no_frames)
         #
@@ -398,10 +440,28 @@ class SignedLaplacianAnalysis:
         ani = animation.FuncAnimation(fig, animate, frames=no_frames)
         #
         fig.tight_layout()
-        ani.save(savename, writer=animation.FFMpegWriter(fps=fps), dpi=dpi)
+        ani.save(f"{savename}{eMP4}", writer=animation.FFMpegWriter(fps=fps), dpi=dpi)
         plt.close(fig)
 #
-
+def lsp_read_values(folder_path, fpattern='Sm1_avg_p', sort=True):
+    file_pattern = fr"{fpattern}=(\d+\.\d+)"
+    value_pattern = r"p=(\d+\.\d+)"
+    # Get all files in the folder
+    files = os.listdir(folder_path)
+    # Filter files based on the pattern
+    file_names = [file_name for file_name in files 
+                  if re.match(file_pattern, file_name)]
+    # Extract values from file names
+    values = []
+    for file_name in file_names:
+        match = re.search(value_pattern, file_name)
+        if match:
+            value = float(match.group(1))
+            values.append(value)
+    # Sort the values if needed
+    if sort:
+        values.sort()
+    return np.array(values) 
 
 
 
@@ -502,29 +562,7 @@ class SignedLaplacianAnalysis:
 
 
 
-def lsp_read_values(folder_path, fpattern='Sm1_avg_p'):
-    #file_pattern = r"p=(\d+\.\d+)_Sm1.bin"
-    file_pattern = fr"{fpattern}=(\d+\.\d+)"
-    value_pattern = r"p=(\d+\.\d+)"
-    #
-    # Get all files in the folder
-    #
-    files = os.listdir(folder_path)
-    #
-    # Filter files based on the pattern
-    file_names = [file_name for file_name in files if re.match(file_pattern, file_name)]
-    #
-    # Extract values from file names
-    values = []
-    for file_name in file_names:
-        match = re.search(value_pattern, file_name)
-        if match:
-            value = float(match.group(1))
-            values.append(value)
-    #
-    # Sort the values if needed
-    values.sort()
-    return np.array(values) 
+
 
 
 
@@ -684,8 +722,7 @@ def local_moran_i(i, field_array, adj):
     return I_i
 
 
-def set_alpha_torgb(rgbacol, alpha=0.5):
-    return (rgbacol[0], rgbacol[1], rgbacol[2], alpha)
+
 
 def ising_spinglass_pmJ_2D_Tcrit(L):
     return L**(-1./2)
