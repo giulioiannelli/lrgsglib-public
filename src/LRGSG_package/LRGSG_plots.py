@@ -1,13 +1,16 @@
 import matplotlib.pyplot as plt
+
 #
+import numpy as np
 from matplotlib.axes import Axes
-from matplotlib.cm import ScalarMappable
-from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.cm import ScalarMappable, hsv
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap, Normalize
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
 
 from typing import Any, Optional, Union
+
 
 def set_alpha_torgb(rgbacol, alpha=0.5):
     """
@@ -65,11 +68,109 @@ def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
 
     """
     colors = [c1, c2]  # Red to black
-    cmap = LinearSegmentedColormap.from_list('custom_colormap', colors)
+    cmap = LinearSegmentedColormap.from_list("custom_colormap", colors)
     return cmap
 
-def imshow_colorbar_caxdivider(mappable, ax, position="right", size="5%", 
-                               pad=0.05) -> [AxesDivider, Axes, Any]:
+def generate_maxpercdiff_colormap(number_of_distinct_colors: int = 80, 
+                                  number_of_shades: int = 7):
+    """
+    Generates a perceptually distinct colormap.
+
+    Parameters:
+    -----------
+    number_of_distinct_colors : int, optional
+        The number of distinct colors in the colormap. Default is 80.
+
+    Returns:
+    --------
+    ListedColormap
+        A ListedColormap object representing the generated colormap.
+
+    Notes:
+    ------
+    This function generates a perceptually distinct colormap using a saw-tooth pattern in the HSV color space.
+    The number of distinct colors can be customized by providing the `number_of_distinct_colors` parameter.
+
+    Reference:
+    -----------
+    - Based on the "saw-like" pattern technique for generating distinct colors.
+    - HSV colormap is used to create cyclic color variations.
+
+    Example:
+    --------
+    >>> colormap = generate_colormap(100)
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> data = np.random.rand(10, 10)
+    >>> plt.imshow(data, cmap=colormap)
+    >>> plt.colorbar()
+    >>> plt.show()
+    """
+
+    no_distinct_colors_wmultshades = int(
+        np.ceil(number_of_distinct_colors / number_of_shades) * number_of_shades
+    )
+
+    # Create an array with uniformly drawn floats taken from <0, 1) partition
+    linearly_distributed_nums = (
+        np.arange(no_distinct_colors_wmultshades) / no_distinct_colors_wmultshades
+    )
+
+    # We are going to reorganize monotonically growing numbers in such a way that there will be a single array with a saw-like pattern
+    #     but each sawtooth is slightly higher than the one before
+    # First divide linearly_distributed_nums into number_of_shades sub-arrays containing linearly distributed numbers
+    arr_by_shade_rows = linearly_distributed_nums.reshape(
+        number_of_shades, no_distinct_colors_wmultshades // number_of_shades
+    )
+
+    # Transpose the above matrix (columns become rows) - as a result, each row contains a sawtooth with values slightly higher than the row above
+    arr_by_shade_columns = arr_by_shade_rows.T
+
+    # Keep the number of sawtooths for later
+    number_of_partitions = arr_by_shade_columns.shape[0]
+
+    # Flatten the above matrix - join each row into a single array
+    nums_distributed_like_rising_saw = arr_by_shade_columns.reshape(-1)
+
+    # HSV colormap is cyclic (https://matplotlib.org/tutorials/colors/colormaps.html#cyclic), we'll use this property
+    initial_cm = hsv(nums_distributed_like_rising_saw)
+
+    lower_partitions_half = number_of_partitions // 2
+    upper_partitions_half = number_of_partitions - lower_partitions_half
+
+    # Modify the lower half in such a way that colors towards the beginning of the partition are darker
+    # First colors are affected more, colors closer to the middle are affected less
+    lower_half = lower_partitions_half * number_of_shades
+    for i in range(3):
+        initial_cm[0:lower_half, i] *= np.arange(0.2, 1, 0.8 / lower_half)
+
+    # Modify the second half in such a way that colors towards the end of the partition are less intense and brighter
+    # Colors closer to the middle are affected less, colors closer to the end are affected more
+    for i in range(3):
+        for j in range(upper_partitions_half):
+            modifier = (
+                np.ones(number_of_shades)
+                - initial_cm[
+                    lower_half
+                    + j * number_of_shades : lower_half
+                    + (j + 1) * number_of_shades,
+                    i,
+                ]
+            )
+            modifier = j * modifier / upper_partitions_half
+            initial_cm[
+                lower_half
+                + j * number_of_shades : lower_half
+                + (j + 1) * number_of_shades,
+                i,
+            ] += modifier
+
+    return ListedColormap(initial_cm)
+
+
+def imshow_colorbar_caxdivider(
+    mappable, ax, position="right", size="5%", pad=0.05
+) -> [AxesDivider, Axes, Any]:
     """
     Display colorbar in a specified position relative to a given axis.
 
@@ -121,13 +222,13 @@ def imshow_colorbar_caxdivider(mappable, ax, position="right", size="5%",
     plt.show()
 
     """
-    list_caxdivider = ['position', 'size', 'pad']
+    list_caxdivider = ["position", "size", "pad"]
     kwargs_caxdivider = dict(zip(list_caxdivider, [position, size, pad]))
     #
     divider = make_axes_locatable(ax)
     cax = divider.append_axes(**kwargs_caxdivider)
     #
-    list_colorbar = ['mappable', 'cax']
+    list_colorbar = ["mappable", "cax"]
     kwargs_colorbar = dict(zip(list_colorbar, [mappable, cax]))
     #
     clb = plt.colorbar(**kwargs_colorbar)

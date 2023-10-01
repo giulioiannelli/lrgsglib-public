@@ -6,7 +6,41 @@ from .LRGSG_errwar import *
 from numpy import ndarray
 from os import chdir, getcwd
 #
+from collections.abc import Iterable
 from scipy.interpolate import pchip
+
+def flatten(xs):
+    """
+    Recursively flattens a nested iterable into a flat iterable.
+
+    Parameters:
+    -----------
+    xs : iterable
+        The input nested iterable to be flattened.
+
+    Returns:
+    --------
+    object
+        The flattened elements from the input iterable.
+
+    Notes:
+    ------
+    This function takes a nested iterable and yields each element from the
+    nested structure as a flat iterable. It recursively processes nested
+    iterables such as lists or tuples.
+
+    Example:
+    --------
+    >>> nested_list = [1, [2, [3, 4], 5], 6]
+    >>> flattened = list(flatten(nested_list))
+    >>> flattened
+    [1, 2, 3, 4, 5, 6]
+    """
+    for x in xs:
+        if isinstance(x, Iterable) and not isinstance(x, (str, bytes)):
+            yield from flatten(x)
+        else:
+            yield x
 
 def move_to_rootf(print_tf: bool = False):
     """

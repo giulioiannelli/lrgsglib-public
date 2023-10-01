@@ -8,10 +8,7 @@ from networkx.classes.graph import Graph
 from networkx.drawing.layout import _process_params, rescale_layout
 from scipy.sparse import csr_array
 #
-def get_kth_order_neighbours(G, node, order):
-    node = 0
-    # Set the desired order
-    order = 1
+def get_kth_order_neighbours(G, node, order=1):
     # Get the kth-order neighbors
     neighbor_dict = nx.single_source_shortest_path_length(G, node, cutoff=order)
     # Extract the nodes at the kth order

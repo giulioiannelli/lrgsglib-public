@@ -5,11 +5,13 @@ import re
 import os
 import sys
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 #
 import networkx as nx
 import numpy as np
 import random as rd
+
 # import pyfftlog
 #
 import matplotlib.animation as animation
@@ -18,6 +20,7 @@ import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 import scipy.special
 import scipy.sparse as scsp
+
 #
 from itertools import product
 from matplotlib.patches import Circle, Rectangle
@@ -36,8 +39,10 @@ from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
 from typing import Any, Optional, Union
+
 #
 from tqdm import tqdm
+
 #
 from .nx_patches import *
 from .nx_objects import *
@@ -45,10 +50,19 @@ from .LRGSG_const import *
 from .LRGSG_errwar import *
 from .LRGSG_plots import *
 from .LRGSG_utils import *
+
 #
-__all__ = ['np', 'nx', 'plt',
-    'SignedLaplacianAnalysis', 'lsp_read_values',
-    'FullyConnected', 'Lattice2D']
+__all__ = [
+    "np",
+    "nx",
+    "plt",
+    "SignedLaplacianAnalysis",
+    "lsp_read_values",
+    "FullyConnected",
+    "Lattice2D",
+]
+
+
 #
 # renormalization group for heterogenous network functions
 class SignedLaplacianAnalysis:
@@ -59,14 +73,26 @@ class SignedLaplacianAnalysis:
     taumax = None
     taumax0 = None
     frames_dynsys = []
+    Ising_clusters = []
     eigv = None
     ACCERR_LAPL_DYN = 1e-10
     MAXVAL_LAPL_DYN = 200
+
     #
-    def __init__(self, system, pflip: float = None, is_signed: bool = True,
-                 steps: int = DEFAULT_ENTROPY_STEPS, t1: float = -2,
-                 t2: float = 5, maxThresh: float = DEFAULT_MAX_THRESHOLD, 
-                 nreplica: int = 0, initCond: str = 'gauss_1', t_steps = 10, no_obs = 1) -> None:
+    def __init__(
+        self,
+        system,
+        pflip: float = None,
+        is_signed: bool = True,
+        steps: int = DEFAULT_ENTROPY_STEPS,
+        t1: float = -2,
+        t2: float = 5,
+        maxThresh: float = DEFAULT_MAX_THRESHOLD,
+        nreplica: int = 0,
+        initCond: str = "gauss_1",
+        t_steps=10,
+        no_obs=1,
+    ) -> None:
         self.system = system
         self.is_signed = is_signed
         #
@@ -82,83 +108,97 @@ class SignedLaplacianAnalysis:
         #
         self.pflip = pflip
         if pflip is not None:
-            self.nflip = int(self.pflip*self.system.Ne)
-            self.randsample = random.sample(range(self.system.Ne), 
-                                            self.nflip)
+            self.nflip = int(self.pflip * self.system.Ne)
+            self.randsample = random.sample(range(self.system.Ne), self.nflip)
         else:
             self.nflip = 0
             self.randsample = None
-        
+
     #
     def init_weights(self):
-        nx.set_edge_attributes(self.system.G, values=1, name='weight')
-        nx.set_edge_attributes(self.system.H, values=1, name='weight')
+        nx.set_edge_attributes(self.system.G, values=1, name="weight")
+        nx.set_edge_attributes(self.system.H, values=1, name="weight")
         self.system.upd_H_graph()
+
     #
-    def upd_graph_matrices(self, on_graph='H'):
-        if on_graph == 'G':
+    def upd_graph_matrices(self, on_graph="H"):
+        if on_graph == "G":
             motherNx = self.system.G
-        elif on_graph == 'H':
+        elif on_graph == "H":
             motherNx = self.system.H
         self.Adj = self.adjacency_matrix(motherNx)
         self.Deg = self.degree_matrix(self.Adj)
         self.sDeg = self.absolute_degree_matrix(self.Adj)
         self.Lap = self.laplacian_csr()
         self.sLp = self.signed_laplacian_csr()
+
     #
     def check_pflip(self):
         if self.nflip < 1:
-            raise NflipError("""The probability of flipping an edge times the 
+            raise NflipError(
+                """The probability of flipping an edge times the 
                              number of edges is < 1, then no edges would be
-                             flipped. Skipping the analysis for this value.""")
+                             flipped. Skipping the analysis for this value."""
+            )
+
     #
-    def flip_sel_edges(self, neg_weights_dict=None, on_graph='H'):
-        """Flips a specific edges of a graph G.
-        """
+    def flip_sel_edges(self, neg_weights_dict=None, on_graph="H"):
+        """Flips a specific edges of a graph G."""
         #
-        if on_graph == 'G':
+        if on_graph == "G":
             if neg_weights_dict is None:
                 neg_weights_dict = self.system.DEFAULT_NEG_WEIGHTS_DICT_G
-            nx.set_edge_attributes(self.system.G, values=neg_weights_dict, 
-                                name='weight')
+            nx.set_edge_attributes(
+                self.system.G, values=neg_weights_dict, name="weight"
+            )
             self.system.upd_G_graph()
-        elif on_graph == 'H':
+        elif on_graph == "H":
             if neg_weights_dict is None:
                 neg_weights_dict = self.system.DEFAULT_NEG_WEIGHTS_DICT_H
-            nx.set_edge_attributes(self.system.H, values=neg_weights_dict, 
-                                name='weight')
+            nx.set_edge_attributes(
+                self.system.H, values=neg_weights_dict, name="weight"
+            )
             self.system.upd_H_graph()
         self.upd_graph_matrices()
+
     #
-    def flip_random_fract_edges(self, on_graph='H'):
-        """Flips a fraction p of edges (+1 to -1) of a graph G.
-        """
-        
+    def flip_random_fract_edges(self, on_graph="H"):
+        """Flips a fraction p of edges (+1 to -1) of a graph G."""
+
         #
         try:
             self.check_pflip()
         except NflipError:
             return None
-        if on_graph == 'G':
+        if on_graph == "G":
             eset = self.system.esetG
-        elif on_graph == 'H':
+        elif on_graph == "H":
             eset = self.system.esetH
-        neg_weights = {e: -1 for i,e in enumerate(eset) if i in self.randsample}
+        neg_weights = {
+            e: -1 for i, e in enumerate(eset) if i in self.randsample
+        }
         self.flip_sel_edges(neg_weights_dict=neg_weights, on_graph=on_graph)
+
     #
-    def adjacency_matrix(self, G: Graph,
-                         nodelist: list = None, weight: str = "weight"):
-        if nodelist is None: nodelist = list(G)
-        return nx.to_scipy_sparse_array(G, nodelist=nodelist, 
-                                        weight=weight, format="csr")
+    def adjacency_matrix(
+        self, G: Graph, nodelist: list = None, weight: str = "weight"
+    ):
+        if nodelist is None:
+            nodelist = list(G)
+        return nx.to_scipy_sparse_array(
+            G, nodelist=nodelist, weight=weight, format="csr"
+        )
+
     #
     def degree_matrix(self, A: csr_array) -> csr_array:
-        return csr_array(scsp.spdiags(A.sum(axis=1), 
-                                        0, *A.shape, format="csr"))
+        return csr_array(scsp.spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
+
     #
     def absolute_degree_matrix(self, A: csr_array) -> csr_array:
-        return csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 
-                                        0, *A.shape, format="csr"))
+        return csr_array(
+            scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape, format="csr")
+        )
+
     #
     def laplacian_csr(self) -> csr_array:
         """Returns the signed Laplacian matrix of G.
@@ -171,11 +211,12 @@ class SignedLaplacianAnalysis:
         The Laplacian matrix of G.
         """
         return self.Deg - self.Adj
+
     #
     def signed_laplacian_csr(self) -> csr_array:
         """Returns the signed Laplacian matrix of G.
         The graph Laplacian is the matrix L = |D| - A, where
-        A is the adjacency matrix and |D| is the diagonal matrix of absolute 
+        A is the adjacency matrix and |D| is the diagonal matrix of absolute
         values of node degrees
 
         Returns
@@ -184,38 +225,45 @@ class SignedLaplacianAnalysis:
         The Laplacian matrix of G.
         """
         return self.sDeg - self.Adj
+
     #
-    def compute_laplacian_spectrum(self, MODE_lapspec: str = 'numpy') -> None:
-        if MODE_lapspec == 'networkx':
+    def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
+        if MODE_lapspec == "networkx":
             self.slspectrum = nx.laplacian_spectrum(self.system.G)
-        elif MODE_lapspec == 'numpy':
+        elif MODE_lapspec == "numpy":
             self.slspectrum = eigvals(self.sLp.toarray())
+
     #
     def timescale_for_S(self) -> ndarray:
         return np.logspace(self.t1, self.t2, self.steps)
+
     #
     def timescale_for_C(self) -> ndarray:
         t = self.timescale_for_S()
-        return .5 * (t[1:] + t[:-1])
+        return 0.5 * (t[1:] + t[:-1])
+
     #
-    def compute_entropy(self) -> None:# tuple[ndarray, ndarray, ndarray, ndarray]
+    def compute_entropy(
+        self,
+    ) -> None:  # tuple[ndarray, ndarray, ndarray, ndarray]
         if self.slspectrum is None:
             self.compute_laplacian_spectrum()
         t = self.timescale_for_S()
         w = self.slspectrum
         S = np.zeros(len(t))
         VarL = np.zeros(len(t))
-    
+
         for i, tau in enumerate(t):
             rhoTr = np.exp(-tau * w)
             Tr = np.nansum(rhoTr)
             rho = np.divide(rhoTr, Tr)
             avgrho = np.nansum(np.multiply(w, rhoTr)) / Tr
-            av2rho = np.nansum(np.multiply(np.multiply(w,w), rhoTr)) / Tr
+            av2rho = np.nansum(np.multiply(np.multiply(w, w), rhoTr)) / Tr
             S[i] = -np.nansum(rho * np.log(rho)) / np.log(self.system.N)
-            VarL[i] = (av2rho - avgrho**2)
-        self.Sm1  = 1 - S
+            VarL[i] = av2rho - avgrho**2
+        self.Sm1 = 1 - S
         self.VarL = VarL
+
     #
     def compute_Cspe(self) -> None:
         if self.Sm1 is None:
@@ -224,6 +272,7 @@ class SignedLaplacianAnalysis:
         Sm1 = self.Sm1
         t = self.timescale_for_S()
         self.Cspe = np.log(N) * dv(Sm1, np.log(t))
+
     #
     def compute_taumax_array(self) -> None:
         if self.Cspe is None:
@@ -233,202 +282,344 @@ class SignedLaplacianAnalysis:
         maxIdxCondition = self.Cspe[maxIdx] > self.maxThresh
         self.taumax = t[maxIdx[maxIdxCondition]]
         self.taumax0 = t[maxIdx[maxIdxCondition][0]]
+
     #
-    def compute_k_eigvV(self, MODE_dynspec: str = 'scipy', howmany: int = 1):
-        if MODE_dynspec == 'scipy':
-            self.eigv, self.eigV = scsp.linalg.eigsh(self.sLp.astype(np.float64), k=howmany, which='SM') 
+    def compute_k_eigvV(self, MODE_dynspec: str = "scipy", howmany: int = 1):
+        if MODE_dynspec == "scipy":
+            self.eigv, self.eigV = scsp.linalg.eigsh(
+                self.sLp.astype(np.float64), k=howmany, which="SM"
+            )
+
     #
-    def laplacian_dynamics_init(self, t_stepsMultiplier: int = 1, 
-                                window_size=0, window_shift_x=0,
-                                window_shift_y=0, win_val=1):
+    def laplacian_dynamics_init(
+        self,
+        t_stepsMultiplier: int = 1,
+        window_size=0,
+        window_shift_x=0,
+        window_shift_y=0,
+        win_val=1,
+    ):
         N = self.system.N
         #
-        self.Deltat = 1./self.t_steps
-        self.simulationTime = N*self.t_steps*t_stepsMultiplier
-        self.sampling = np.logspace(0, np.log10(self.simulationTime), num=200, dtype=int)
+        self.Deltat = 1.0 / self.t_steps
+        self.simulationTime = N * self.t_steps * t_stepsMultiplier
+        self.sampling = np.logspace(
+            0, np.log10(self.simulationTime), num=200, dtype=int
+        )
         #
-        if not 'ground_state' in self.initCond:
+        if not "ground_state" in self.initCond:
             self.compute_k_eigvV()
-        if self.initCond.startswith('ground_state'):
-            self.eigenModeInit = int(self.initCond.split('_')[-1])
-            self.compute_k_eigvV(howmany=self.eigenModeInit+1)
+        if self.initCond.startswith("ground_state"):
+            self.eigenModeInit = int(self.initCond.split("_")[-1])
+            self.compute_k_eigvV(howmany=self.eigenModeInit + 1)
             self.status_array = self.eigV.T[self.eigenModeInit]
-        elif self.initCond == 'uniform_1':
+        elif self.initCond == "uniform_1":
             self.status_array = np.random.uniform(-1, 1, N)
-        elif self.initCond == 'delta_1':
+        elif self.initCond == "delta_1":
             self.status_array = np.zeros(N)
-            self.status_array[N//2] = 1
-        elif self.initCond == 'gauss_1':
+            self.status_array[N // 2] = 1
+        elif self.initCond == "gauss_1":
             self.status_array = np.random.normal(-1, 1, N)
-        elif self.initCond == 'all_1':
-            self.status_array = np.ones(N)
-        elif self.initCond.startswith('window'):
-            s22 = self.system.side2//2
-            wndwS = s22-1 if window_size > (s22-1) else window_size
-            hS, hE = s22-wndwS-1, s22+wndwS+1
+        elif self.initCond.startswith("all"):
+            self.initVal = float(self.initCond.split("_")[-1])
+            self.status_array = self.initVal * np.ones(N)
+        elif self.initCond.startswith("window"):
+            s22 = self.system.side2 // 2
+            wndwS = s22 - 1 if window_size > (s22 - 1) else window_size
+            hS, hE = s22 - wndwS - 1, s22 + wndwS + 1
             initStatus = np.zeros(N)
-            
+
             #
-            if self.initCond.startswith('window_multiple'):
-                self.nsquares = int(self.initCond.split('_')[-1])
+            if self.initCond.startswith("window_multiple"):
+                self.nsquares = int(self.initCond.split("_")[-1])
 
                 # wndwSa = np.array([wndwS, -wndwS])
-                # sqTmp = np.random.randint(wndwS, self.system.side1-wndwS, 
+                # sqTmp = np.random.randint(wndwS, self.system.side1-wndwS,
                 #                             size=(self.nsquares, 2)) - wndwSa
                 # sqIdx = np.concatenate([
                 #     np.concatenate([
-                #         [j+i*self.system.side1 
-                #          for j in range(iSq[0])] 
-                #          for i in range(iSq[1])]) 
+                #         [j+i*self.system.side1
+                #          for j in range(iSq[0])]
+                #          for i in range(iSq[1])])
                 #     for iSq in sqTmp])
                 wndwSa = np.array([wndwS, -wndwS])
-                sqTmp = np.random.randint(wndwS, self.system.side1-wndwS, size=(self.nsquares, 2))
+                sqTmp = np.random.randint(
+                    wndwS, self.system.side1 - wndwS, size=(self.nsquares, 2)
+                )
                 result = np.column_stack((sqTmp, sqTmp + wndwS))
                 result[:, [1, 2]] = result[:, [2, 1]]
                 result = result.reshape(-1, 2, 2)
 
-                sqIdx = np.concatenate([
-                    np.concatenate([
-                        [j+i*self.system.side1
-                         for j in range(*iSq[0])] 
-                         for i in range(*iSq[1])]) 
-                    for iSq in result])
+                sqIdx = np.concatenate(
+                    [
+                        np.concatenate(
+                            [
+                                [
+                                    j + i * self.system.side1
+                                    for j in range(*iSq[0])
+                                ]
+                                for i in range(*iSq[1])
+                            ]
+                        )
+                        for iSq in result
+                    ]
+                )
                 if type(win_val) is str:
-                    if win_val == 'gauss':
+                    if win_val == "gauss":
                         win_val = np.random.normal(0, 1, size=len(sqIdx))
-                    elif win_val == 'uniform':
+                    elif win_val == "uniform":
                         win_val = np.random.uniform(-1, 1, len(sqIdx))
-                initStatus[sqIdx] = np.ones(len(sqIdx))*win_val
+                initStatus[sqIdx] = np.ones(len(sqIdx)) * win_val
             else:
-                shiftsX = [hS+window_shift_x, hE+window_shift_x]
-                shiftsY = [hS+window_shift_y, hE+window_shift_y]
-                sqIdx = np.concatenate([
-                    [j+i*self.system.side1 
-                     for j in range(*shiftsX)] 
-                     for i in range(*shiftsY)])
-                if self.initCond == 'window_1':
+                shiftsX = [hS + window_shift_x, hE + window_shift_x]
+                shiftsY = [hS + window_shift_y, hE + window_shift_y]
+                sqIdx = np.concatenate(
+                    [
+                        [j + i * self.system.side1 for j in range(*shiftsX)]
+                        for i in range(*shiftsY)
+                    ]
+                )
+                if self.initCond == "window_1":
                     initStatus[sqIdx] = np.ones(len(sqIdx))
-                elif self.initCond == 'window_val':
-                    initStatus[sqIdx] = np.ones(len(sqIdx))*win_val
-                elif self.initCond == 'window_gauss_1':
+                elif self.initCond == "window_val":
+                    initStatus[sqIdx] = np.ones(len(sqIdx)) * win_val
+                elif self.initCond == "window_gauss_1":
                     initStatus[sqIdx] = np.random.normal(-1, 1, len(sqIdx))
-                elif self.initCond.startswith('window_ground_state'):
-                    self.eigenModeInit = int(self.initCond.split('_')[-1])
-                    self.compute_k_eigvV(howmany=self.eigenModeInit+1)
+                elif self.initCond.startswith("window_ground_state"):
+                    self.eigenModeInit = int(self.initCond.split("_")[-1])
+                    self.compute_k_eigvV(howmany=self.eigenModeInit + 1)
                     initStatus = self.eigV.T[self.eigenModeInit]
                     outIdx = np.setxor1d(np.arange(N), sqIdx)
-                    initStatus[outIdx] = np.random.uniform(initStatus.min(), 
-                                                           initStatus.max(), 
-                                                           len(outIdx))
+                    initStatus[outIdx] = np.random.uniform(
+                        initStatus.min(), initStatus.max(), len(outIdx)
+                    )
                 else:
-                    print('Error, no mode for init laplacian dynamic chosen.')
+                    print("Error, no mode for init laplacian dynamic chosen.")
             self.status_array = initStatus
         #
         if self.system.pbc is False:
             L = int(np.sqrt(N))
-            self.fixed_border_idxs = np.array(sorted([i for i in range(L)] + \
-                        [(L-1) * L + i for i in range(L)] + \
-                        [i * L for i in range(1, L-1)] + 
-                        [(i+1) * L - 1 for i in range(1, L-1)]))
+            self.fixed_border_idxs = np.array(
+                sorted(
+                    [i for i in range(L)]
+                    + [(L - 1) * L + i for i in range(L)]
+                    + [i * L for i in range(1, L - 1)]
+                    + [(i + 1) * L - 1 for i in range(1, L - 1)]
+                )
+            )
             self.status_array[self.fixed_border_idxs] = self.system.fbc_val
+
     #
     def run_laplacian_dynamics(self, rescaled=False, saveFrames=False):
         self.frames_dynsys = []
         x = self.status_array
+
         def stop_conditions_lapdyn(self, x_tm1, xx):
-            error_tolerance = self.ACCERR_LAPL_DYN*np.ones(self.system.N)
-            C1 = (np.abs(x_tm1/x_tm1.max() - xx/xx.max()) < error_tolerance).all()
-            C2 = (np.abs(np.log10(np.max(np.abs(xx)))) > self.MAXVAL_LAPL_DYN)
+            error_tolerance = self.ACCERR_LAPL_DYN * np.ones(self.system.N)
+            C1 = (
+                np.abs(x_tm1 / x_tm1.max() - xx / xx.max()) < error_tolerance
+            ).all()
+            C2 = np.abs(np.log10(np.max(np.abs(xx)))) > self.MAXVAL_LAPL_DYN
             return C1, C2
+
         if rescaled:
             eigv0 = self.eigv[0]
-            if rescaled == 'field':
-                self.resLp = (self.sLp - eigv0*scsp.identity(self.system.N))#lambda _: (self.sLp - eigv0)
+            if rescaled == "field":
+                self.resLp = self.sLp - eigv0 * scsp.identity(
+                    self.system.N
+                )  # lambda _: (self.sLp - eigv0)
                 lap = lambda _: self.resLp
-            elif rescaled == 'dynamic':
-                lap = lambda t: np.exp(-eigv0*t)*self.sLp#(self.sLp - eigv0)
-            elif rescaled == 'double':
-                self.resLp = (self.sLp - np.array([eigv0]))
-                new_eigv0 = scipy.linalg.eigvalsh(self.resLp.astype(np.float64), 
-                                              subset_by_index=[0, 0])
-                self.resLp = (self.resLp - new_eigv0*np.identity(self.system.N))
+            elif rescaled == "dynamic":
+                lap = (
+                    lambda t: np.exp(-eigv0 * t) * self.sLp
+                )  # (self.sLp - eigv0)
+            elif rescaled == "double":
+                self.resLp = self.sLp - np.array([eigv0])
+                new_eigv0 = scipy.linalg.eigvalsh(
+                    self.resLp.astype(np.float64), subset_by_index=[0, 0]
+                )
+                self.resLp = self.resLp - new_eigv0 * np.identity(self.system.N)
                 lap = lambda _: self.resLp
 
         else:
             lap = lambda _: self.sLp
         if not self.system.pbc:
+
             def set_boundary_condition(self):
                 x[self.fixed_border_idxs] = self.fbc_val
+
         else:
+
             def set_boundary_condition():
                 pass
+
         if saveFrames:
+
             def save_frames(self, x, t):
-                if (t in self.sampling):
+                if t in self.sampling:
                     self.frames_dynsys.append(x)
+
         else:
+
             def save_frames(*_):
                 pass
+
         print("Beginning Laplacian dynamics.")
         for t in tqdm(range(1, self.simulationTime)):
             save_frames(self, x, t)
             x_tm1 = x
-            x = x - self.Deltat*(lap(t)@x) #+ np.sqrt(Deltat)*np.random.uniform(-1e-3, 1e-3, L**2)
+            x = x - self.Deltat * (
+                lap(t) @ x
+            )  # + np.sqrt(Deltat)*np.random.uniform(-1e-3, 1e-3, L**2)
             set_boundary_condition()
             C1, C2 = stop_conditions_lapdyn(self, x_tm1, x)
             if C2 or C1:
-                if C1: 
+                if C1:
                     print("Convergence reached.")
-                if C2: 
+                if C2:
                     print("Max val. reached.")
                 break
         self.status_array = x
+
     #
-    def run_ising_dynamics(self, T=0.1, nstepsIsing=100, IsingIC='uniform'):
+    def run_ising_dynamics(self, T=0.1, nstepsIsing=100, IsingIC="uniform"):
         magn = []
         ene = []
-        if (IsingIC == 'uniform'):
+        if IsingIC == "uniform":
             m = np.random.choice([-1, 1], size=self.system.N)
-        elif (IsingIC == 'ground_state'):
+        elif IsingIC == "ground_state":
             bin_eigV = np.where((self.eigV[0] < 0))[0]
             m = [1 if i in bin_eigV else -1 for i in range(self.system.N)]
+
         #
         def boltzmann_factor(energy, temp):
-            return np.exp(-energy/temp)
+            return np.exp(-energy / temp)
+
         def neigh_weight_magn(i, graph):
-            return [w['weight']*m[nn] for nn, w in dict(graph.H[i]).items()]
+            return [w["weight"] * m[nn] for nn, w in dict(graph.H[i]).items()]
+
         def neigh_ene(m_i, neigh):
-            return -m_i*np.sum(neigh)/len(neigh)
+            return -m_i * np.sum(neigh) / len(neigh)
+
         def calc_full_energy(m, graph):
-            '''Energy of a given configuration'''
-            return np.array([neigh_ene(m[i], neigh_weight_magn(i, graph)) 
-                      for i in range(graph.N)]).sum()
+            """Energy of a given configuration"""
+            return np.array(
+                [
+                    neigh_ene(m[i], neigh_weight_magn(i, graph))
+                    for i in range(graph.N)
+                ]
+            ).sum()
+
         def flip_spin(node, m, graph, T):
             m_flp = -m[node]
             neigh = neigh_weight_magn(node, graph)
             E_old = neigh_ene(m[node], neigh)
             E_new = neigh_ene(m_flp, neigh)
-            DeltaE = E_new-E_old
-            if (DeltaE < 0):
+            DeltaE = E_new - E_old
+            if DeltaE < 0:
                 m[node] = m_flp
-            elif (np.random.uniform() < boltzmann_factor(DeltaE, T)):
+            elif np.random.uniform() < boltzmann_factor(DeltaE, T):
                 m[node] = m_flp
+
         #
+        # a = np.random.randint(0, self.system.N, nstepsIsing*self.system.N)
         for _ in tqdm(range(nstepsIsing)):
             magn.append(np.sum(m))
             ene.append(calc_full_energy(m, self.system))
             sample = rd.sample(self.system.H.nodes(), self.system.N)
             for i in range(self.system.N):
-                node=sample[i]
+                node = sample[i]  # a[t*nstepsIsing + i]#sample[i]
                 flip_spin(node, m, self.system, T)
         self.magn_array = m
         return magn, ene
+
+    #
+    def find_ising_clusters(self):
+        if self.Ising_clusters:
+            print("exit function")
+            return
+        lnodes = list(self.system.H.nodes())
+        lnodes_tmp = lnodes[:]
+        #
+        eigVbin = self.eigV.T[0]
+        eigVbin[eigVbin >= 0] = +1
+        eigVbin[eigVbin < 0] = -1
+
+        #
+        # neig = np.array(get_kth_order_neighbours(self.system.H, 0, 1))
+        # neig_m = eigVbin[neig]
+        # neig_same_m = neig_m == eigVbin[0]
+        #
+        def recursive_search(seed, magn_i, clustertmp):
+            neighs = get_kth_order_neighbours(self.system.H, seed, 1)
+            neighs = np.array([e for e in neighs if e not in set(clustertmp)])
+            if not neighs.size:
+                return
+            samecluster = np.array(eigVbin[neighs] == magn_i)
+            if not samecluster.any():
+                return
+            neighs_samecluster = list(neighs[samecluster])
+            clustertmp.extend(neighs_samecluster)
+            for ss in neighs_samecluster:
+                recursive_search(ss, magn_i, clustertmp)
+
+        #
+        for i in lnodes:
+            if i not in lnodes_tmp:
+                continue
+            if not lnodes_tmp:
+                break
+            #
+            clustertmp = []
+            clustertmp.extend([i])
+            #
+            recursive_search(i, eigVbin[i], clustertmp)
+            lnodes_tmp = [e for e in lnodes_tmp if e not in set(clustertmp)]
+            self.Ising_clusters.append(clustertmp)
+        self.numIsing_cl = len(self.Ising_clusters)
+        self.biggestIsing_clidx = np.argmax(
+            [len(c) for c in self.Ising_clusters]
+        )
+        self.biggestIsing_cl = self.Ising_clusters[self.biggestIsing_clidx]
+
+    #
+    def mapping_nodes_to_clusters(self):
+        if not self.Ising_clusters:
+            self.find_ising_clusters()
+        loc = [x for x in range(len(self.Ising_clusters))]
+        self.loc = loc
+        node_with_inherclust = [
+            [[j, loc[i]] for j in clus]
+            for i, clus in enumerate(self.Ising_clusters)
+        ]
+        self.node_with_inherclust = node_with_inherclust
+        node_inherclust_flat = [i for j in node_with_inherclust for i in j]
+        self.node_inherclust_flat = node_inherclust_flat
+        sorted_list = sorted(node_inherclust_flat, key=lambda x: x[0])
+        self.sorted_list = sorted_list
+        result_array = np.empty(
+            (self.system.side1, self.system.side2), dtype=object
+        )
+        self.result_array = result_array
+
+        # Fill the result_array with tuples from sorted_list
+        for i, sublist in enumerate(sorted_list):
+            row, col = divmod(
+                i, self.system.side1
+            )  # Calculate the row and column index
+            result_array[row, col] = sublist[1]
+        # self.distr = np.unique(result_array, return_counts=True)
+        self.mapping = result_array
+
     #
     def rescaled_field_regularization(self):
         status = self.status_array.reshape(self.system.side1, self.system.side2)
-        restatus = np.log10(np.max(status)-status)
+        restatus = np.log10(np.max(status) - status)
         nnans = restatus[(restatus != np.inf) & (restatus != -np.inf)]
-        self.restatus =  np.nan_to_num(restatus, posinf=np.max(nnans), neginf=np.min(nnans))
+        self.restatus = np.nan_to_num(
+            restatus, posinf=np.max(nnans), neginf=np.min(nnans)
+        )
+
     #
     def make_animation_fromFrames(self, savename="output", fps=10, dpi=200):
         no_frames = len(self.frames_dynsys)
@@ -440,17 +631,22 @@ class SignedLaplacianAnalysis:
         ani = animation.FuncAnimation(fig, animate, frames=no_frames)
         #
         fig.tight_layout()
-        ani.save(f"{savename}{eMP4}", writer=animation.FFMpegWriter(fps=fps), dpi=dpi)
+        ani.save(
+            f"{savename}{eMP4}", writer=animation.FFMpegWriter(fps=fps), dpi=dpi
+        )
         plt.close(fig)
+
+
 #
-def lsp_read_values(folder_path, fpattern='Sm1_avg_p', sort=True):
-    file_pattern = fr"{fpattern}=(\d+\.\d+)"
+def lsp_read_values(folder_path, fpattern="Sm1_avg_p", sort=True):
+    file_pattern = rf"{fpattern}=(\d+\.\d+)"
     value_pattern = r"p=(\d+\.\d+)"
     # Get all files in the folder
     files = os.listdir(folder_path)
     # Filter files based on the pattern
-    file_names = [file_name for file_name in files 
-                  if re.match(file_pattern, file_name)]
+    file_names = [
+        file_name for file_name in files if re.match(file_pattern, file_name)
+    ]
     # Extract values from file names
     values = []
     for file_name in file_names:
@@ -461,52 +657,51 @@ def lsp_read_values(folder_path, fpattern='Sm1_avg_p', sort=True):
     # Sort the values if needed
     if sort:
         values.sort()
-    return np.array(values) 
+    return np.array(values)
 
 
-
-#                           ,((((((((((((((((((((((((.                          
-#                      @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                     
-#                    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                   
-#                   @@@@@@                              @@@@@@                  
-#                  @@@@@@                               *@@@@@/                 
-#    /@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,    
+#                           ,((((((((((((((((((((((((.
+#                      @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#                    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#                   @@@@@@                              @@@@@@
+#                  @@@@@@                               *@@@@@/
+#    /@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,
 #   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 #  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 #   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#                                #    TRASH CODE                                                                                                         
-#   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
-#   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   
-#   *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,   
-#    @@@@@@@@@@@@@@    @@@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    
-#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    
-#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    
-#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    
-#    &@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@&    
-#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    .@@@@@@@@@@@@@     
-#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    (@@@@@@@@@@@@@     
-#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    @@@@@@@@@@@@@@     
-#     @@@@@@@@@@@@@.    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    @@@@@@@@@@@@@@     
-#     @@@@@@@@@@@@@/    @@@@@@@@@@@@@@     @@@@@@@@@@@@@&    @@@@@@@@@@@@@@     
-#     *@@@@@@@@@@@@@    @@@@@@@@@@@@@@     @@@@@@@@@@@@@(    @@@@@@@@@@@@@.     
-#      @@@@@@@@@@@@@    &@@@@@@@@@@@@@     @@@@@@@@@@@@@.    @@@@@@@@@@@@@      
-#      @@@@@@@@@@@@@    *@@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@      
-#      @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@      
-#      @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@      
-#      &@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@#      
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@       
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@       
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@       
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@       
-#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@       
-#       *@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@        
-#        @@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@        
-#        @@@@@@@@@@@@    @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@        
-#        @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@        
-#        @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@        
-#         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&         
-#          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&     
+#                                #    TRASH CODE
+#   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#   *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,
+#    @@@@@@@@@@@@@@    @@@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@
+#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@
+#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@
+#    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@
+#    &@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@&
+#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    .@@@@@@@@@@@@@
+#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    (@@@@@@@@@@@@@
+#     @@@@@@@@@@@@@     @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    @@@@@@@@@@@@@@
+#     @@@@@@@@@@@@@.    @@@@@@@@@@@@@@     @@@@@@@@@@@@@@    @@@@@@@@@@@@@@
+#     @@@@@@@@@@@@@/    @@@@@@@@@@@@@@     @@@@@@@@@@@@@&    @@@@@@@@@@@@@@
+#     *@@@@@@@@@@@@@    @@@@@@@@@@@@@@     @@@@@@@@@@@@@(    @@@@@@@@@@@@@.
+#      @@@@@@@@@@@@@    &@@@@@@@@@@@@@     @@@@@@@@@@@@@.    @@@@@@@@@@@@@
+#      @@@@@@@@@@@@@    *@@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@
+#      @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@
+#      @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@
+#      &@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@#
+#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@
+#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@
+#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@
+#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@
+#       @@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@
+#       *@@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@
+#        @@@@@@@@@@@     @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@
+#        @@@@@@@@@@@@    @@@@@@@@@@@@@     @@@@@@@@@@@@@    @@@@@@@@@@@@
+#        @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#        @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&
+#          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&
 
 
 #     def run_ising_dynamics(self):
@@ -561,11 +756,6 @@ def lsp_read_values(folder_path, fpattern='Sm1_avg_p', sort=True):
 #     bigene.append(ene)
 
 
-
-
-
-
-
 def smallest_prob_for_erconn(N, pstart=0.1, halving=0.8, testset=100):
     p = pstart
     while True:
@@ -578,10 +768,14 @@ def smallest_prob_for_erconn(N, pstart=0.1, halving=0.8, testset=100):
             break
         p *= halving
     return lowest_prob
+
+
 def logpsace_prob_erconn(N, pHigh=0.5, pstart=0.1, halving=0.8, testset=100):
     lowest_prob = smallest_prob_for_erconn(N, pstart, halving, testset)
     lsp = np.logspace(np.log10(lowest_prob), np.log10(pHigh), num=10)
     return lsp
+
+
 def get_graph_lapl(G, is_signed=True):
     if is_signed:
         lapl = slaplacian_matrix(G)
@@ -589,11 +783,12 @@ def get_graph_lapl(G, is_signed=True):
         lapl = nx.laplacian_matrix(G)
     return lapl
 
+
 def get_graph_lspectrum(G, is_signed=False):
     if is_signed:
         A = nx.adjacency_matrix(G).toarray()
         D = np.diag(np.abs(A).sum(axis=1))
-        L = D-A
+        L = D - A
         w = eigvals(L)
     else:
         L = nx.laplacian_matrix(G).todense()
@@ -601,38 +796,41 @@ def get_graph_lspectrum(G, is_signed=False):
     return L, w
 
 
-
 def get_graph_lspectrum_rw(G, is_signed=False):
     A = nx.adjacency_matrix(G).toarray()
     D = np.diag(np.abs(A).sum(axis=1))
-    L = np.eye(D.shape[0]) - fractional_matrix_power(D, -.5)@A@fractional_matrix_power(D, -.5)
+    L = np.eye(D.shape[0]) - fractional_matrix_power(
+        D, -0.5
+    ) @ A @ fractional_matrix_power(D, -0.5)
     if is_signed:
         w = eigvals(L)
     else:
         w = nx.laplacian_spectrum(G)
     return L, w
 
+
 def entropy(G, steps=600, is_signed=False, wTresh=1e-15, t1=-2, t2=5):
     N = G.number_of_nodes()
 
     L, w = get_graph_lspectrum_rw(G, is_signed=is_signed)
-    wSig = w[w>wTresh]
-    
-    t = np.logspace(t1,t2, int(steps))
+    wSig = w[w > wTresh]
+
+    t = np.logspace(t1, t2, int(steps))
     S = np.zeros(len(t))
     VarL = np.zeros(len(t))
-    
+
     for i, tau in enumerate(t):
         rhoTr = np.exp(-tau * w)
         Tr = np.nansum(rhoTr)
         rho = np.divide(rhoTr, Tr)
         S[i] = -np.nansum(rho * np.log(rho)) / np.log(N)
         avgrho = np.nansum(np.multiply(w, rhoTr)) / Tr
-        av2rho = np.nansum(np.multiply(np.multiply(w,w), rhoTr)) / Tr
-        VarL[i] = (av2rho - avgrho**2)
-        
-    dS = np.log(N) * np.diff(1-S)/np.diff(np.log(t))
-    return 1-S, dS, VarL, t
+        av2rho = np.nansum(np.multiply(np.multiply(w, w), rhoTr)) / Tr
+        VarL[i] = av2rho - avgrho**2
+
+    dS = np.log(N) * np.diff(1 - S) / np.diff(np.log(t))
+    return 1 - S, dS, VarL, t
+
 
 def averaged_Sm1(t1Sm1Avg):
     lenLs = t1Sm1Avg[0][0].__len__()
@@ -641,7 +839,7 @@ def averaged_Sm1(t1Sm1Avg):
     commonLs = np.logspace(np.log10(min(all_t1)), np.log10(max(all_t1)), lenLs)
     digitizedLs = []
     for tS in t1Sm1Avg:
-        digiTmp = np.digitize(tS[0], bins=commonLs)-1
+        digiTmp = np.digitize(tS[0], bins=commonLs) - 1
         np.add.at(avgSm1, digiTmp, tS[1])
         digitizedLs.extend(digiTmp)
     unique, counts = np.unique(digitizedLs, return_counts=True)
@@ -655,10 +853,11 @@ def averaged_Sm1(t1Sm1Avg):
         print(counts.shape, avgSm1.shape)
     return commonLs, avgSm1
 
+
 def lapl_dists(L, tau=1e-2, is_signed=False):
-    num = expm((-tau*L))
-    rho = num/np.trace(num)
-    Trho = np.copy(1. / rho)
+    num = expm((-tau * L))
+    rho = num / np.trace(num)
+    Trho = np.copy(1.0 / rho)
     Trho = np.maximum(Trho, Trho.T)
     np.fill_diagonal(Trho, 0)
     if is_signed:
@@ -668,20 +867,20 @@ def lapl_dists(L, tau=1e-2, is_signed=False):
         dists = squareform(Trho)
     return dists
 
+
 def MakeLinkageMatrix(G, tau=1e-2, is_signed=False, method="ward"):
     L, w = get_graph_lspectrum(G, is_signed)
     dists = lapl_dists(L, tau, is_signed)
     linkage_matrix1 = linkage(dists, method=method)
     tmax = linkage_matrix1[::, 2][-1]
-    linkage_matrix = linkage(dists/tmax, method=method)
+    linkage_matrix = linkage(dists / tmax, method=method)
     return linkage_matrix, w
 
 
 def Cspe_plot_ax(ax):
     ax.set_xlabel(r"$\tau$")
     ax.set_ylabel(r"$\log(N)\langle{C}\rangle$")
-    ax.set_xscale('log')
-
+    ax.set_xscale("log")
 
 
 def radial_correlation(field, neighbor_dict, central_index):
@@ -695,11 +894,19 @@ def radial_correlation(field, neighbor_dict, central_index):
         kth_order_neighbors = [n for n, d in neighbor_dict.items() if d == ord]
         for neighbor_index in kth_order_neighbors:
             correlations_node = []
-            correlation_node = np.mean((flattened_field[central_index] - mean_field) * flattened_field[neighbor_index]) / np.std(flattened_field) ** 2
+            correlation_node = (
+                np.mean(
+                    (flattened_field[central_index] - mean_field)
+                    * flattened_field[neighbor_index]
+                )
+                / np.std(flattened_field) ** 2
+            )
             correlations_node.append(correlation_node)
         correlation.append([ord, np.mean(correlations_node)])
 
     return correlation
+
+
 # Define a function to calculate the Local Moran's I for a given cell
 def local_moran_i(i, field_array, adj):
     N = len(field_array)
@@ -707,8 +914,8 @@ def local_moran_i(i, field_array, adj):
     x_i = field_array[i]
     x_j = field_array
     w_ij = adj[i]
-    m2 = np.sum((x_i-x_avg)**2)/N
-    I_i = (x_i-x_avg)/m2 * np.sum(w_ij*(x_j-x_avg))
+    m2 = np.sum((x_i - x_avg) ** 2) / N
+    I_i = (x_i - x_avg) / m2 * np.sum(w_ij * (x_j - x_avg))
     # # Extract the values of the cell and its neighbors
     # cell_value = field_array[row, col]
     # cell_neighbors = field_array[max(0, row - wndwS):min(n_rows, row + wndwS + 1),
@@ -722,10 +929,8 @@ def local_moran_i(i, field_array, adj):
     return I_i
 
 
-
-
 def ising_spinglass_pmJ_2D_Tcrit(L):
-    return L**(-1./2)
+    return L ** (-1.0 / 2)
 
 
 def make_animation_fromFrames(frames, savename="output.mp4", fps=10, dpi=200):
@@ -733,25 +938,28 @@ def make_animation_fromFrames(frames, savename="output.mp4", fps=10, dpi=200):
     ax = fig.add_subplot(111)
     # I like to position my colorbars this way, but you don't have to
     div = make_axes_locatable(ax)
-    cax = div.append_axes('right', '5%', '5%')
+    cax = div.append_axes("right", "5%", "5%")
     cv0 = frames[0]
-    im = ax.imshow(cv0) # Here make an AxesImage rather than contour
+    im = ax.imshow(cv0)  # Here make an AxesImage rather than contour
     cb = fig.colorbar(im, cax=cax)
+
     # tx = ax.set_title('Frame 0')
     def animate(i):
         arr = frames[i]
-        vmax     = np.max(arr)
-        vmin     = np.min(arr)
+        vmax = np.max(arr)
+        vmin = np.min(arr)
         im.set_data(arr)
         im.set_clim(vmin, vmax)
         # tx.set_text('Frame {0}'.format(i))
         # In this version you don't have to do anything to the colorbar,
         # it updates itself when the mappable it watches (im) changes
+
     print("# of frames: ", len(frames))
     ani = animation.FuncAnimation(fig, animate, frames=len(frames))
     fig.tight_layout()
-    writervideo = animation.FFMpegWriter(fps=fps) 
+    writervideo = animation.FFMpegWriter(fps=fps)
     ani.save(savename, writer=writervideo, dpi=dpi)
+
 
 #
 def flip_random_fract_edges(G: Graph, p: float):
@@ -767,31 +975,32 @@ def flip_random_fract_edges(G: Graph, p: float):
     """
     eset = G.edges()
     nedges = len(eset)
-    noflip = int(p*nedges)
+    noflip = int(p * nedges)
     #
     if noflip < 1:
-        print('p too small')
+        print("p too small")
         exit()
     rndsmpl = random.sample(range(nedges), noflip)
     #
     # all_weights = {e: 1 for e in eset}
-    neg_weights = {e: -1 for i,e in enumerate(eset) if i in rndsmpl}
+    neg_weights = {e: -1 for i, e in enumerate(eset) if i in rndsmpl}
     #
-    nx.set_edge_attributes(G, values=1, name='weight')
-    nx.set_edge_attributes(G, values=neg_weights, name='weight')
+    nx.set_edge_attributes(G, values=1, name="weight")
+    nx.set_edge_attributes(G, values=neg_weights, name="weight")
+
+
 #
 def flip_one_2dgraph(G, coord1, coord2):
     neg_weights = {(coord1, coord2): -1}
     #
-    nx.set_edge_attributes(G, values=neg_weights, name='weight')
-
+    nx.set_edge_attributes(G, values=neg_weights, name="weight")
 
 
 #
-lambdaPath_l2d = lambda geometry : f"l2d_{geometry}/"
-pltPath_l2d = lambda geometry : f"data/plot/{lambdaPath_l2d(geometry)}"
-datPath_l2d = lambda geometry : f"data/{lambdaPath_l2d(geometry)}"
+lambdaPath_l2d = lambda geometry: f"l2d_{geometry}/"
+pltPath_l2d = lambda geometry: f"data/plot/{lambdaPath_l2d(geometry)}"
+datPath_l2d = lambda geometry: f"data/{lambdaPath_l2d(geometry)}"
 setPath_ERp = "conf/ERp/"
 pltPath_Sm1C = "plot/Sm1_and_C/"
 #
-pflip_fmt = '.3g'
+pflip_fmt = ".3g"
