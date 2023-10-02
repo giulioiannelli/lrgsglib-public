@@ -17,7 +17,7 @@ import sys
 sys.setrecursionlimit(2500)
 
 
-side = 100
+side = 10
 eigenmode = 0
 #
 theLattice = Lattice2D(  #
@@ -43,6 +43,7 @@ f = open('outputs/p.txt', 'a+')
 for T in tqdm(np.linspace(0.001, 3, num=20)):
     magn_i = []
     for i in range(200):
+        print(f"temperature {T:.3g}, replica: {i}", end='\r')
         # termalizzazione
         _, _ = SLRG_obj.run_ising_dynamics(nstepsIsing=200, T=T)
         magn, _ = SLRG_obj.run_ising_dynamics(
@@ -60,6 +61,7 @@ for T in tqdm(np.linspace(0.001, 3, num=20)):
         # mediarla dopo la termalizzazione
         pass
     mVsT.append([T, np.mean(magn_i)])
+    print([T, np.mean(magn_i)])
     f.write("{}\t{}\n".format(T, np.mean(magn_i)))
 f.close()
     
