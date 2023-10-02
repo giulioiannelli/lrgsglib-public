@@ -556,78 +556,84 @@ class SignedLaplacianAnalysis:
         def neigh_weight_magn(m: NDArray, node_dict: dict) -> list:
             return [w["weight"] * m[nn] for nn, w in node_dict.items()]
 
-        def neigh_ene(m_i: float, neigh: list) -> float:
-            return -m_i * np.sum(neigh) / len(neigh)
+        def neigh_ene(neigh: list) -> float:
+            return - np.sum(neigh) / neigh.__len__()
 
         def calc_full_energy(m: NDArray, graph):
             """Energy of a given configuration"""
             return np.array(
                 [
-                    neigh_ene(m[i], neigh_weight_magn(m, dict(graph.H[i])))
+                    m[i] * neigh_ene(neigh_weight_magn(m, dict(graph.H[i])))
                     for i in range(graph.N)
                 ]
             ).sum()
 
-        import time
+        # import time
 
-        neigh_time1 = 0
-        neigh_time2 = 0
-        fliptime = 0
+        # neigh_time1 = 0
+        # neigh_time2 = 0
+        # fliptime = 0
 
         def flip_spin(node, m, graph, T):
-            nonlocal neigh_time1
-            nonlocal neigh_time2
-            nonlocal fliptime
+            # nonlocal neigh_time1
+            # nonlocal neigh_time2
+            # nonlocal fliptime
+            # nt1 = time.time()
             m_flp = -m[node]
-            nt1 = time.time()
             neigh = neigh_weight_magn(m, dict(graph.H[node]))
-            ent1 = time.time()
-            nt2 = time.time()
-            E_old = neigh_ene(m[node], neigh)
-            ent2 = time.time()
-            E_new = neigh_ene(m_flp, neigh)
+            # ent1 = time.time()
+            # nt2 = time.time()
+            neighEn = neigh_ene(neigh)
+            E_old = m[node] * neighEn
+            E_new = m_flp * neighEn
+            # ent2 = time.time()
+            # et1 = time.time()
             DeltaE = E_new - E_old
-            et1 = time.time()
             if DeltaE < 0:
                 m[node] = m_flp
             elif np.random.uniform() < boltzmann_factor(DeltaE, T):
                 m[node] = m_flp
-            net1 = time.time()
-            neigh_time1 += ent1 - nt1
-            neigh_time2 += ent2 - nt2
-            fliptime += net1 - et1
+            # net1 = time.time()
+            # neigh_time1 += ent1 - nt1
+            # neigh_time2 += ent2 - nt2
+            # fliptime += net1 - et1
 
+        flip_spin_all = np.vectorize(flip_spin)
+        flip_spin_all.excluded.add(1)
+        flip_spin_all.excluded.add(2)
+        flip_spin_all.excluded.add(3)
         #
-        s1 = time.time()
-        # a = np.random.randint(0, self.system.N, nstepsIsing*self.system.N)
-        t2_tot = 0.0
-        t3_tot = 0.0
+        # s1 = time.time()
+        # # a = np.random.randint(0, self.system.N, nstepsIsing*self.system.N)
+        # t2_tot = 0.0
+        # t3_tot = 0.0
 
         iterator = tqdm(range(nstepsIsing)) if tqdm_on else range(nstepsIsing)
         
         for _ in range(nstepsIsing):
             magn.append(np.sum(m))
             ene.append(calc_full_energy(m, self.system))
-            s2 = time.time()
+            # s2 = time.time()
             sample = rd.sample(self.system.H.nodes(), self.system.N)
-            e2 = time.time()
-            t2_tot += e2 - s2
-            s3 = time.time()
+            # e2 = time.time()
+            # t2_tot += e2 - s2
+            # s3 = time.time()
             for i in range(self.system.N):
                 # node =   # a[t*nstepsIsing + i]#sample[i]
                 flip_spin(sample[i], m, self.system, T)
-            e3 = time.time()
-            t3_tot += e3 - s3
+            # flip_spin_all(sample, m, self.system, T)
+            # e3 = time.time()
+            # t3_tot += e3 - s3
             if save_magnetization:
                 self.magn_array_save.append(np.array(m))
         self.magn_array = m
-        e1 = time.time()
-        print("time for full:", e1 - s1)
-        print("time for sampling:", t2_tot)
-        print("time for flipping:", t3_tot)
-        print("time for flipping_neig1:", neigh_time1)
-        print("time for flipping_neig2:", neigh_time2)
-        print("time for flipping_flip:", fliptime)
+        # e1 = time.time()
+        # print("time for full:", e1 - s1)
+        # print("time for sampling:", t2_tot)
+        # print("time for flipping:", t3_tot)
+        # print("time for flipping_neig1:", neigh_time1)
+        # print("time for flipping_neig2:", neigh_time2)
+        # print("time for flipping_flip:", fliptime)
         return magn, ene
 
     #
