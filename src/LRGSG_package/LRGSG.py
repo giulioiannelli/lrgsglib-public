@@ -26,8 +26,10 @@ from itertools import product
 from matplotlib.patches import Circle, Rectangle
 from matplotlib.ticker import ScalarFormatter
 from networkx.classes.graph import Graph
+from numba import jit
 from numpy import inf, ndarray
 from numpy.linalg import eigvals, eigvalsh
+from numpy.typing import NDArray
 from scipy import stats
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
@@ -56,6 +58,7 @@ __all__ = [
     "np",
     "nx",
     "plt",
+    "tqdm",
     "SignedLaplacianAnalysis",
     "lsp_read_values",
     "FullyConnected",
@@ -482,7 +485,43 @@ class SignedLaplacianAnalysis:
         self.status_array = x
 
     #
-    def run_ising_dynamics(self, T=0.1, nstepsIsing=100, IsingIC="uniform"):
+    class IsingDynamics:
+       def __init__(self, N: int, T: float, G: Graph) -> None:
+            self.T = T
+            self.N = N
+            pass
+       def boltzmann_factor(self, energy: float) -> float:
+            return np.exp(-energy / self.T)
+       #
+       def neigh_weight_magn(self, m: NDArray, node: int) -> list:
+            node_dict = dict(self.G[node])
+            return [w["weight"] * m[nn] for nn, w in node_dict.items()]
+       #
+       def neigh_ene(self, m_i: float, neigh: list) -> float:
+            return -m_i * np.sum(neigh) / len(neigh)
+       #
+       def flip_spin(self, node, m, graph, ):
+            m_flp = -m[node]
+            neigh = self.neigh_weight_magn(m, dict(graph.H[node]))
+            E_old = self.neigh_ene(m[node], neigh)
+            E_new = self.neigh_ene(m_flp, neigh)
+            DeltaE = E_new - E_old
+            if DeltaE < 0:
+                m[node] = m_flp
+            elif np.random.uniform() < self.boltzmann_factor(DeltaE):
+                m[node] = m_flp
+       #
+       def calc_full_energy(self, m: NDArray):
+            """Energy of a given configuration"""
+            return np.array(
+                [
+                    self.neigh_ene(m[node], self.neigh_weight_magn(m, node))
+                    for node in range(self.N)
+                ]
+            ).sum()
+
+       
+    def run_ising_dynamics(self, T=0.1, nstepsIsing=100, IsingIC="uniform", save_magnetization=False):
         magn = []
         ene = []
         if IsingIC == "uniform":
@@ -490,29 +529,27 @@ class SignedLaplacianAnalysis:
         elif IsingIC == "ground_state":
             bin_eigV = np.where((self.eigV[0] < 0))[0]
             m = [1 if i in bin_eigV else -1 for i in range(self.system.N)]
-
+        if save_magnetization:
+            self.magn_array_save = []
         #
         def boltzmann_factor(energy, temp):
             return np.exp(-energy / temp)
-
-        def neigh_weight_magn(i, graph):
-            return [w["weight"] * m[nn] for nn, w in dict(graph.H[i]).items()]
-
-        def neigh_ene(m_i, neigh):
+        def neigh_weight_magn(m: NDArray, node_dict: dict) -> list:
+            return [w["weight"] * m[nn] for nn, w in node_dict.items()]
+        def neigh_ene(m_i: float, neigh: list) -> float:
             return -m_i * np.sum(neigh) / len(neigh)
 
-        def calc_full_energy(m, graph):
+        def calc_full_energy(m: NDArray, graph):
             """Energy of a given configuration"""
             return np.array(
                 [
-                    neigh_ene(m[i], neigh_weight_magn(i, graph))
+                    neigh_ene(m[i], neigh_weight_magn(m, dict(graph.H[i])))
                     for i in range(graph.N)
                 ]
             ).sum()
-
         def flip_spin(node, m, graph, T):
             m_flp = -m[node]
-            neigh = neigh_weight_magn(node, graph)
+            neigh = neigh_weight_magn(m, dict(graph.H[node]))
             E_old = neigh_ene(m[node], neigh)
             E_new = neigh_ene(m_flp, neigh)
             DeltaE = E_new - E_old
@@ -528,8 +565,10 @@ class SignedLaplacianAnalysis:
             ene.append(calc_full_energy(m, self.system))
             sample = rd.sample(self.system.H.nodes(), self.system.N)
             for i in range(self.system.N):
-                node = sample[i]  # a[t*nstepsIsing + i]#sample[i]
-                flip_spin(node, m, self.system, T)
+                # node =   # a[t*nstepsIsing + i]#sample[i]
+                flip_spin(sample[i], m, self.system, T)
+            if save_magnetization:
+                self.magn_array_save.append(np.array(m))
         self.magn_array = m
         return magn, ene
 
