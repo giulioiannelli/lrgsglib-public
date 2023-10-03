@@ -543,9 +543,14 @@ class SignedLaplacianAnalysis:
 
         if IsingIC == "uniform":
             m = np.random.choice([-1, 1], size=self.system.N)
-        elif IsingIC == "ground_state":
+        elif IsingIC.startswith("ground_state"):
             bin_eigV = np.where((self.eigV[0] < 0))[0]
-            m = [1 if i in bin_eigV else -1 for i in range(self.system.N)]
+            m = np.array([1 if i in bin_eigV else -1 for i in range(self.system.N)])
+            if len(IsingIC) > len("ground_state"):
+                IICnoise = float(IsingIC.split("_")[-1])
+                if IICnoise < 0 or IICnoise > 1:
+                    print("error")
+                m = m*np.random.choice([-1, 1], size=self.system.N, p=[IICnoise, 1-IICnoise])
         if save_magnetization:
             self.magn_array_save = []
 
