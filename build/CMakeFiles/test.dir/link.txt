@@ -1,0 +1,1 @@
+/usr/bin/gcc -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -pipe -O2 -DNDEBUG -g -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now -rdynamic CMakeFiles/test.dir/test.c.o -o test  libSFMT.a 

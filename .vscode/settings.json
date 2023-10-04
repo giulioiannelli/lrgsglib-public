@@ -6,5 +6,14 @@
     "black-formatter.args": [
         "--experimental-string-processing",
         "--line-length=80"
-    ]
+    ],
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc-12",
+    "files.associations": {
+        "Makefile": "c",
+        "lrsg_utils.h": "c",
+        "string.h": "c",
+        "lrgsg_customs.h": "c",
+        "prova.h": "c"
+    },
+    "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT"
 }

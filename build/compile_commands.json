@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/build",
+  "command": "/usr/bin/gcc -DSFMT_MEXP=19937  -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -pipe -O2 -DNDEBUG -g -o CMakeFiles/SFMT.dir/SFMT.c.o -c /home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT/SFMT.c",
+  "file": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT/SFMT.c"
+},
+{
+  "directory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/build",
+  "command": "/usr/bin/gcc -DSFMT_MEXP=19937  -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -pipe -O2 -DNDEBUG -g -o CMakeFiles/test.dir/test.c.o -c /home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT/test.c",
+  "file": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT/test.c"
+}
+]
