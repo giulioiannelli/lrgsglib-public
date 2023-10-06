@@ -39,4 +39,11 @@ extern void __wait_childs(void);
 
 char *rand_string(char *str, size_t size);
 
+typedef double *double_p;
+
+
+extern void __make_adj_from_tmp(size_t i, size_t j, double tmp, double_p **adj);
+extern void __fill_adj__(FILE **f, size_t N, double_p **adj);
+
+
 #endif /* __LRSGLIB_H_INC__ */

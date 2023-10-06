@@ -14,17 +14,27 @@ int main(int argc, char *argv[])
 {
     __set_seed_SFMT();
     
-    FILE *f_init;
+    FILE *f_init, *f_elst;
     int8_t *s;
-    size_t N;
+    size_t N = strtozu(argv[1]);
+    double_p *adj;
 
+    s = __chMalloc(N * sizeof(*s));
+    __fopen(&f_init, argv[2], "rb"); //argv[2]: init_magn_randomstring
+    __fread_check(fread(s, sizeof(*s), N, f_init), N);
 
-    char ss[10];
-    rand_string(ss, 10);;
-    // __fopen(f_init, "init_magn", "rb")
-    // printf("%d\n", addition(2, 2));
+    adj = __chMalloc(N * sizeof(*adj));
+    __fopen(&f_elst, argv[3], "rb"); //argv[2]: init_magn_randomstring
 
-    // s = __chMalloc(100);
+    for (size_t i = 0; i < N; i++)
+    {
+        adj[i] = __chMalloc(N * sizeof(**adj));
+    }
+
+    __fill_adj__(&f_elst, N, &adj);
+
+    fclose(f_init);
+    fclose(f_elst);
 
 }
 

@@ -1,5 +1,10 @@
+import pickle
+import random
+import scipy
+
 import networkx as nx
 import numpy as np
+import scipy.sparse as scsp
 
 from .LRGSG_const import *
 from .LRGSG_errwar import *
@@ -8,44 +13,181 @@ from .LRGSG_utils import round_sigfig_n
 from matplotlib.colors import Colormap
 from networkx.classes.graph import Graph
 from .nx_patches import signed_spectral_layout
+from scipy.sparse import csr_array
 from typing import Union
 
 
 class SignedGraph():
     p_c = None
     lsp = None
-    def __init__(self, G: Graph, lsp_mode: str = 'intervals'):
-        self.G = G
+    
+    def __init__(self, G: Graph, lsp_mode: str = 'intervals', stdFname: str = "graph", import_on: bool = False,
+                 pflip: float = 0.):
         self.lsp_mode = lsp_mode
+        self.stdFname = stdFname
+        self.import_on = import_on
+        if import_on:
+            self.G = self.__init_graph_fromfile__()
+        else:
+            self.G = G
+        self.init_sgraph()
+        self.pflip = pflip
+        self.nflip = int(self.pflip * self.Ne)
+        self.randsample = random.sample(range(self.Ne), self.nflip)
+
     #
-    def init_sgraph(self):
-        self.N = self.G.number_of_nodes()
-        self.Ne = self.G.number_of_edges()
-        self.esetG = list(self.G.edges())
-        self.init_H_graph()
+    def __init_graph_fromfile__(self):
+        return pickle.load(open(f'src/LRGSG_package/tmp_stuff/{self.stdFname}.pickle', 'rb'))
     #
-    def init_H_graph(self):
-        self.H = nx.convert_node_labels_to_integers(self.G)
-        self.upd_H_graph()
+    def init_weights(self):
+        nx.set_edge_attributes(self.G, values=1, name="weight")
     #
-    def upd_H_graph(self):
-        self.esetH = list(self.H.edges())
-        self.posH = nx.get_node_attributes(self.H, 'pos')
-        self.node_map = dict(zip(self.G, self.H))
-        self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
-        self.number_of_negative_links()
+    def number_of_negative_links(self):
+        self.Ne_n = (np.array(list(
+            nx.get_edge_attributes(self.H, 'weight').values())) < 0).sum()
     #
     def upd_G_graph(self):
         self.invnode_map = {v: k for k, v in self.node_map.items()}
         self.invedge_map = {v: k for k, v in self.edge_map.items()}
         self.G = nx.relabel_nodes(self.H, self.invnode_map)
-        self.posG = nx.get_node_attributes(self.G, 'pos')
         self.esetG = list(self.G.edges())
         self.number_of_negative_links()
     #
-    def number_of_negative_links(self):
-        self.Ne_n = (np.array(list(
-            nx.get_edge_attributes(self.H, 'weight').values())) < 0).sum()
+    def upd_H_graph(self):
+        self.esetH = list(self.H.edges())
+        self.node_map = dict(zip(self.G, self.H))
+        self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
+        self.number_of_negative_links()
+    #
+    def init_H_graph(self):
+        self.H = nx.convert_node_labels_to_integers(self.G)
+        self.upd_H_graph()
+
+    def init_sgraph(self):
+        self.N = self.G.number_of_nodes()
+        self.Ne = self.G.number_of_edges()
+        self.esetG = list(self.G.edges())
+        self.init_weights()
+        self.init_H_graph()
+    #
+    def adjacency_matrix(self, weight: str = "weight"):
+        return nx.to_scipy_sparse_array(self.H, weight=weight, format="csr")
+    #
+    def degree_matrix(self, A: csr_array) -> csr_array:
+        return csr_array(scsp.spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
+    #
+    def absolute_degree_matrix(self, A: csr_array) -> csr_array:
+        return csr_array(
+            scsp.spdiags(abs(A).sum(axis=1), 0, *A.shape, format="csr")
+        )
+    #
+    def laplacian_matrix(self) -> csr_array:
+        """Returns the signed Laplacian matrix of G.
+        The graph Laplacian is the matrix L = D - A, where
+        A is the adjacency matrix and D is the diagonal matrix of node degrees
+
+        Returns
+        -------
+        L : SciPy sparse array
+        The Laplacian matrix of G.
+        """
+        return self.Deg - self.Adj
+    #
+    def signed_laplacian(self) -> csr_array:
+        """Returns the signed Laplacian matrix of G.
+        The graph Laplacian is the matrix L = |D| - A, where
+        A is the adjacency matrix and |D| is the diagonal matrix of absolute
+        values of node degrees
+
+        Returns
+        -------
+        L : SciPy sparse array
+        The Laplacian matrix of G.
+        """
+        return self.sDeg - self.Adj
+    #
+    def upd_graph_matrices(self, on_graph="H"):
+        if on_graph == "G":
+            motherNx = self.G
+        elif on_graph == "H":
+            motherNx = self.H
+        self.Adj = self.adjacency_matrix()
+        self.Deg = self.degree_matrix(self.Adj)
+        self.sDeg = self.absolute_degree_matrix(self.Adj)
+        self.Lap = self.laplacian_matrix()
+        self.sLp = self.signed_laplacian()
+    #
+    def flip_sel_edges(self, neg_weights_dict=None, on_graph="H"):
+        """Flips a specific edges of a graph G."""
+        #
+        if on_graph == "G":
+            if neg_weights_dict is None:
+                neg_weights_dict = self.DEFAULT_NEG_WEIGHTS_DICT_G
+            nx.set_edge_attributes(
+                self.G, values=neg_weights_dict, name="weight"
+            )
+            self.upd_G_graph()
+            self.upd_H_graph()
+        elif on_graph == "H":
+            if neg_weights_dict is None:
+                neg_weights_dict = self.DEFAULT_NEG_WEIGHTS_DICT_H
+            nx.set_edge_attributes(
+                self.H, values=neg_weights_dict, name="weight"
+            )
+            self.upd_H_graph()
+            self.upd_G_graph()
+        self.upd_graph_matrices()
+    #
+    def check_pflip(self):
+        if self.nflip < 1:
+            raise NflipError(
+                """The probability of flipping an edge times the 
+                             number of edges is < 1, then no edges would be
+                             flipped. Skipping the analysis for this value."""
+            )
+    #
+    def flip_random_fract_edges(self, on_graph="H"):
+        """Flips a fraction p of edges (+1 to -1) of a graph G."""
+
+        #
+        try:
+            self.check_pflip()
+        except NflipError:
+            return None
+        if on_graph == "G":
+            eset = self.esetG
+        elif on_graph == "H":
+            eset = self.esetH
+        neg_weights = {
+            e: -1 for i, e in enumerate(eset) if i in self.randsample
+        }
+        self.flip_sel_edges(neg_weights_dict=neg_weights, on_graph=on_graph)
+    #
+    def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
+        if MODE_lapspec == "networkx":
+            self.slspectrum = nx.laplacian_spectrum(self.system.G)
+        elif MODE_lapspec == "numpy":
+            self.slspectrum = np.linalg.eigvalsh(self.sLp.toarray())
+    #
+    def compute_k_eigvV(self, MODE_dynspec: str = "scipy", howmany: int = 1):
+        if MODE_dynspec == "scipy":
+            self.eigv, self.eigV = scsp.linalg.eigsh(
+                self.sLp.astype(np.float64), k=howmany, which="SM"
+            )
+            self.eigV = self.eigV.T
+    #
+    def bin_eigV(self, which=0):
+        return np.sign(self.eigV[which])
+    #
+    def rescaled_signed_laplacian(self, MODE: str = 'field'):
+        if MODE == 'field':
+            self.resLp = self.sLp - self.eigv[0] * scsp.identity(self.N)
+        elif MODE == "double":
+            self.resLp = self.sLp - np.array([self.eigv[0]])
+            new_eigv0 = scipy.linalg.eigvalsh(
+                self.resLp.astype(np.float64), subset_by_index=[0, 0]
+            )
+            self.resLp = self.resLp - new_eigv0 * np.identity(self.N)
     #
     def lsp_selection(self, custom_list):
         if self.lsp_mode == 'custom':
@@ -84,12 +226,16 @@ class SignedGraph():
               'stop': 1, 'num': num_high, 'rsf': 1},
         )
         return d
+    # 
+    def export_graph_pickle(self):
+        # save graph object to file
+        pickle.dump(self.G, open(f"src/LRGSG_package/tmp_stuff/{self.stdFname}.pickle", 'wb'))
 
 class FullyConnected(SignedGraph):
     def __init__(self, side1: int, anigemb: str = 'sle'):
         self.side1 = side1
         self.G = nx.complete_graph(self.side1)
-        super().__init__(self.G)
+        super(FullyConnected, self).__init__(self.G)
         self.init_graph()
         self.pbc = True
         self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG)//2]: -1}
@@ -98,7 +244,7 @@ class FullyConnected(SignedGraph):
     
     def init_graph(self):
         self.H = self.G
-        self.init_sgraph()
+        self.upd_graph_matrices()
     
     def init_paths(self):
         self.lambdaPath = f"fc/"
@@ -138,7 +284,7 @@ class FullyConnected(SignedGraph):
 class Lattice2D(SignedGraph):
     #
     def __init__(self, side1: int, geometry: str = DEFAULT_LATTICE2D_GEOMETRY, 
-                 side2: int = 0, pbc: bool = True, fbc_val: float = 1.) -> None:
+                 side2: int = 0, pbc: bool = True, fbc_val: float = 1., **kwargs) -> None:
         try: 
             self.geometry = geometry
             if geometry not in DEFLIST_LATTICE2D_GEOMETRIES:
@@ -161,7 +307,7 @@ class Lattice2D(SignedGraph):
         self.pbc = pbc
         self.fbc_val = fbc_val
         self.G = self.lattice_selection()
-        super().__init__(self.G)
+        super(Lattice2D, self).__init__(self.G, **kwargs)
         self.init_graph()
         self.init_paths()
         self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG)//2]: -1}
@@ -171,7 +317,7 @@ class Lattice2D(SignedGraph):
         if self.geometry == 'squared':
             self.posG = dict(zip(self.G, self.G))
             nx.set_node_attributes(self.G, values=self.posG, name='pos')
-        self.init_sgraph()
+        self.upd_graph_matrices()
     #
     def init_paths(self):
         self.lambdaPath = f"l2d_{self.geometry}/"

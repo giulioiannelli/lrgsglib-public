@@ -1,3 +1,4 @@
+import string
 import numpy as np
 #
 from .LRGSG_const import *
@@ -476,3 +477,7 @@ def width_interval(a, b):
 
     """
     return np.abs(a - b)
+
+
+def randstring(size=10, chars=string.ascii_lowercase + string.ascii_uppercase + string.digits):
+    return ''.join(np.random.choice(list(chars), size))

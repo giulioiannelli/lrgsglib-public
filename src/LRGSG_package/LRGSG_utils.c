@@ -353,8 +353,31 @@ char *rand_string(char *str, size_t size)
 }
 
 
+extern void __make_adj_from_tmp(size_t i, size_t j, double tmp, double_p **adj)
+{
+    *(*(*adj + j) + i) = tmp;
+    *(*(*adj + i) + j) = *(*(*adj + j) + i);
+}
+
+extern void __fill_adj__(FILE **f, size_t N, double_p **adj)
+{
+    double tmp;
+    for (size_t i = 0; i < N; i++)
+    {
+        for (size_t j = i; j < N; j++)
+        {
+            __fread_check(fread(&tmp, sizeof(tmp), 1, *f), 1);
+            __make_adj_from_tmp(i, j, tmp, adj);
+        }
+    }
+}
 
 
+// extern void __make_adj_fromfile(size_t i, size_t j, double tmp, double_p **adj)
+// {
+//     *(*(*adj + i) + j) = (double) tmp;
+//     *(*(*adj + j) + i) = *(*(*adj + i) + j);
+// }
 
 
 // /* DICTIONARY IMPLEMENTATION ************************************************ */
