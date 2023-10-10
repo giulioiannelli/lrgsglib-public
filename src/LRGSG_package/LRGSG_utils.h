@@ -13,6 +13,10 @@
 #define __LRSGLIB_H_INC__
 
 /* utils.c */
+extern double sum_vs(size_t n, double *v);
+extern double sum_vs_2(size_t n, double *v);
+
+
 extern uint32_t softplus_u32(int32_t x);
 
 extern bool strsme(const char *str1, const char *str2);
@@ -40,7 +44,8 @@ extern void __wait_childs(void);
 char *rand_string(char *str, size_t size);
 
 typedef double *double_p;
-
+typedef size_t *size_tp;
+typedef int8_t *spin_tp; 
 
 extern void __make_adj_from_tmp(size_t i, size_t j, double tmp, double_p **adj);
 extern void __fill_adj__(FILE **f, size_t N, double_p **adj);

@@ -9,6 +9,34 @@
 #include "LRGSG_utils.h"
 #include "LRGSG_customs.h"
 #include "sfmtrng.h"
+
+//
+/** perform the sum of a floating point array 
+ * @param n (size_t) the number of vector components
+ * @param v (double *) the floaring point array
+ * @return (double) sum(v)
+ */
+extern double sum_vs(size_t n, double *v)
+{
+    double s = 0.;
+    for (size_t i = 0; i < n; i++)
+        s += v[i];
+    return s;
+}
+
+/** perform the sum of squared components of an array
+ * @param n (size_t) the number of vector components
+ * @param v (double *) the array
+ * @return (double) sum(v)
+ */
+extern double sum_vs_2(size_t n, double *v)
+{
+    double s = 0.;
+    for (size_t i = 0; i < n; i++)
+        s += v[i] * v[i];
+    return s;
+}
+
 /**
  * @brief get the ReLU(x) (or softplus) of input unsigned 32-bit integer.
  * 

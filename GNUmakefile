@@ -13,7 +13,7 @@ FILES.o = ${FILES.c:.c=.o}
 PATHS.c := $(addprefix $(PATH_SRC), $(SRCCFILES.c)) $(addprefix $(PATH_SFMT), $(SFMTFILES.c))
 
 # create directories
-DIRS := src/LRGSG_package/dump 
+DIRS := data/l2d_sq_ising/ src/LRGSG_package/dump
 $(shell mkdir -p $(DIRS))
 
 PROGRAMN  = $(addprefix $(PATH_SRC), IsingSimulator)

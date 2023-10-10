@@ -54,22 +54,23 @@ from .LRGSG_errwar import *
 from .LRGSG_plots import *
 from .LRGSG_utils import *
 
-np.random.seed(0)
-random.seed(0)
+# np.random.seed(0)
+# random.seed(0)
+sys.setrecursionlimit(10000)
 
 #
-__all__ = [
-    "np",
-    "nx",
-    "plt",
-    "tqdm",
-    "flip_random_fract_edges",
-    "SignedLaplacianAnalysis",
-    "lsp_read_values",
-    "FullyConnected",
-    "Lattice2D",
-]
-
+# __all__ = [
+#     "np",
+#     "nx",
+#     "plt",
+#     "tqdm",
+#     "flip_random_fract_edges",
+#     "SignedLaplacianAnalysis",
+#     "IsingDynamics",
+#     "lsp_read_values",
+#     "FullyConnected",
+#     "Lattice2D",
+# ]
 
 #
 # renormalization group for heterogenous network functions
@@ -89,7 +90,7 @@ class SignedLaplacianAnalysis:
     #
     def __init__(
         self,
-        system,
+        system: SignedGraph,
         is_signed: bool = True,
         steps: int = DEFAULT_ENTROPY_STEPS,
         t1: float = -2,
@@ -113,19 +114,21 @@ class SignedLaplacianAnalysis:
         self.t_steps = t_steps
         self.no_obs = no_obs
 
-
     #
     def timescale_for_S(self) -> ndarray:
         return np.logspace(self.t1, self.t2, self.steps)
+
     #
     def timescale_for_C(self) -> ndarray:
         return 0.5 * (self.tTsS[1:] + self.tTsS[:-1])
+
     #
     def init_computation(self):
         if self.system.slspectrum is None:
             self.system.compute_laplacian_spectrum()
         self.tTsS = self.timescale_for_S()
         self.tTsC = self.timescale_for_C()
+
     #
     def compute_entropy(self) -> None:
         w = self.system.slspectrum
@@ -141,11 +144,13 @@ class SignedLaplacianAnalysis:
             VarL[i] = av2rho - avgrho**2
         self.Sm1 = 1 - S
         self.VarL = VarL
+
     #
     def compute_Cspe(self) -> None:
         if self.Sm1 is None:
             self.compute_entropy()
         self.Cspe = np.log(self.system.N) * dv(self.Sm1, np.log(self.tTsS))
+
     #
     def compute_taumax_array(self) -> None:
         if self.Cspe is None:
@@ -154,6 +159,7 @@ class SignedLaplacianAnalysis:
         maxIdxCondition = self.Cspe[maxIdx] > self.maxThresh
         self.taumax = self.tTsC[maxIdx[maxIdxCondition]]
         self.taumax0 = self.tTsC[maxIdx[maxIdxCondition][0]]
+
     #
     def laplacian_dynamics_init(
         self,
@@ -266,15 +272,17 @@ class SignedLaplacianAnalysis:
         self.frames_dynsys = []
         #
         x = self.field
+
         #
         def stop_conditions_lapdyn(self, x_tm1, xx):
             ERRTOL = self.ACCERR_LAPL_DYN * np.ones(self.system.N)
             C1 = (np.abs(x_tm1 / x_tm1.max() - xx / xx.max()) < ERRTOL).all()
             C2 = np.abs(np.log10(np.max(np.abs(xx)))) > self.MAXVAL_LAPL_DYN
             return C1, C2
+
         #
         if rescaled:
-            if rescaled == 'dynamic':
+            if rescaled == "dynamic":
                 lap = lambda t: np.exp(-self.eigv[0] * t) * self.sLp
             else:
                 self.system.rescaled_laplacian(rescaled)
@@ -283,26 +291,34 @@ class SignedLaplacianAnalysis:
             lap = lambda _: self.sLp
         #
         if not self.system.pbc:
+
             def set_bc(self):
                 x[self.fixed_border_idxs] = self.fbc_val
+
         else:
+
             def set_bc():
                 pass
+
         #
         if saveFrames:
+
             def save_frames(self, x, t):
                 if t in self.sampling:
                     self.frames_dynsys.append(x)
+
         else:
+
             def save_frames(*_):
                 pass
+
         #
         print("Beginning Laplacian dynamics.")
         #
         for t in tqdm(range(1, self.simulationTime)):
             save_frames(self, x, t)
             x_tm1 = x
-            x = x - self.Deltat * lap(t) @ x # + np.sqrt(Deltat)*noise 
+            x = x - self.Deltat * lap(t) @ x  # + np.sqrt(Deltat)*noise
             set_bc()
             C1, C2 = stop_conditions_lapdyn(self, x_tm1, x)
             if C2 or C1:
@@ -312,159 +328,6 @@ class SignedLaplacianAnalysis:
                     print("Max val. reached.")
                 break
         self.field = x
-    #
-    class IsingDynamics:
-        magn = []
-        ene = []
-        magn_array_save = []
-        Ising_clusters = []
-        def __init__(self, system, T: float,  IsingIC: str,  nstepsIsing: int = 100, save_magnetization: bool = False,) -> None:
-            self.system = system
-            self.T = T
-            self.IsingIC = IsingIC
-            self.nstepsIsing = nstepsIsing
-            self.save_magnetization=save_magnetization
-            pass
-
-        def boltzmann_factor(self, energy: float) -> float:
-            return np.exp(-energy / self.T)
-        #
-        def neigh_weight_magn(self, node: int) -> list:
-            node_dict = dict(self.system.H[node])
-            return [w["weight"] * self.m[nn] for nn, w in node_dict.items()]
-        #
-        def neigh_ene(self, neigh: list) -> float:
-            return np.sum(neigh) / len(neigh)
-        #
-        def flip_spin(self, node: int):
-            self.m[node] = -self.m[node]
-
-        def metropolis(self, node):
-            neigh = self.neigh_weight_magn(node)
-            neighene = self.neigh_ene(neigh)
-            E_old = -self.m[node] * neighene
-            E_new = +self.m[node] * neighene
-            DeltaE = E_new - E_old
-            if DeltaE < 0:
-                self.flip_spin(node)
-            elif np.random.uniform() < self.boltzmann_factor(DeltaE):
-                self.flip_spin(node)
-
-        #
-        def calc_full_energy(self):
-            return np.array(
-                [
-                    self.neigh_ene(self.neigh_weight_magn(node))
-                    for node in range(self.system.N)
-                ]
-            ).sum()
-        #
-        def init_ising_dynamics(self):
-            if self.IsingIC == "uniform":
-                self.m = np.random.choice([-1, 1], size=self.system.N)
-            elif self.IsingIC.startswith("ground_state"):
-                self.m = np.array([1 if i in self.system.bin_eigV else -1 for i in range(self.system.N)])
-                if len(self.IsingIC) > len("ground_state"):
-                    IICnoise = float(self.IsingIC.split("_")[-1])
-                    if IICnoise < 0 or IICnoise > 1:
-                        print("error")
-                    self.m = self.m*np.random.choice([-1, 1], size=self.system.N, p=[IICnoise, 1-IICnoise])
-        #
-        def run(self, MODE = 'py'):
-            if MODE == 'C':
-                self.id_string_isingdyn = randstring()
-                output_file = open(f"src/LRGSG_package/tmp_stuff/m_{self.id_string_isingdyn}.bin", 'wb')
-                self.m.tofile(output_file)
-                call(["./spa", "args", "to", "spa"])
-                # execute C program,  calling with proper arguments
-                return
-            metropolis_1step = np.vectorize(self.metropolis, excluded='self')
-            if self.save_magnetization:
-                def save_magn_array():
-                    self.magn_array_save.append(self.m)
-            else:
-                def save_magn_array():
-                    pass
-            sample = rd.sample(list(self.system.H.nodes()), self.system.N)
-            for _ in range(self.nstepsIsing):
-                self.magn.append(np.sum(self.m))
-                self.ene.append(self.calc_full_energy())
-                # for i in range(self.system.N):
-                #     self.metropolis(sample[i])
-                metropolis_1step(sample)
-                save_magn_array()
-        #
-        def find_ising_clusters(self):
-            if self.Ising_clusters:
-                print("exit function")
-                return
-            lnodes = list(self.system.H.nodes())
-            lnodes_tmp = lnodes[:]
-            #
-            self.system.compute_k_eigvV()
-            eigVbin = self.system.eigV.T[:, 0]
-            eigVbin[eigVbin >= 0] = +1
-            eigVbin[eigVbin < 0] = -1
-
-            def recursive_search(seed, magn_i, clustertmp):
-                neighs = get_kth_order_neighbours(self.system.H, seed, 1)
-                neighs = np.array([e for e in neighs if e not in set(clustertmp)])
-                if not neighs.size:
-                    return
-                samecluster = np.array(eigVbin[neighs] == magn_i)
-                if not samecluster.any():
-                    return
-                neighs_samecluster = list(neighs[samecluster])
-                clustertmp.extend(neighs_samecluster)
-                for ss in neighs_samecluster:
-                    recursive_search(ss, magn_i, clustertmp)
-
-            #
-            for i in lnodes:
-                if i not in lnodes_tmp:
-                    continue
-                if not lnodes_tmp:
-                    break
-                #
-                clustertmp = []
-                clustertmp.extend([i])
-                #
-                recursive_search(i, eigVbin[i], clustertmp)
-                lnodes_tmp = [e for e in lnodes_tmp if e not in set(clustertmp)]
-                self.Ising_clusters.append(clustertmp)
-            self.numIsing_cl = len(self.Ising_clusters)
-            self.biggestIsing_clidx = np.argmax(
-                [len(c) for c in self.Ising_clusters]
-            )
-            self.biggestIsing_cl = self.Ising_clusters[self.biggestIsing_clidx]
-        #
-        def mapping_nodes_to_clusters(self):
-            if not self.Ising_clusters:
-                self.find_ising_clusters()
-            loc = [x for x in range(len(self.Ising_clusters))]
-            self.loc = loc
-            node_with_inherclust = [
-                [[j, loc[i]] for j in clus]
-                for i, clus in enumerate(self.Ising_clusters)
-            ]
-            self.node_with_inherclust = node_with_inherclust
-            node_inherclust_flat = [i for j in node_with_inherclust for i in j]
-            self.node_inherclust_flat = node_inherclust_flat
-            sorted_list = sorted(node_inherclust_flat, key=lambda x: x[0])
-            self.sorted_list = sorted_list
-            result_array = np.empty(
-                (self.system.side1, self.system.side2), dtype=object
-            )
-            self.result_array = result_array
-
-            # Fill the result_array with tuples from sorted_list
-            for i, sublist in enumerate(sorted_list):
-                row, col = divmod(
-                    i, self.system.side1
-                )  # Calculate the row and column index
-                result_array[row, col] = sublist[1]
-            # self.distr = np.unique(result_array, return_counts=True)
-            self.mapping = result_array
 
     #
     def rescaled_field_regularization(self):
@@ -489,12 +352,7 @@ class SignedLaplacianAnalysis:
         ani.save(
             f"{savename}{eMP4}", writer=animation.FFMpegWriter(fps=fps), dpi=dpi
         )
-        plt.close(fig)        
-
-
-
-
-
+        plt.close(fig)
 
 
 #
@@ -518,6 +376,200 @@ def lsp_read_values(folder_path, fpattern="Sm1_avg_p", sort=True):
     if sort:
         values.sort()
     return np.array(values)
+
+
+class IsingDynamics:
+    magn = []
+    ene = []
+    magn_array_save = []
+    Ising_clusters = []
+
+    def __init__(
+        self,
+        system: SignedGraph,
+        T: float,
+        IsingIC: str,
+        nstepsIsing: int = 100,
+        save_magnetization: bool = False,
+    ) -> None:
+        self.system = system
+        self.T = T
+        self.IsingIC = IsingIC
+        self.nstepsIsing = nstepsIsing
+        self.save_magnetization = save_magnetization
+        pass
+
+    def boltzmann_factor(self, energy: float) -> float:
+        return np.exp(-energy / self.T)
+
+    #
+    def neigh_weight_magn(self, node: int) -> list:
+        node_dict = dict(self.system.H[node])
+        return [w["weight"] * self.s[nn] for nn, w in node_dict.items()]
+
+    #
+    def neigh_ene(self, neigh: list) -> float:
+        return np.sum(neigh) / len(neigh)
+
+    #
+    def flip_spin(self, node: int):
+        self.s[node] = -self.s[node]
+
+    #
+    def metropolis(self, node):
+        neigh = self.neigh_weight_magn(node)
+        neighene = self.neigh_ene(neigh)
+        E_old = -self.s[node] * neighene
+        E_new = +self.s[node] * neighene
+        DeltaE = E_new - E_old
+        if DeltaE < 0:
+            self.flip_spin(node)
+        elif np.random.uniform() < self.boltzmann_factor(DeltaE):
+            self.flip_spin(node)
+
+    #
+    def calc_full_energy(self):
+        return np.array(
+            [
+                self.neigh_ene(self.neigh_weight_magn(node))
+                for node in range(self.system.N)
+            ]
+        ).sum()
+
+    #
+    def init_ising_dynamics(self):
+        self.id_string_isingdyn = randstring()
+        if self.IsingIC == "uniform":
+            self.s = np.random.choice([-1, 1], size=self.system.N)
+        elif self.IsingIC.startswith("ground_state"):
+            try:
+                bineigv = self.system.bin_eigV()
+            except AttributeError:
+                self.system.compute_k_eigvV()
+                bineigv = self.system.bin_eigV()
+            self.s = bineigv
+            if len(self.IsingIC) > len("ground_state"):
+                IICnoise = float(self.IsingIC.split("_")[-1])
+                if IICnoise < 0 or IICnoise > 1:
+                    print("error")
+                self.s = self.s * np.random.choice(
+                    [-1, 1], size=self.system.N, p=[IICnoise, 1 - IICnoise]
+                )
+
+    #
+    def run(self, MODE: str = "py"):
+        if MODE == "C":
+            output_file = open(
+                f"{self.system.DEFAULT_OUTDIR}s_{self.system.stdFname}.bin",
+                "wb",
+            )
+            self.s.astype("int8").tofile(output_file)
+            # call(["./IsingSimulator", "args", "to", "spa"])
+            # execute C program,  calling with proper arguments
+            return
+        metropolis_1step = np.vectorize(self.metropolis, excluded="self")
+        if self.save_magnetization:
+
+            def save_magn_array():
+                self.magn_array_save.append(self.s)
+
+        else:
+
+            def save_magn_array():
+                pass
+
+        sample = list(
+            range(self.system.N)
+        )  # rd.sample(list(self.system.H.nodes()), self.system.N)
+        for _ in range(self.nstepsIsing):
+            self.magn.append(np.sum(self.s))
+            self.ene.append(self.calc_full_energy())
+            # for i in range(self.system.N):
+            #     self.metropolis(sample[i])
+            metropolis_1step(sample)
+            save_magn_array()
+
+    #
+    def find_ising_clusters(self):
+        if self.Ising_clusters:
+            print("exit function")
+            return
+        lnodes = list(self.system.H.nodes())
+        lnodes_tmp = lnodes[:]
+        #
+        self.system.compute_k_eigvV()
+        eigVbin = self.system.eigV.T[:, 0]
+        eigVbin[eigVbin >= 0] = +1
+        eigVbin[eigVbin < 0] = -1
+
+        def recursive_search(seed, magn_i, clustertmp):
+            neighs = get_kth_order_neighbours(self.system.H, seed, 1)
+            neighs = np.array([e for e in neighs if e not in set(clustertmp)])
+            if not neighs.size:
+                return
+            samecluster = np.array(eigVbin[neighs] == magn_i)
+            if not samecluster.any():
+                return
+            neighs_samecluster = list(neighs[samecluster])
+            clustertmp.extend(neighs_samecluster)
+            for ss in neighs_samecluster:
+                recursive_search(ss, magn_i, clustertmp)
+
+        #
+        for i in lnodes:
+            if i not in lnodes_tmp:
+                continue
+            if not lnodes_tmp:
+                break
+            #
+            clustertmp = []
+            clustertmp.extend([i])
+            #
+            recursive_search(i, eigVbin[i], clustertmp)
+            lnodes_tmp = [e for e in lnodes_tmp if e not in set(clustertmp)]
+            self.Ising_clusters.append(clustertmp)
+        self.numIsing_cl = len(self.Ising_clusters)
+        self.Ising_clusters.sort(key=len, reverse=True)
+
+    #
+    def mapping_nodes_to_clusters(self):
+        if not self.Ising_clusters:
+            self.find_ising_clusters()
+        loc = [x for x in range(len(self.Ising_clusters))]
+        self.loc = loc
+        node_with_inherclust = [
+            [[j, loc[i]] for j in clus]
+            for i, clus in enumerate(self.Ising_clusters)
+        ]
+        self.node_with_inherclust = node_with_inherclust
+        node_inherclust_flat = [i for j in node_with_inherclust for i in j]
+        self.node_inherclust_flat = node_inherclust_flat
+        sorted_list = sorted(node_inherclust_flat, key=lambda x: x[0])
+        self.sorted_list = sorted_list
+        result_array = np.empty(
+            (self.system.side1, self.system.side2), dtype=object
+        )
+        self.result_array = result_array
+
+        # Fill the result_array with tuples from sorted_list
+        for i, sublist in enumerate(sorted_list):
+            row, col = divmod(
+                i, self.system.side1
+            )  # Calculate the row and column index
+            result_array[row, col] = sublist[1]
+        # self.distr = np.unique(result_array, return_counts=True)
+        self.mapping = result_array
+
+    #
+    def export_ising_clust(self, howmany=2):
+        for i in range(howmany):
+            output_file = open(
+                f"{self.system.DEFAULT_OUTDIR}cl{i+1}_{self.system.stdFname}.bin",
+                "wb",
+            )
+            np.array(self.Ising_clusters[i]).astype("uint64").tofile(
+                output_file
+            )
 
 
 #                           ,((((((((((((((((((((((((.
@@ -564,121 +616,114 @@ def lsp_read_values(folder_path, fpattern="Sm1_avg_p", sort=True):
 #          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&
 
 
+# def run_ising_dynamics(
+#     self,
+#     T=0.1,
+#     nstepsIsing=100,
+#     IsingIC="uniform",
+#     save_magnetization=False,
+#     tqdm_on=False,
+#     MODE='C'
+# ):
 
-    # def run_ising_dynamics(
-    #     self,
-    #     T=0.1,
-    #     nstepsIsing=100,
-    #     IsingIC="uniform",
-    #     save_magnetization=False,
-    #     tqdm_on=False,
-    #     MODE='C'
-    # ):
+#     self.init_ising_dynamics(IsingIC)
+#     self.id_string_isingdyn = randstring()
+#     if MODE == 'C':
+#         output_file = open(f"src/LRGSG_package/tmp_stuff/m_{self.id_string_isingdyn}.bin", 'wb')
+#         self.s.tofile(output_file)
+#         return
 
-    #     self.init_ising_dynamics(IsingIC)
-    #     self.id_string_isingdyn = randstring()
-    #     if MODE == 'C':
-    #         output_file = open(f"src/LRGSG_package/tmp_stuff/m_{self.id_string_isingdyn}.bin", 'wb')
-    #         self.m.tofile(output_file)
-    #         return
-        
-    #     magn = []
-    #     ene = []
-    #     if save_magnetization:
-    #         self.magn_array_save = []
-    #     ising = self.IsingDynamics(self.system.N)
-    #     #
-    #     def boltzmann_factor(energy, temp):
-    #         return np.exp(-energy / temp)
-    #     #questo ci puo calcolare una sola volta
-    #     def neigh_weight_magn(m: NDArray, node_dict: dict) -> list:
-    #         return [w["weight"] * m[nn] for nn, w in node_dict.items()]
+#     magn = []
+#     ene = []
+#     if save_magnetization:
+#         self.magn_array_save = []
+#     ising = self.IsingDynamics(self.system.N)
+#     #
+#     def boltzmann_factor(energy, temp):
+#         return np.exp(-energy / temp)
+#     #questo ci puo calcolare una sola volta
+#     def neigh_weight_magn(m: NDArray, node_dict: dict) -> list:
+#         return [w["weight"] * m[nn] for nn, w in node_dict.items()]
 
-    #     def neigh_ene(neigh: list) -> float:
-    #         return - np.sum(neigh) / neigh.__len__()
+#     def neigh_ene(neigh: list) -> float:
+#         return - np.sum(neigh) / neigh.__len__()
 
-    #     def calc_full_energy(m: NDArray, graph):
-    #         """Energy of a given configuration"""
-    #         return np.array(
-    #             [
-    #                 m[i] * neigh_ene(neigh_weight_magn(m, dict(graph.H[i])))
-    #                 for i in range(graph.N)
-    #             ]
-    #         ).sum()
+#     def calc_full_energy(m: NDArray, graph):
+#         """Energy of a given configuration"""
+#         return np.array(
+#             [
+#                 m[i] * neigh_ene(neigh_weight_magn(m, dict(graph.H[i])))
+#                 for i in range(graph.N)
+#             ]
+#         ).sum()
 
-    #     # import time
+#     # import time
 
-    #     # neigh_time1 = 0
-    #     # neigh_time2 = 0
-    #     # fliptime = 0
+#     # neigh_time1 = 0
+#     # neigh_time2 = 0
+#     # fliptime = 0
 
-    #     def flip_spin(node, m, graph, T):
-    #         # nonlocal neigh_time1
-    #         # nonlocal neigh_time2
-    #         # nonlocal fliptime
-    #         # nt1 = time.time()
-    #         m_flp = -m[node]
-    #         neigh = neigh_weight_magn(m, dict(graph.H[node]))
-    #         # ent1 = time.time()
-    #         # nt2 = time.time()
-    #         neighEn = neigh_ene(neigh)
-    #         E_old = m[node] * neighEn
-    #         E_new = m_flp * neighEn
-    #         # ent2 = time.time()
-    #         # et1 = time.time()
-    #         DeltaE = E_new - E_old
-    #         if DeltaE < 0:
-    #             m[node] = m_flp
-    #         elif np.random.uniform() < boltzmann_factor(DeltaE, T):
-    #             m[node] = m_flp
-    #         # net1 = time.time()
-    #         # neigh_time1 += ent1 - nt1
-    #         # neigh_time2 += ent2 - nt2
-    #         # fliptime += net1 - et1
+#     def flip_spin(node, m, graph, T):
+#         # nonlocal neigh_time1
+#         # nonlocal neigh_time2
+#         # nonlocal fliptime
+#         # nt1 = time.time()
+#         m_flp = -m[node]
+#         neigh = neigh_weight_magn(m, dict(graph.H[node]))
+#         # ent1 = time.time()
+#         # nt2 = time.time()
+#         neighEn = neigh_ene(neigh)
+#         E_old = m[node] * neighEn
+#         E_new = m_flp * neighEn
+#         # ent2 = time.time()
+#         # et1 = time.time()
+#         DeltaE = E_new - E_old
+#         if DeltaE < 0:
+#             m[node] = m_flp
+#         elif np.random.uniform() < boltzmann_factor(DeltaE, T):
+#             m[node] = m_flp
+#         # net1 = time.time()
+#         # neigh_time1 += ent1 - nt1
+#         # neigh_time2 += ent2 - nt2
+#         # fliptime += net1 - et1
 
-    #     flip_spin_all = np.vectorize(flip_spin)
-    #     flip_spin_all.excluded.add(1)
-    #     flip_spin_all.excluded.add(2)
-    #     flip_spin_all.excluded.add(3)
-    #     #
-    #     # s1 = time.time()
-    #     # # a = np.random.randint(0, self.system.N, nstepsIsing*self.system.N)
-    #     # t2_tot = 0.0
-    #     # t3_tot = 0.0
+#     flip_spin_all = np.vectorize(flip_spin)
+#     flip_spin_all.excluded.add(1)
+#     flip_spin_all.excluded.add(2)
+#     flip_spin_all.excluded.add(3)
+#     #
+#     # s1 = time.time()
+#     # # a = np.random.randint(0, self.system.N, nstepsIsing*self.system.N)
+#     # t2_tot = 0.0
+#     # t3_tot = 0.0
 
-    #     iterator = tqdm(range(nstepsIsing)) if tqdm_on else range(nstepsIsing)
-        
-    #     for _ in range(nstepsIsing):
-    #         magn.append(np.sum(m))
-    #         ene.append(calc_full_energy(m, self.system))
-    #         # s2 = time.time()
-    #         sample = rd.sample(self.system.H.nodes(), self.system.N)
-    #         # e2 = time.time()
-    #         # t2_tot += e2 - s2
-    #         # s3 = time.time()
-    #         # for i in range(self.system.N):
-    #         #     # node =   # a[t*nstepsIsing + i]#sample[i]
-    #         #     flip_spin(sample[i], m, self.system, T)
-    #         flip_spin_all(sample, m, self.system, T)
-    #         # e3 = time.time()
-    #         # t3_tot += e3 - s3
-    #         if save_magnetization:
-    #             self.magn_array_save.append(np.array(m))
-    #     self.magn_array = m
-    #     # e1 = time.time()
-    #     # print("time for full:", e1 - s1)
-    #     # print("time for sampling:", t2_tot)
-    #     # print("time for flipping:", t3_tot)
-    #     # print("time for flipping_neig1:", neigh_time1)
-    #     # print("time for flipping_neig2:", neigh_time2)
-    #     # print("time for flipping_flip:", fliptime)
-    #     return magn, ene
+#     iterator = tqdm(range(nstepsIsing)) if tqdm_on else range(nstepsIsing)
 
-
-
-
-
-
+#     for _ in range(nstepsIsing):
+#         magn.append(np.sum(m))
+#         ene.append(calc_full_energy(m, self.system))
+#         # s2 = time.time()
+#         sample = rd.sample(self.system.H.nodes(), self.system.N)
+#         # e2 = time.time()
+#         # t2_tot += e2 - s2
+#         # s3 = time.time()
+#         # for i in range(self.system.N):
+#         #     # node =   # a[t*nstepsIsing + i]#sample[i]
+#         #     flip_spin(sample[i], m, self.system, T)
+#         flip_spin_all(sample, m, self.system, T)
+#         # e3 = time.time()
+#         # t3_tot += e3 - s3
+#         if save_magnetization:
+#             self.magn_array_save.append(np.array(m))
+#     self.magn_array = m
+#     # e1 = time.time()
+#     # print("time for full:", e1 - s1)
+#     # print("time for sampling:", t2_tot)
+#     # print("time for flipping:", t3_tot)
+#     # print("time for flipping_neig1:", neigh_time1)
+#     # print("time for flipping_neig2:", neigh_time2)
+#     # print("time for flipping_flip:", fliptime)
+#     return magn, ene
 
 
 #     def run_ising_dynamics(self):

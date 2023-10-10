@@ -20,6 +20,7 @@ from typing import Union
 class SignedGraph():
     p_c = None
     lsp = None
+    DEFAULT_OUTDIR = "src/LRGSG_package/dump/"
     
     def __init__(self, G: Graph, lsp_mode: str = 'intervals', stdFname: str = "graph", import_on: bool = False,
                  pflip: float = 0.):
@@ -36,8 +37,8 @@ class SignedGraph():
         self.randsample = random.sample(range(self.Ne), self.nflip)
 
     #
-    def __init_graph_fromfile__(self):
-        return pickle.load(open(f'src/LRGSG_package/tmp_stuff/{self.stdFname}.pickle', 'rb'))
+    def __init_graph_fromfile__(self, expath: str = DEFAULT_OUTDIR):
+        return pickle.load(open(f"{expath}{self.stdFname}.pickle", 'rb'))
     #
     def init_weights(self):
         nx.set_edge_attributes(self.G, values=1, name="weight")
@@ -226,10 +227,24 @@ class SignedGraph():
               'stop': 1, 'num': num_high, 'rsf': 1},
         )
         return d
-    # 
-    def export_graph_pickle(self):
-        # save graph object to file
-        pickle.dump(self.G, open(f"src/LRGSG_package/tmp_stuff/{self.stdFname}.pickle", 'wb'))
+    #
+    def export_graph_pickle(self, expath: str = DEFAULT_OUTDIR):
+        pickle.dump(self.G, open(f"{expath}{self.stdFname}.pickle", 'wb'))
+    #
+    def export_adj_bin(self, expath: str = DEFAULT_OUTDIR):
+        rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
+        with open(f"{expath}adj_{self.stdFname}.bin", "wb") as f:
+            for i in range(len(rowarr)):
+                rowarr[i].astype('float64').tofile(f)
+    #
+    def export_edgel(self):
+        # TO BE FIXED
+        a=list(self.H.edges(data='weight'))
+        with open(r'src/LRGSG_package/tmp_stuff/prova.txt', 'w') as fp:
+            for item in a:
+                # write each item on a new line
+                fp.write("%s %s %s\n" %  item)
+            print('Done')
 
 class FullyConnected(SignedGraph):
     def __init__(self, side1: int, anigemb: str = 'sle'):

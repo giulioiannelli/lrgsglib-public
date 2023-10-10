@@ -39,7 +39,7 @@ SLRG_obj.find_ising_clusters()
 SLRG_obj.mapping_nodes_to_clusters()
 
 mVsT = []
-f = open('outputs/p.txt', 'a+')
+f = open('data/p.txt', 'a+')
 for T in tqdm(np.linspace(0.001, 3, num=20)):
     magn_i = []
     for i in range(200):

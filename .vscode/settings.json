@@ -7,7 +7,7 @@
         "--experimental-string-processing",
         "--line-length=80"
     ],
-    "C_Cpp.default.compilerPath": "/usr/bin/gcc-12",
+    "C_Cpp.default.compilerPath": "/home/opisthofulax/anaconda3/envs/LRG-Signed/bin/gcc",
     "files.associations": {
         "Makefile": "c",
         "lrsg_utils.h": "c",
