@@ -20,7 +20,7 @@ from typing import Union
 class SignedGraph():
     p_c = None
     lsp = None
-    DEFAULT_OUTDIR = "src/LRGSG_package/dump/"
+    DEFAULT_OUTDIR = "data/l2d_sq_ising/graphs/"
     
     def __init__(self, G: Graph, lsp_mode: str = 'intervals', stdFname: str = "graph", import_on: bool = False,
                  pflip: float = 0.):
@@ -178,7 +178,9 @@ class SignedGraph():
             self.eigV = self.eigV.T
     #
     def bin_eigV(self, which=0):
-        return np.sign(self.eigV[which])
+        eigVbin = np.sign(self.eigV[which])
+        eigVbin[eigVbin == 0] = +1
+        return eigVbin
     #
     def rescaled_signed_laplacian(self, MODE: str = 'field'):
         if MODE == 'field':
@@ -335,6 +337,12 @@ class Lattice2D(SignedGraph):
         self.upd_graph_matrices()
     #
     def init_paths(self):
+        if self.geometry == 'triangular':
+            self.stdFname = 'trLattice' + f"_p={self.pflip:.3g}"
+        elif self.geometry == 'squared':
+            self.stdFname = 'sqLattice' + f"_p={self.pflip:.3g}"
+        elif self.geometry == 'hexagonal':
+            self.stdFname = 'hxLattice' + f"_p={self.pflip:.3g}"
         self.lambdaPath = f"l2d_{self.geometry}/"
         self.pltPath = f"data/plot/{self.lambdaPath}"
         self.datPath = f"data/{self.lambdaPath}"

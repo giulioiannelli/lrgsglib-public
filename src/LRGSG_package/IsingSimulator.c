@@ -8,8 +8,8 @@
 #define BOLTZMANN_FACTOR(DE, T) exp(-DE / T)
 #define T_MAX_STEP 10 * N
 #define T_THERM_STEP N
-#define STR_PATH_PREFIX "src/LRGSG_package/tmp_stuff/"
-#define RND_PREFIX argv[4]
+#define DEFAULT_DATA_OUTDIR "data/l2d_sq_ising/"
+#define DEFAULT_GRAPH_OUTDIR DEFAULT_DATA_OUTDIR "graphs/"
 #define BINX ".bin"
 #define TXTX ".txt"
 
@@ -30,6 +30,9 @@ double calc_clust_magn(size_t cli_l, size_tp cli, spin_tp s);
 
 int main(int argc, char *argv[])
 {
+    // char cwd[1024];
+    // getcwd(cwd, sizeof(cwd));
+    // printf("Current working dir: %s\n", cwd);
     __set_seed_SFMT();
     //
     FILE *f_sini, *f_adj, *f_icl1, *f_icl2, *f_edgel;
@@ -49,13 +52,13 @@ int main(int argc, char *argv[])
     N = strtozu(argv[1]);
     T = strtod(argv[2], &ptr);
     //
-    sprintf(buf, STR_PATH_PREFIX "%s" BINX, argv[3]);
+    sprintf(buf, DEFAULT_GRAPH_OUTDIR "adj_%s" BINX, argv[3]);
     __fopen(&f_adj, buf, "rb");
-    sprintf(buf, STR_PATH_PREFIX "s_%s" BINX, RND_PREFIX);
+    sprintf(buf, DEFAULT_GRAPH_OUTDIR "s_%s" BINX, argv[3]);
     __fopen(&f_sini, buf, "rb");
-    sprintf(buf, STR_PATH_PREFIX "cl1_%s" BINX, RND_PREFIX);
+    sprintf(buf, DEFAULT_GRAPH_OUTDIR "cl1_%s" BINX, argv[3]);
     __fopen(&f_icl1, buf, "rb");
-    sprintf(buf, STR_PATH_PREFIX "cl2_%s" BINX, RND_PREFIX);
+    sprintf(buf, DEFAULT_GRAPH_OUTDIR "cl2_%s" BINX, argv[3]);
     __fopen(&f_icl2, buf, "rb");
     //
     side = (size_t)sqrt(N);
@@ -106,7 +109,7 @@ int main(int argc, char *argv[])
     edgl = __chMalloc(N * sizeof(*edgl));
     neighs = __chMalloc(N * sizeof(*neighs));
     neigh_len = __chMalloc(N * sizeof(*neigh_len));
-    sprintf(buf, STR_PATH_PREFIX "edgel_%s" TXTX, argv[3] + 4);
+    sprintf(buf, DEFAULT_GRAPH_OUTDIR "edgel_%s" TXTX, argv[3] + 4);
     if (__feexist(buf))
     {
         size_t node_i;
@@ -159,8 +162,8 @@ int main(int argc, char *argv[])
     }
 
     // printf("energy = %lf\n", calc_energy_full(N, s, neigh_len, neighs, edgl));
-    sprintf(buf, STR_PATH_PREFIX "out_%s" TXTX, RND_PREFIX);
-    __fopen(&f_out, buf, "w+");
+    sprintf(buf, DEFAULT_DATA_OUTDIR "out_%s" TXTX, argv[4]);
+    __fopen(&f_out, buf, "a+");
     for (size_t t = 0; t < T_MAX_STEP; t++)
     {
         // printf("cycle %zu\r", t);
@@ -168,18 +171,18 @@ int main(int argc, char *argv[])
             one_step_metropolis(i, T, s, neigh_len, neighs, edgl);
     }
     m1 = __chMalloc(T_MAX_STEP * sizeof(*m1));
-    m2 = __chMalloc(T_MAX_STEP * sizeof(*m2));
+    // m2 = __chMalloc(T_MAX_STEP * sizeof(*m2));
     for (size_t t = 0; t < T_THERM_STEP; t++)
     {
         m1[t] = calc_clust_magn(cl1i_l, cl1i, s);
-        m2[t] = calc_clust_magn(cl2i_l, cl2i, s);
+        // m2[t] = calc_clust_magn(cl2i_l, cl2i, s);
         for (size_t i = 0; i < N; i++)
             one_step_metropolis(i, T, s, neigh_len, neighs, edgl);
     }
-    fprintf(f_out, "%lf %lf ", sum_vs(T_THERM_STEP, m1) / T_THERM_STEP,
+    fprintf(f_out, "%lf %lf\n", sum_vs(T_THERM_STEP, m1) / T_THERM_STEP,
             sum_vs_2(T_THERM_STEP, m1) / T_THERM_STEP);
-    fprintf(f_out, "%lf %lf\n", sum_vs(T_THERM_STEP, m2) / T_THERM_STEP,
-            sum_vs_2(T_THERM_STEP, m2) / T_THERM_STEP);
+    // fprintf(f_out, "%lf %lf\n", sum_vs(T_THERM_STEP, m2) / T_THERM_STEP,
+    //         sum_vs_2(T_THERM_STEP, m2) / T_THERM_STEP);
     // printf("energy = %lf\n", calc_energy_full(N, s, neigh_len, neighs, edgl));
     // printf("side = %zu\n", side);
 
@@ -198,7 +201,7 @@ int main(int argc, char *argv[])
     fclose(f_adj);
     free(neigh_len);
     free(m1);
-    free(m2);
+    // free(m2);
     free(s);
 
     tmp = N;

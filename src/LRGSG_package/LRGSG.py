@@ -56,7 +56,7 @@ from .LRGSG_utils import *
 
 # np.random.seed(0)
 # random.seed(0)
-sys.setrecursionlimit(10000)
+sys.setrecursionlimit(20000)
 
 #
 # __all__ = [
@@ -71,6 +71,7 @@ sys.setrecursionlimit(10000)
 #     "FullyConnected",
 #     "Lattice2D",
 # ]
+
 
 #
 # renormalization group for heterogenous network functions
@@ -389,9 +390,11 @@ class IsingDynamics:
         system: SignedGraph,
         T: float,
         IsingIC: str,
+        MODE_RUN: str = "py",
         nstepsIsing: int = 100,
         save_magnetization: bool = False,
     ) -> None:
+        self.MODE_RUN = MODE_RUN
         self.system = system
         self.T = T
         self.IsingIC = IsingIC
@@ -457,15 +460,25 @@ class IsingDynamics:
                 )
 
     #
-    def run(self, MODE: str = "py"):
-        if MODE == "C":
-            output_file = open(
-                f"{self.system.DEFAULT_OUTDIR}s_{self.system.stdFname}.bin",
-                "wb",
-            )
-            self.s.astype("int8").tofile(output_file)
-            # call(["./IsingSimulator", "args", "to", "spa"])
-            # execute C program,  calling with proper arguments
+    def run(
+        self,
+        adjfname: str = "",
+        out_suffix: str = "",
+        tqdm_on: bool = True,
+    ):
+        if self.MODE_RUN == "C":
+            if adjfname == "":
+                adjfname = self.system.stdFname
+            if out_suffix == "":
+                out_suffix = self.id_string_isingdyn
+            cprogram = [
+                    "src/LRGSG_package/IsingSimulator",
+                    f"{self.system.N}",
+                    f"{self.T}",
+                    adjfname,
+                    out_suffix
+                ]
+            call(cprogram)
             return
         metropolis_1step = np.vectorize(self.metropolis, excluded="self")
         if self.save_magnetization:
@@ -481,7 +494,12 @@ class IsingDynamics:
         sample = list(
             range(self.system.N)
         )  # rd.sample(list(self.system.H.nodes()), self.system.N)
-        for _ in range(self.nstepsIsing):
+        iterator = (
+            tqdm(range(self.nstepsIsing))
+            if tqdm_on
+            else range(self.nstepsIsing)
+        )
+        for _ in iterator:
             self.magn.append(np.sum(self.s))
             self.ene.append(self.calc_full_energy())
             # for i in range(self.system.N):
@@ -498,10 +516,8 @@ class IsingDynamics:
         lnodes_tmp = lnodes[:]
         #
         self.system.compute_k_eigvV()
-        eigVbin = self.system.eigV.T[:, 0]
-        eigVbin[eigVbin >= 0] = +1
-        eigVbin[eigVbin < 0] = -1
-
+        eigVbin = self.system.bin_eigV()
+        #
         def recursive_search(seed, magn_i, clustertmp):
             neighs = get_kth_order_neighbours(self.system.H, seed, 1)
             neighs = np.array([e for e in neighs if e not in set(clustertmp)])
@@ -514,7 +530,6 @@ class IsingDynamics:
             clustertmp.extend(neighs_samecluster)
             for ss in neighs_samecluster:
                 recursive_search(ss, magn_i, clustertmp)
-
         #
         for i in lnodes:
             if i not in lnodes_tmp:
@@ -561,6 +576,13 @@ class IsingDynamics:
         self.mapping = result_array
 
     #
+    def export_s_init(self):
+        output_file = open(
+            f"{self.system.DEFAULT_OUTDIR}s_{self.system.stdFname}.bin",
+            "wb",
+        )
+        self.s.astype("int8").tofile(output_file)
+    #
     def export_ising_clust(self, howmany=2):
         for i in range(howmany):
             output_file = open(
@@ -570,6 +592,7 @@ class IsingDynamics:
             np.array(self.Ising_clusters[i]).astype("uint64").tofile(
                 output_file
             )
+
 
 
 #                           ,((((((((((((((((((((((((.
