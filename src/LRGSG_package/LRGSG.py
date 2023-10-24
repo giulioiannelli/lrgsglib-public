@@ -173,16 +173,16 @@ class SignedLaplacianAnalysis:
         N = self.system.N
         #
         self.Deltat = 1.0 / self.t_steps
-        self.simulationTime = N * self.t_steps * t_stepsMultiplier
+        self.simulationTime = N * t_stepsMultiplier
         self.sampling = np.logspace(
             0, np.log10(self.simulationTime), num=self.no_obs, dtype=int
         )
         #
         if not "ground_state" in self.initCond:
-            self.compute_k_eigvV()
+            self.system.compute_k_eigvV()
         if self.initCond.startswith("ground_state"):
             self.eigenModeInit = int(self.initCond.split("_")[-1])
-            self.compute_k_eigvV(howmany=self.eigenModeInit + 1)
+            self.system.compute_k_eigvV(howmany=self.eigenModeInit + 1)
             self.field = self.system.eigV.T[self.eigenModeInit]
         elif self.initCond == "uniform_1":
             self.field = np.random.uniform(-1, 1, N)
@@ -246,7 +246,7 @@ class SignedLaplacianAnalysis:
                     initStatus[sqIdx] = np.random.normal(-1, 1, len(sqIdx))
                 elif self.initCond.startswith("window_ground_state"):
                     self.eigenModeInit = int(self.initCond.split("_")[-1])
-                    self.compute_k_eigvV(howmany=self.eigenModeInit + 1)
+                    self.system.compute_k_eigvV(howmany=self.eigenModeInit + 1)
                     initStatus = self.eigV.T[self.eigenModeInit]
                     outIdx = np.setxor1d(np.arange(N), sqIdx)
                     initStatus[outIdx] = np.random.uniform(
@@ -284,12 +284,12 @@ class SignedLaplacianAnalysis:
         #
         if rescaled:
             if rescaled == "dynamic":
-                lap = lambda t: np.exp(-self.eigv[0] * t) * self.sLp
+                lap = lambda t: np.exp(-self.system.eigv[0] * t) * self.system.sLp
             else:
-                self.system.rescaled_laplacian(rescaled)
+                self.system.rescaled_signed_laplacian(rescaled)
                 lap = lambda _: self.system.resLp
         else:
-            lap = lambda _: self.sLp
+            lap = lambda _: self.system.sLp
         #
         if not self.system.pbc:
 
@@ -382,6 +382,7 @@ def lsp_read_values(folder_path, fpattern="Sm1_avg_p", sort=True):
 class IsingDynamics:
     magn = []
     ene = []
+    magnc1 = []
     magn_array_save = []
     Ising_clusters = []
 
@@ -475,6 +476,7 @@ class IsingDynamics:
                     "src/LRGSG_package/IsingSimulator",
                     f"{self.system.N}",
                     f"{self.T}",
+                    f"{self.system.pflip}",
                     adjfname,
                     out_suffix
                 ]
@@ -482,12 +484,9 @@ class IsingDynamics:
             return
         metropolis_1step = np.vectorize(self.metropolis, excluded="self")
         if self.save_magnetization:
-
             def save_magn_array():
                 self.magn_array_save.append(self.s)
-
         else:
-
             def save_magn_array():
                 pass
 
@@ -501,6 +500,7 @@ class IsingDynamics:
         )
         for _ in iterator:
             self.magn.append(np.sum(self.s))
+            self.magnc1.append(np.sum(self.s[np.array(self.Ising_clusters[0])]))
             self.ene.append(self.calc_full_energy())
             # for i in range(self.system.N):
             #     self.metropolis(sample[i])
@@ -578,7 +578,7 @@ class IsingDynamics:
     #
     def export_s_init(self):
         output_file = open(
-            f"{self.system.DEFAULT_OUTDIR}s_{self.system.stdFname}.bin",
+            f"{self.system.DEFAULT_OUTDIR}N={self.system.N}/s_{self.system.stdFname}.bin",
             "wb",
         )
         self.s.astype("int8").tofile(output_file)
@@ -586,7 +586,7 @@ class IsingDynamics:
     def export_ising_clust(self, howmany=2):
         for i in range(howmany):
             output_file = open(
-                f"{self.system.DEFAULT_OUTDIR}cl{i+1}_{self.system.stdFname}.bin",
+                f"{self.system.DEFAULT_OUTDIR}N={self.system.N}/cl{i+1}_{self.system.stdFname}.bin",
                 "wb",
             )
             np.array(self.Ising_clusters[i]).astype("uint64").tofile(

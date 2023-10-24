@@ -52,7 +52,8 @@ parser.add_argument(
     type=float,
 )
 parser.add_argument(
-    "-nA", "-navg",
+    "-nA",
+    "-navg",
     "--number_of_averages",
     default=DEFAULT_NUNMBER_AVERAGES,
     help=HELP_nA,
@@ -74,16 +75,26 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+DEFAULT_GRAPH_OUTDIR
+os.makedirs(DEFAULT_GRAPH_OUTDIR + f"N={args.L**2:d}/", exist_ok=True)
+os.makedirs(DEFAULT_DATA_OUTDIR + f"N={args.L**2:d}/", exist_ok=True)
 #
 import_on = False
-if os.path.exists(DEFAULT_GRAPH_OUTDIR + args.graph_filename + f"_p={args.p:.3g}.pickle"):
+if os.path.exists(
+    DEFAULT_GRAPH_OUTDIR
+    + f"N={args.L**2:d}/"
+    + args.graph_filename
+    + f"_p={args.p:.3g}.pickle"
+):
     import_on = True
+#
 sqlatt = Lattice2D(
-    side1 = args.L,
-    geometry = 'squared',
-    import_on = import_on,
-    pflip = args.p,
-    stdFname = args.graph_filename + f"_p={args.p:.3g}"
+    side1=args.L,
+    geometry="squared",
+    import_on=import_on,
+    pflip=args.p,
+    stdFname=args.graph_filename + f"_p={args.p:.3g}",
+    expathc= f"N={args.L**2:}/"
 )
 if not import_on:
     sqlatt.flip_random_fract_edges()
@@ -91,37 +102,37 @@ if not import_on:
     sqlatt.export_adj_bin()
 
 ising_dyn = IsingDynamics(
-    system = sqlatt,
-    T = args.T, 
-    IsingIC = 'ground_state',
-    MODE_RUN = "C"
+    system=sqlatt, T=args.T, IsingIC="ground_state", MODE_RUN="C"
 )
 
 ising_dyn.init_ising_dynamics()
-if not os.path.exists(DEFAULT_GRAPH_OUTDIR + "s_" + args.graph_filename + f"_p={args.p:.3g}.pickle"):
+if not os.path.exists(
+    DEFAULT_GRAPH_OUTDIR
+    + "s_"
+    + args.graph_filename
+    + f"_p={args.p:.3g}.pickle"
+):
     ising_dyn.export_s_init()
-if not os.path.exists(DEFAULT_GRAPH_OUTDIR + "cl1_" + args.graph_filename + f"_p={args.p:.3g}.pickle"):
-    ising_dyn.find_ising_clusters()
-    ising_dyn.mapping_nodes_to_clusters()
-    ising_dyn.export_ising_clust(howmany=1)
+if args.p < 0.103:
+    if not os.path.exists(
+        DEFAULT_GRAPH_OUTDIR
+        + "cl1_"
+        + args.graph_filename
+        + f"_p={args.p:.3g}.pickle"
+    ):
+        ising_dyn.find_ising_clusters()
+        ising_dyn.mapping_nodes_to_clusters()
+        ising_dyn.export_ising_clust(howmany=1)
+else:
+    if not os.path.exists(
+        DEFAULT_GRAPH_OUTDIR
+        + "cl1_"
+        + args.graph_filename
+        + f"_p={args.p:.3g}.pickle"
+    ):
+        ising_dyn.find_ising_clusters()
+        ising_dyn.mapping_nodes_to_clusters()
+        ising_dyn.export_ising_clust(howmany=2)
 for _ in range(args.number_of_averages):
-    ising_dyn.run(out_suffix = args.out_suffix, tqdm_on = False)
+    ising_dyn.run(out_suffix=args.out_suffix, tqdm_on=False)
 
-"""
-lrgsg = SignedLaplacianAnalysis(#
-    system = sqlatt,
-    initCond = 'all_1',
-    t_steps = 10,
-    no_obs = 200
-)
-
-sqlatt.flip_random_fract_edges()
-ising_dyn = IsingDynamics(
-    system = sqlatt,
-    T = 0.2, 
-    IsingIC = 'ground_state'
-)
-if not sqlatt.import_on:
-    sqlatt.export_graph_pickle()
-    sqlatt.export_adj_bin()
-"""

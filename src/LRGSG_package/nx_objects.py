@@ -17,16 +17,24 @@ from scipy.sparse import csr_array
 from typing import Union
 
 
-class SignedGraph():
+class SignedGraph:
     p_c = None
     lsp = None
     DEFAULT_OUTDIR = "data/l2d_sq_ising/graphs/"
-    
-    def __init__(self, G: Graph, lsp_mode: str = 'intervals', stdFname: str = "graph", import_on: bool = False,
-                 pflip: float = 0.):
+
+    def __init__(
+        self,
+        G: Graph,
+        lsp_mode: str = "intervals",
+        stdFname: str = "graph",
+        import_on: bool = False,
+        pflip: float = 0.0,
+        expathc: str = ""
+    ):
         self.lsp_mode = lsp_mode
         self.stdFname = stdFname
         self.import_on = import_on
+        self.expath = self.DEFAULT_OUTDIR + expathc
         if import_on:
             self.G = self.__init_graph_fromfile__()
         else:
@@ -37,15 +45,20 @@ class SignedGraph():
         self.randsample = random.sample(range(self.Ne), self.nflip)
 
     #
-    def __init_graph_fromfile__(self, expath: str = DEFAULT_OUTDIR):
-        return pickle.load(open(f"{expath}{self.stdFname}.pickle", 'rb'))
+    def __init_graph_fromfile__(self):
+        return pickle.load(open(f"{self.expath}{self.stdFname}.pickle", "rb"))
+
     #
     def init_weights(self):
         nx.set_edge_attributes(self.G, values=1, name="weight")
+
     #
     def number_of_negative_links(self):
-        self.Ne_n = (np.array(list(
-            nx.get_edge_attributes(self.H, 'weight').values())) < 0).sum()
+        self.Ne_n = (
+            np.array(list(nx.get_edge_attributes(self.H, "weight").values()))
+            < 0
+        ).sum()
+
     #
     def upd_G_graph(self):
         self.invnode_map = {v: k for k, v in self.node_map.items()}
@@ -53,12 +66,14 @@ class SignedGraph():
         self.G = nx.relabel_nodes(self.H, self.invnode_map)
         self.esetG = list(self.G.edges())
         self.number_of_negative_links()
+
     #
     def upd_H_graph(self):
         self.esetH = list(self.H.edges())
         self.node_map = dict(zip(self.G, self.H))
         self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
         self.number_of_negative_links()
+
     #
     def init_H_graph(self):
         self.H = nx.convert_node_labels_to_integers(self.G)
@@ -70,17 +85,21 @@ class SignedGraph():
         self.esetG = list(self.G.edges())
         self.init_weights()
         self.init_H_graph()
+
     #
     def adjacency_matrix(self, weight: str = "weight"):
         return nx.to_scipy_sparse_array(self.H, weight=weight, format="csr")
+
     #
     def degree_matrix(self, A: csr_array) -> csr_array:
         return csr_array(scsp.spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
+
     #
     def absolute_degree_matrix(self, A: csr_array) -> csr_array:
         return csr_array(
             scsp.spdiags(abs(A).sum(axis=1), 0, *A.shape, format="csr")
         )
+
     #
     def laplacian_matrix(self) -> csr_array:
         """Returns the signed Laplacian matrix of G.
@@ -93,6 +112,7 @@ class SignedGraph():
         The Laplacian matrix of G.
         """
         return self.Deg - self.Adj
+
     #
     def signed_laplacian(self) -> csr_array:
         """Returns the signed Laplacian matrix of G.
@@ -106,6 +126,7 @@ class SignedGraph():
         The Laplacian matrix of G.
         """
         return self.sDeg - self.Adj
+
     #
     def upd_graph_matrices(self, on_graph="H"):
         if on_graph == "G":
@@ -117,6 +138,7 @@ class SignedGraph():
         self.sDeg = self.absolute_degree_matrix(self.Adj)
         self.Lap = self.laplacian_matrix()
         self.sLp = self.signed_laplacian()
+
     #
     def flip_sel_edges(self, neg_weights_dict=None, on_graph="H"):
         """Flips a specific edges of a graph G."""
@@ -138,6 +160,7 @@ class SignedGraph():
             self.upd_H_graph()
             self.upd_G_graph()
         self.upd_graph_matrices()
+
     #
     def check_pflip(self):
         if self.nflip < 1:
@@ -146,6 +169,7 @@ class SignedGraph():
                              number of edges is < 1, then no edges would be
                              flipped. Skipping the analysis for this value."""
             )
+
     #
     def flip_random_fract_edges(self, on_graph="H"):
         """Flips a fraction p of edges (+1 to -1) of a graph G."""
@@ -163,12 +187,14 @@ class SignedGraph():
             e: -1 for i, e in enumerate(eset) if i in self.randsample
         }
         self.flip_sel_edges(neg_weights_dict=neg_weights, on_graph=on_graph)
+
     #
     def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
         if MODE_lapspec == "networkx":
             self.slspectrum = nx.laplacian_spectrum(self.system.G)
         elif MODE_lapspec == "numpy":
             self.slspectrum = np.linalg.eigvalsh(self.sLp.toarray())
+
     #
     def compute_k_eigvV(self, MODE_dynspec: str = "scipy", howmany: int = 1):
         if MODE_dynspec == "scipy":
@@ -176,14 +202,16 @@ class SignedGraph():
                 self.sLp.astype(np.float64), k=howmany, which="SM"
             )
             self.eigV = self.eigV.T
+
     #
     def bin_eigV(self, which=0):
         eigVbin = np.sign(self.eigV[which])
         eigVbin[eigVbin == 0] = +1
         return eigVbin
+
     #
-    def rescaled_signed_laplacian(self, MODE: str = 'field'):
-        if MODE == 'field':
+    def rescaled_signed_laplacian(self, MODE: str = "field"):
+        if MODE == "field":
             self.resLp = self.sLp - self.eigv[0] * scsp.identity(self.N)
         elif MODE == "double":
             self.resLp = self.sLp - np.array([self.eigv[0]])
@@ -191,98 +219,129 @@ class SignedGraph():
                 self.resLp.astype(np.float64), subset_by_index=[0, 0]
             )
             self.resLp = self.resLp - new_eigv0 * np.identity(self.N)
+
     #
     def lsp_selection(self, custom_list):
-        if self.lsp_mode == 'custom':
-                self.lsp = np.array(custom_list)
-        elif self.lsp_mode == 'intervals':
+        if self.lsp_mode == "custom":
+            self.lsp = np.array(custom_list)
+        elif self.lsp_mode == "intervals":
             intervals = []
-            tmp = max([vset['rsf'] for vset in custom_list])
+            tmp = max([vset["rsf"] for vset in custom_list])
             for vset in custom_list:
-                if vset['kind'] == 'log':
-                        spacing_f = np.logspace
-                        vset['start'] = np.log10(vset['start'])
-                        vset['stop'] = np.log10(vset['stop'])
-                elif vset['kind'] == 'lin':
-                        spacing_f = np.linspace
-                intervals.append(#
-                    round_sigfig_n(#
-                        spacing_f(vset['start'], vset['stop'],
-                                    num=vset['num'],
-                                    endpoint=False),
-                    vset['rsf'])
+                if vset["kind"] == "log":
+                    spacing_f = np.logspace
+                    vset["start"] = np.log10(vset["start"])
+                    vset["stop"] = np.log10(vset["stop"])
+                elif vset["kind"] == "lin":
+                    spacing_f = np.linspace
+                intervals.append(  #
+                    round_sigfig_n(  #
+                        spacing_f(
+                            vset["start"],
+                            vset["stop"],
+                            num=vset["num"],
+                            endpoint=False,
+                        ),
+                        vset["rsf"],
+                    )
                 )
             self.lsp = (intervals := np.concatenate(intervals))
             while set(self.lsp).__len__() == intervals.__len__():
                 tmp = tmp - 1
-                self.lsp = np.round(self.lsp , tmp)
+                self.lsp = np.round(self.lsp, tmp)
             tmp = tmp + 1
             self.lsp = np.round(intervals, tmp)
-    
-    def default_dict_lsp(self, num_low = 3, num_at = 6, num_high = 3):
-        d = (#
-            {'kind': 'lin', 'start': 0.001, 'stop': self.p_c-self.p_c*num_at/100, 
-              'num': num_low, 'rsf': 1}, 
-             {'kind': 'lin', 'start': self.p_c-self.p_c*num_at/100, 
-              'stop': self.p_c+self.p_c*num_at/100, 'num': num_at, 'rsf': 3},
-              {'kind': 'lin', 'start': self.p_c+self.p_c*num_at/100, 
-              'stop': 1, 'num': num_high, 'rsf': 1},
+
+    def default_dict_lsp(self, num_low=3, num_at=6, num_high=3):
+        d = (  #
+            {
+                "kind": "lin",
+                "start": 0.001,
+                "stop": self.p_c - self.p_c * num_at / 100,
+                "num": num_low,
+                "rsf": 1,
+            },
+            {
+                "kind": "lin",
+                "start": self.p_c - self.p_c * num_at / 100,
+                "stop": self.p_c + self.p_c * num_at / 100,
+                "num": num_at,
+                "rsf": 3,
+            },
+            {
+                "kind": "lin",
+                "start": self.p_c + self.p_c * num_at / 100,
+                "stop": 1,
+                "num": num_high,
+                "rsf": 1,
+            },
         )
         return d
+
     #
     def export_graph_pickle(self, expath: str = DEFAULT_OUTDIR):
-        pickle.dump(self.G, open(f"{expath}{self.stdFname}.pickle", 'wb'))
+        pickle.dump(
+            self.G, open(f"{expath}N={self.N:d}/{self.stdFname}.pickle", "wb")
+        )
+
     #
     def export_adj_bin(self, expath: str = DEFAULT_OUTDIR):
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
-        with open(f"{expath}adj_{self.stdFname}.bin", "wb") as f:
+        with open(f"{expath}N={self.N:d}/adj_{self.stdFname}.bin", "wb") as f:
             for i in range(len(rowarr)):
-                rowarr[i].astype('float64').tofile(f)
+                rowarr[i].astype("float64").tofile(f)
+
     #
     def export_edgel(self):
         # TO BE FIXED
-        a=list(self.H.edges(data='weight'))
-        with open(r'src/LRGSG_package/tmp_stuff/prova.txt', 'w') as fp:
+        a = list(self.H.edges(data="weight"))
+        with open(r"src/LRGSG_package/tmp_stuff/prova.txt", "w") as fp:
             for item in a:
                 # write each item on a new line
-                fp.write("%s %s %s\n" %  item)
-            print('Done')
+                fp.write("%s %s %s\n" % item)
+            print("Done")
+
 
 class FullyConnected(SignedGraph):
-    def __init__(self, side1: int, anigemb: str = 'sle'):
+    def __init__(self, side1: int, anigemb: str = "sle"):
         self.side1 = side1
         self.G = nx.complete_graph(self.side1)
         super(FullyConnected, self).__init__(self.G)
         self.init_graph()
         self.pbc = True
-        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG)//2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
         self.DEFAULT_NEG_WEIGHTS_DICT_H = self.DEFAULT_NEG_WEIGHTS_DICT_G
         self.animation_graph_embedding = anigemb
-    
+
     def init_graph(self):
         self.H = self.G
         self.upd_graph_matrices()
-    
+
     def init_paths(self):
         self.lambdaPath = f"fc/"
         self.pltPath = f"data/plot/{self.lambdaPath}"
         self.datPath = f"data/{self.lambdaPath}"
+
     #
-    def make_animation(self, fig, ax, frames, cmap: Union[str, Colormap] = 'viridis'):
+    def make_animation(
+        self, fig, ax, frames, cmap: Union[str, Colormap] = "viridis"
+    ):
         # I like to position my colorbars this way, but you don't have to
         #
         G_nodecol = frames[0]
-        G_edgecol = ['b' if (e[2]['weight'] > 0) else 'r' 
-                     for e in self.G.edges(data=True)]
-        if self.animation_graph_embedding == 'sle':
+        G_edgecol = [
+            "b" if (e[2]["weight"] > 0) else "r"
+            for e in self.G.edges(data=True)
+        ]
+        if self.animation_graph_embedding == "sle":
             pos = signed_spectral_layout(self.G)
-        elif self.animation_graph_embedding == 'circular':
+        elif self.animation_graph_embedding == "circular":
             pos = nx.circular_layout(self.G)
         # nx.draw(G, ax=ax, pos=pos, edge_color=G_edgecol, node_color=G_nodecol, cmap='viridis')
-        nodes = nx.draw_networkx_nodes(self.G, pos=pos, 
-                                       node_color=G_nodecol, cmap=cmap)
-        nx.draw_networkx_edges(self.G, pos=pos, 
-                                       edge_color=G_edgecol)
+        nodes = nx.draw_networkx_nodes(
+            self.G, pos=pos, node_color=G_nodecol, cmap=cmap
+        )
+        nx.draw_networkx_edges(self.G, pos=pos, edge_color=G_edgecol)
         #
         cbar = fig.colorbar(nodes)
         # tx = ax.set_title('Frame 0')
@@ -291,35 +350,46 @@ class FullyConnected(SignedGraph):
             G_nodecol = frames[i]
             vmax = np.max(G_nodecol)
             vmin = np.min(G_nodecol)
-            nx.draw_networkx_nodes(self.G, pos=pos, 
-                                       node_color=G_nodecol, cmap=cmap)
+            nx.draw_networkx_nodes(
+                self.G, pos=pos, node_color=G_nodecol, cmap=cmap
+            )
             cbar.mappable.set_clim(vmin, vmax)
+
         return animate
 
 
 #
 class Lattice2D(SignedGraph):
     #
-    def __init__(self, side1: int, geometry: str = DEFAULT_LATTICE2D_GEOMETRY, 
-                 side2: int = 0, pbc: bool = True, fbc_val: float = 1., **kwargs) -> None:
-        try: 
+    def __init__(
+        self,
+        side1: int,
+        geometry: str = DEFAULT_LATTICE2D_GEOMETRY,
+        side2: int = 0,
+        pbc: bool = True,
+        fbc_val: float = 1.0,
+        **kwargs,
+    ) -> None:
+        try:
             self.geometry = geometry
             if geometry not in DEFLIST_LATTICE2D_GEOMETRIES:
-                raise Lattice2DError("""The selected geometry of the 2D lattice
+                raise Lattice2DError(
+                    """The selected geometry of the 2D lattice
                                      is not available. Setting it to 'squared' 
-                                     for a 2d regular grid.""")
+                                     for a 2d regular grid."""
+                )
         except:
             self.geometry = self.DEFAULT_GEOMETRY
         self.side1 = side1
         if side2:
             self.side2 = side2
         else:
-            if self.geometry == 'triangular':
+            if self.geometry == "triangular":
                 self.side2 = int(self.side1 * np.sqrt(3))
-            elif self.geometry == 'hexagonal':
+            elif self.geometry == "hexagonal":
                 self.side1 = int(self.side1 * np.sqrt(3))
                 self.side2 = side1
-            elif self.geometry == 'squared':
+            elif self.geometry == "squared":
                 self.side2 = self.side1
         self.pbc = pbc
         self.fbc_val = fbc_val
@@ -327,53 +397,54 @@ class Lattice2D(SignedGraph):
         super(Lattice2D, self).__init__(self.G, **kwargs)
         self.init_graph()
         self.init_paths()
-        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG)//2]: -1}
-        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH)//2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH) // 2]: -1}
+
     #
     def init_graph(self):
-        if self.geometry == 'squared':
+        if self.geometry == "squared":
             self.posG = dict(zip(self.G, self.G))
-            nx.set_node_attributes(self.G, values=self.posG, name='pos')
+            nx.set_node_attributes(self.G, values=self.posG, name="pos")
         self.upd_graph_matrices()
+
     #
     def init_paths(self):
-        if self.geometry == 'triangular':
-            self.stdFname = 'trLattice' + f"_p={self.pflip:.3g}"
-        elif self.geometry == 'squared':
-            self.stdFname = 'sqLattice' + f"_p={self.pflip:.3g}"
-        elif self.geometry == 'hexagonal':
-            self.stdFname = 'hxLattice' + f"_p={self.pflip:.3g}"
+        if self.geometry == "triangular":
+            self.stdFname = "trLattice" + f"_p={self.pflip:.3g}"
+        elif self.geometry == "squared":
+            self.stdFname = "sqLattice" + f"_p={self.pflip:.3g}"
+        elif self.geometry == "hexagonal":
+            self.stdFname = "hxLattice" + f"_p={self.pflip:.3g}"
         self.lambdaPath = f"l2d_{self.geometry}/"
         self.pltPath = f"data/plot/{self.lambdaPath}"
         self.datPath = f"data/{self.lambdaPath}"
 
-    
     def lattice_selection(self, pbc=None) -> Graph:
         if pbc is None:
             pbc = self.pbc
         else:
             pbc = False
-        if self.geometry == 'triangular':
+        if self.geometry == "triangular":
             nxfunc = nx.triangular_lattice_graph
             self.p_c = 0.146
-            kwdict = {'with_positions': True}
-        elif self.geometry == 'squared':
+            kwdict = {"with_positions": True}
+        elif self.geometry == "squared":
             nxfunc = nx.grid_2d_graph
             self.p_c = 0.103
             kwdict = {}
             self.syshape = (self.side1, self.side2)
-        elif self.geometry == 'hexagonal':
+        elif self.geometry == "hexagonal":
             nxfunc = nx.hexagonal_lattice_graph
             self.p_c = 0.065
-            kwdict = {'with_positions': True}
+            kwdict = {"with_positions": True}
         return nxfunc(self.side1, self.side2, periodic=pbc, **kwdict)
-    
+
     #
     def make_animation(self, fig, ax, frames):
         # I like to position my colorbars this way, but you don't have to
 
         cv0 = frames[0].reshape(self.syshape)
-        im = ax.imshow(cv0) # Here make an AxesImage rather than contour
+        im = ax.imshow(cv0)  # Here make an AxesImage rather than contour
         _, _, cbar = imshow_colorbar_caxdivider(im, ax)
         # tx = ax.set_title('Frame 0')
 
@@ -386,4 +457,5 @@ class Lattice2D(SignedGraph):
             # tx.set_text('Frame {0}'.format(i))
             # In this version you don't have to do anything to the colorbar,
             # it updates itself when the mappable it watches (im) changes
+
         return animate
