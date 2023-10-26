@@ -4,3 +4,6 @@ class NflipError(Exception):
 #
 class Lattice2DError(Exception):
     pass
+#
+class NoClustError(Exception):
+    pass

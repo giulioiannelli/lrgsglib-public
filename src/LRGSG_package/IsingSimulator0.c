@@ -1,32 +1,18 @@
-#include <stdio.h>
-#include <math.h>
-#include <inttypes.h>
 #include "LRGSG_utils.h"
 #include "LRGSG_customs.h"
+#include "LRGSG_rbim.h"
 #include "sfmtrng.h"
 
-#define BOLTZMANN_FACTOR(DE, T) exp(-DE / T)
-#define T_MAX_STEP (10 * N)
-#define T_THERM_STEP (2 * N)
 #define DEFAULT_DATA_OUTDIR "data/l2d_sq_ising/"
 #define DEFAULT_GRAPH_OUTDIR DEFAULT_DATA_OUTDIR "graphs/"
-#define BINX ".bin"
-#define TXTX ".txt"
+
+#define T_MAX_STEP (10 * N)
+#define T_THERM_STEP (2 * N)
 
 sfmt_t sfmt;
 uint32_t *seed_rand;
 
-double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs,
-                         double_p *edgl);
-double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
-                        double_p *edgl);
-double calc_ext_magn(size_t N, spin_tp s);
-double calc_ext_magn2(size_t N, spin_tp s);
-void flip_spin(size_t nd, spin_tp s);
-void one_step_metropolis(size_t nd, double T, spin_tp s, size_tp nlen,
-                         size_tp *neighs, double_p *edgl);
-void prepend(char *s, const char *t);
-double calc_clust_magn(size_t cli_l, size_tp cli, spin_tp s);
+
 
 int main(int argc, char *argv[])
 {
@@ -42,7 +28,7 @@ int main(int argc, char *argv[])
     double T;
     double p;
     spin_tp s;
-    size_t N, side;
+    size_t N;//, side;
     size_t tmp, cntr, cl1i_l = 0, cl2i_l = 0;
     size_tp neigh_len, cl1i, cl2i;
     size_tp *neighs;
@@ -50,6 +36,10 @@ int main(int argc, char *argv[])
     double_p *adj;
     double_p *edgl;
     //
+    if (argc > 5)
+    {
+        printf("too many arguments!\n");
+    }
     N = strtozu(argv[1]);
     T = strtod(argv[2], &ptr);
     p = strtod(argv[3], &ptr);
@@ -61,7 +51,7 @@ int main(int argc, char *argv[])
     sprintf(buf, DEFAULT_GRAPH_OUTDIR "N=%zu/cl1_%s" BINX, N, argv[4]);
     __fopen(&f_icl1, buf, "rb");
     //
-    side = (size_t)sqrt(N);
+    // side = (size_t)sqrt(N);
     //
     adj = __chMalloc(N * sizeof(*adj));
     for (size_t i = 0; i < N; i++)
@@ -77,11 +67,11 @@ int main(int argc, char *argv[])
     cl1i_l--;
     //
     // qui sostituisci con una condizione su argc se il programma ha trovato piu di un solo cluster
+    cl2i = __chMalloc(1 * sizeof(*cl2i));
     if (p > 0.103)
     {
         sprintf(buf, DEFAULT_GRAPH_OUTDIR "N=%zu/cl2_%s" BINX, N, argv[4]);
         __fopen(&f_icl2, buf, "rb");
-        cl2i = __chMalloc(1 * sizeof(*cl2i));
         while (fread(&cl2i[cl2i_l++], sizeof(*cl2i), 1, f_icl2) == 1)
             cl2i = realloc(cl2i, (cl2i_l + 1) * sizeof(*cl2i));
         cl2i_l--;
@@ -171,9 +161,10 @@ int main(int argc, char *argv[])
         for (size_t i = 0; i < N; i++)
             one_step_metropolis(i, T, s, neigh_len, neighs, edgl);
     }
+    m1 = __chMalloc(T_THERM_STEP * sizeof(*m1));
+    m2 = __chMalloc(T_MAX_STEP * sizeof(*m2));
     if (p < 0.103)
     {
-        m1 = __chMalloc(T_THERM_STEP * sizeof(*m1));
         for (size_t t = 0; t < T_THERM_STEP; t++)
         {
             m1[t] = calc_clust_magn(cl1i_l, cl1i, s);
@@ -187,8 +178,6 @@ int main(int argc, char *argv[])
     {
         sprintf(buf, DEFAULT_DATA_OUTDIR "N=%zu/outcl2_%s_T=%.3g_%s" TXTX, N, argv[4], T, argv[5]);
         __fopen(&f_out2, buf, "a+");
-        m1 = __chMalloc(T_THERM_STEP * sizeof(*m1));
-        m2 = __chMalloc(T_MAX_STEP * sizeof(*m2));
         for (size_t t = 0; t < T_THERM_STEP; t++)
         {
             m1[t] = calc_clust_magn(cl1i_l, cl1i, s);
@@ -230,10 +219,8 @@ int main(int argc, char *argv[])
     fclose(f_adj);
     free(neigh_len);
     free(m1);
-    if (p > 0.103)
-        free(m2);
-    if (p > 0.103)
-        free(cl2i);
+    free(m2);
+    free(cl2i);
     free(s);
     free(cl1i);
 
@@ -251,73 +238,4 @@ int main(int argc, char *argv[])
     while (tmp)
         free(neighs[--tmp]);
     free(neighs);
-}
-double calc_clust_magn(size_t cli_l, size_tp cli, spin_tp s)
-{
-    double clm = 0.;
-    for (size_t i = 0; i < cli_l; i++)
-        clm += s[cli[i]];
-    return clm / cli_l;
-}
-
-/* Prepends t into s. Assumes s has enough space allocated
-** for the combined string.
-*/
-void prepend(char *s, const char *t)
-{
-    size_t len = strlen(t);
-    memmove(s + len, s, strlen(s) + 1);
-    memcpy(s, t, len);
-}
-double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs, double_p *edgl)
-{
-    double sum = 0.;
-    for (size_t i = 0; i < n_nn; i++)
-        sum += *(*(edgl + nd) + i) * *(s + *(*(neighs + nd) + i));
-    return -sum / n_nn;
-}
-double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs, double_p *edgl)
-{
-    double sum = 0.;
-    for (size_t i = 0; i < N; i++)
-        sum += neigh_weight_magn(i, *(nlen + i), s, neighs, edgl);
-    return sum;
-}
-void flip_spin(size_t nd, spin_tp s)
-{
-    s[nd] = -s[nd];
-}
-void one_step_metropolis(size_t nd, double T, spin_tp s, size_tp nlen, size_tp *neighs, double_p *edgl)
-{
-    double nene, E_old, E_new, DeltaE;
-    nene = neigh_weight_magn(nd, *(nlen + nd), s, neighs, edgl);
-    E_old = s[nd] * nene;
-    E_new = -s[nd] * nene;
-    DeltaE = E_new - E_old;
-    if (DeltaE < 0)
-    {
-        flip_spin(nd, s);
-    }
-    else
-    {
-        if (RNG_dbl() < BOLTZMANN_FACTOR(DeltaE, T))
-        {
-            flip_spin(nd, s);
-        }
-    }
-}
-
-double calc_ext_magn(size_t N, spin_tp s)
-{
-    double m = 0.;
-    for (size_t i = 0; i < N; i++)
-        m += s[i];
-    return m;
-}
-double calc_ext_magn2(size_t N, spin_tp s)
-{
-    double m2 = 0.;
-    for (size_t i = 0; i < N; i++)
-        m2 += s[i] * s[i];
-    return m2;
 }

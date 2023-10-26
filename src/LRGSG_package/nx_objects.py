@@ -39,10 +39,8 @@ class SignedGraph:
             self.G = self.__init_graph_fromfile__()
         else:
             self.G = G
+            self.pflip = pflip
         self.init_sgraph()
-        self.pflip = pflip
-        self.nflip = int(self.pflip * self.Ne)
-        self.randsample = random.sample(range(self.Ne), self.nflip)
 
     #
     def __init_graph_fromfile__(self):
@@ -69,22 +67,30 @@ class SignedGraph:
 
     #
     def upd_H_graph(self):
+        self.H = nx.convert_node_labels_to_integers(self.G)
         self.esetH = list(self.H.edges())
         self.node_map = dict(zip(self.G, self.H))
         self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
         self.number_of_negative_links()
-
-    #
-    def init_H_graph(self):
-        self.H = nx.convert_node_labels_to_integers(self.G)
-        self.upd_H_graph()
-
-    def init_sgraph(self):
+    
+    def init_n_nodes_edges(self):
         self.N = self.G.number_of_nodes()
         self.Ne = self.G.number_of_edges()
+
+    def init_sgraph(self):
         self.esetG = list(self.G.edges())
-        self.init_weights()
-        self.init_H_graph()
+        self.init_n_nodes_edges()
+        if self.import_on:
+            self.upd_H_graph()
+            self.nflip = self.Ne_n
+            self.pflip = self.nflip / self.Ne
+            self.upd_graph_matrices() 
+            self.randsample = np.where(np.array(self.Adj.todense()).flatten() < 0)
+        else:
+            self.nflip = int(self.pflip * self.Ne)
+            self.randsample = random.sample(range(self.Ne), self.nflip) 
+            self.init_weights()
+            self.upd_H_graph()
 
     #
     def adjacency_matrix(self, weight: str = "weight"):
@@ -149,7 +155,6 @@ class SignedGraph:
             nx.set_edge_attributes(
                 self.G, values=neg_weights_dict, name="weight"
             )
-            self.upd_G_graph()
             self.upd_H_graph()
         elif on_graph == "H":
             if neg_weights_dict is None:
@@ -157,7 +162,6 @@ class SignedGraph:
             nx.set_edge_attributes(
                 self.H, values=neg_weights_dict, name="weight"
             )
-            self.upd_H_graph()
             self.upd_G_graph()
         self.upd_graph_matrices()
 
@@ -208,7 +212,10 @@ class SignedGraph:
         eigVbin = np.sign(self.eigV[which])
         eigVbin[eigVbin == 0] = +1
         return eigVbin
-
+    def bin_eigV_all(self):
+        eigVbin = np.sign(self.eigV)
+        eigVbin[eigVbin == 0] = +1
+        return eigVbin
     #
     def rescaled_signed_laplacian(self, MODE: str = "field"):
         if MODE == "field":
@@ -279,11 +286,14 @@ class SignedGraph:
         return d
 
     #
-    def export_graph_pickle(self, expath: str = DEFAULT_OUTDIR):
-        pickle.dump(
-            self.G, open(f"{expath}N={self.N:d}/{self.stdFname}.pickle", "wb")
-        )
-
+    def export_graph(self, MODE: str = "pickle", expath: str = DEFAULT_OUTDIR):
+        fname = f"{expath}N={self.N:d}/{self.stdFname}"
+        if MODE == "pickle":
+            pickle.dump(
+                self.G, open(f"{fname}.pickle", "wb"), pickle.HIGHEST_PROTOCOL
+            )
+        elif MODE == "gml":
+            nx.write_gml(self.G, f"{fname}.gml")
     #
     def export_adj_bin(self, expath: str = DEFAULT_OUTDIR):
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]

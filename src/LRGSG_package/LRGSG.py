@@ -284,7 +284,10 @@ class SignedLaplacianAnalysis:
         #
         if rescaled:
             if rescaled == "dynamic":
-                lap = lambda t: np.exp(-self.system.eigv[0] * t) * self.system.sLp
+                lap = (
+                    lambda t: np.exp(-self.system.eigv[0] * t)
+                    * self.system.sLp
+                )
             else:
                 self.system.rescaled_signed_laplacian(rescaled)
                 lap = lambda _: self.system.resLp
@@ -351,7 +354,9 @@ class SignedLaplacianAnalysis:
         #
         fig.tight_layout()
         ani.save(
-            f"{savename}{eMP4}", writer=animation.FFMpegWriter(fps=fps), dpi=dpi
+            f"{savename}{eMP4}",
+            writer=animation.FFMpegWriter(fps=fps),
+            dpi=dpi,
         )
         plt.close(fig)
 
@@ -392,6 +397,7 @@ class IsingDynamics:
         T: float,
         IsingIC: str,
         MODE_RUN: str = "py",
+        NoClust: int = 1,
         nstepsIsing: int = 100,
         save_magnetization: bool = False,
     ) -> None:
@@ -401,6 +407,7 @@ class IsingDynamics:
         self.IsingIC = IsingIC
         self.nstepsIsing = nstepsIsing
         self.save_magnetization = save_magnetization
+        self.NoClust = NoClust
         pass
 
     def boltzmann_factor(self, energy: float) -> float:
@@ -459,6 +466,8 @@ class IsingDynamics:
                 self.s = self.s * np.random.choice(
                     [-1, 1], size=self.system.N, p=[IICnoise, 1 - IICnoise]
                 )
+        if self.MODE_RUN.startswith("C"):
+            self.export_s_init()
 
     #
     def run(
@@ -467,26 +476,45 @@ class IsingDynamics:
         out_suffix: str = "",
         tqdm_on: bool = True,
     ):
-        if self.MODE_RUN == "C":
+        if self.MODE_RUN == "C0":
             if adjfname == "":
                 adjfname = self.system.stdFname
             if out_suffix == "":
                 out_suffix = self.id_string_isingdyn
-            cprogram = [
-                    "src/LRGSG_package/IsingSimulator",
-                    f"{self.system.N}",
-                    f"{self.T}",
-                    f"{self.system.pflip}",
-                    adjfname,
-                    out_suffix
-                ]
-            call(cprogram)
+            self.cprogram = [
+                "src/LRGSG_package/IsingSimulator0",
+                f"{self.system.N}",
+                f"{self.T}",
+                f"{self.system.pflip}",
+                adjfname,
+                out_suffix,
+            ]
+            call(self.cprogram)
+            return
+        elif self.MODE_RUN == "C1":
+            if adjfname == "":
+                adjfname = self.system.stdFname
+            if out_suffix == "":
+                out_suffix = self.id_string_isingdyn
+            self.cprogram = [
+                "src/LRGSG_package/IsingSimulator1",
+                f"{self.system.N}",
+                f"{self.T}",
+                f"{self.system.pflip}",
+                adjfname,
+                f"{self.NoClust}",
+                out_suffix,
+            ]
+            call(self.cprogram)
             return
         metropolis_1step = np.vectorize(self.metropolis, excluded="self")
         if self.save_magnetization:
+
             def save_magn_array():
                 self.magn_array_save.append(self.s)
+
         else:
+
             def save_magn_array():
                 pass
 
@@ -500,7 +528,9 @@ class IsingDynamics:
         )
         for _ in iterator:
             self.magn.append(np.sum(self.s))
-            self.magnc1.append(np.sum(self.s[np.array(self.Ising_clusters[0])]))
+            self.magnc1.append(
+                np.sum(self.s[np.array(self.Ising_clusters[0])])
+            )
             self.ene.append(self.calc_full_energy())
             # for i in range(self.system.N):
             #     self.metropolis(sample[i])
@@ -508,43 +538,100 @@ class IsingDynamics:
             save_magn_array()
 
     #
-    def find_ising_clusters(self):
+    # def find_ising_clusters(self):
+    #     if self.Ising_clusters:
+    #         print("exit function")
+    #         return
+    #     lnodes = list(self.system.H.nodes())
+    #     lnodes_tmp = lnodes[:]
+    #     #
+    #     self.system.compute_k_eigvV()
+    #     eigVbin = self.system.bin_eigV()
+    #     #
+    #     def recursive_search(seed, magn_i, clustertmp):
+    #         neighs = get_kth_order_neighbours(self.system.H, seed, 1)
+    #         neighs = np.array([e for e in neighs if e not in set(clustertmp)])
+    #         if not neighs.size:
+    #             return
+    #         samecluster = np.array(eigVbin[neighs] == magn_i)
+    #         if not samecluster.any():
+    #             return
+    #         neighs_samecluster = list(neighs[samecluster])
+    #         clustertmp.extend(neighs_samecluster)
+    #         for ss in neighs_samecluster:
+    #             recursive_search(ss, magn_i, clustertmp)
+    #     #
+    #     for i in lnodes:
+    #         if i not in lnodes_tmp:
+    #             continue
+    #         if not lnodes_tmp:
+    #             break
+    #         #
+    #         clustertmp = []
+    #         clustertmp.extend([i])
+    #         #
+    #         recursive_search(i, eigVbin[i], clustertmp)
+    #         lnodes_tmp = [e for e in lnodes_tmp if e not in set(clustertmp)]
+    #         self.Ising_clusters.append(clustertmp)
+    #     self.numIsing_cl = len(self.Ising_clusters)
+    #     self.Ising_clusters.sort(key=len, reverse=True)
+    def find_ising_clusters(self, import_cl: bool = False):
+        if import_cl:
+            for i in range(self.NoClust):
+                self.Ising_clusters.append(
+                    np.fromfile(
+                        f"{self.system.DEFAULT_OUTDIR}N={self.system.N}/cl{i}_{self.system.stdFname}.bin",
+                        dtype=int
+                    )
+                )
+            self.numIsing_cl = len(self.Ising_clusters)
         if self.Ising_clusters:
-            print("exit function")
+            print("Ising Clusters already computed.")
             return
-        lnodes = list(self.system.H.nodes())
-        lnodes_tmp = lnodes[:]
         #
-        self.system.compute_k_eigvV()
-        eigVbin = self.system.bin_eigV()
+        self.system.compute_k_eigvV(howmany=self.NoClust)
+        eigVbin = self.system.bin_eigV_all()
         #
-        def recursive_search(seed, magn_i, clustertmp):
-            neighs = get_kth_order_neighbours(self.system.H, seed, 1)
-            neighs = np.array([e for e in neighs if e not in set(clustertmp)])
-            if not neighs.size:
-                return
-            samecluster = np.array(eigVbin[neighs] == magn_i)
-            if not samecluster.any():
-                return
-            neighs_samecluster = list(neighs[samecluster])
-            clustertmp.extend(neighs_samecluster)
-            for ss in neighs_samecluster:
-                recursive_search(ss, magn_i, clustertmp)
-        #
-        for i in lnodes:
-            if i not in lnodes_tmp:
-                continue
-            if not lnodes_tmp:
-                break
-            #
-            clustertmp = []
-            clustertmp.extend([i])
-            #
-            recursive_search(i, eigVbin[i], clustertmp)
-            lnodes_tmp = [e for e in lnodes_tmp if e not in set(clustertmp)]
-            self.Ising_clusters.append(clustertmp)
+        self.Ising_clusters = []
+        for j in range(self.NoClust):
+            lnodes = list(self.system.H.nodes())
+            lnodes_tmp = lnodes[:]
+
+            def recursive_search(seed, magn_i, clustertmp):
+                neighs = get_kth_order_neighbours(self.system.H, seed, 1)
+                neighs = np.array(
+                    [e for e in neighs if e not in set(clustertmp)]
+                )
+                if not neighs.size:
+                    return
+                samecluster = np.array(eigVbin[j][neighs] == magn_i)
+                if not samecluster.any():
+                    return
+                neighs_samecluster = list(neighs[samecluster])
+                clustertmp.extend(neighs_samecluster)
+                for ss in neighs_samecluster:
+                    recursive_search(ss, magn_i, clustertmp)
+
+            allclusters = []
+            for i in lnodes:
+                if i not in lnodes_tmp:
+                    continue
+                if not lnodes_tmp:
+                    break
+                #
+                clustertmp = []
+                clustertmp.extend([i])
+                #
+                recursive_search(i, eigVbin[j][i], clustertmp)
+                lnodes_tmp = [
+                    e for e in lnodes_tmp if e not in set(clustertmp)
+                ]
+                allclusters.append(clustertmp)
+            allclusters.sort(key=len, reverse=True)
+            self.Ising_clusters.append(allclusters[0])
         self.numIsing_cl = len(self.Ising_clusters)
-        self.Ising_clusters.sort(key=len, reverse=True)
+        if self.MODE_RUN.startswith("C"):
+            self.export_ising_clust()
 
     #
     def mapping_nodes_to_clusters(self):
@@ -582,17 +669,26 @@ class IsingDynamics:
             "wb",
         )
         self.s.astype("int8").tofile(output_file)
+
     #
-    def export_ising_clust(self, howmany=2):
-        for i in range(howmany):
+    def export_ising_clust(self):
+        try:
+            if self.NoClust > self.numIsing_cl:
+                raise NoClustError(
+                    "Requested number of Cluster files is bigger than the one"
+                    " in selected topology."
+                )
+        except NoClustError as excpt:
+            print(excpt)
+
+        for i in range(self.NoClust):
             output_file = open(
-                f"{self.system.DEFAULT_OUTDIR}N={self.system.N}/cl{i+1}_{self.system.stdFname}.bin",
+                f"{self.system.DEFAULT_OUTDIR}N={self.system.N}/cl{i}_{self.system.stdFname}.bin",
                 "wb",
             )
-            np.array(self.Ising_clusters[i]).astype("uint64").tofile(
+            np.array(self.Ising_clusters[i]).astype(int).tofile(
                 output_file
             )
-
 
 
 #                           ,((((((((((((((((((((((((.

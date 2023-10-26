@@ -1,16 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <errno.h>
-#include <inttypes.h>
 #include "LRGSG_utils.h"
-#include "LRGSG_customs.h"
-#include "sfmtrng.h"
-
 //
+
+extern void print_stdout_cwd(void)
+{
+    char cwd[1024];
+    getcwd(cwd, sizeof(cwd));
+    printf("Current working directory: %s\n", cwd);
+}
+
+
+
 /** perform the sum of a floating point array 
  * @param n (size_t) the number of vector components
  * @param v (double *) the floaring point array
@@ -134,7 +133,15 @@ extern void __fgets_row(FILE **fc, char *row)
     }
     row[strlen(row) - 1] = '\0';
 }
-
+/* Prepends t into s. Assumes s has enough space allocated
+** for the combined string.
+*/
+void prepend(char *s, const char *t)
+{
+    size_t len = strlen(t);
+    memmove(s + len, s, strlen(s) + 1);
+    memcpy(s, t, len);
+}
 /**
  * @brief acquire size_t data from a string
  * 

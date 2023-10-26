@@ -3,17 +3,15 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "python.formatting.provider": "none",
-    "black-formatter.args": [
-        "--experimental-string-processing",
-        "--line-length=80"
-    ],
     "C_Cpp.default.compilerPath": "/home/opisthofulax/anaconda3/envs/LRG-Signed/bin/gcc",
     "files.associations": {
         "Makefile": "c",
         "lrsg_utils.h": "c",
         "string.h": "c",
         "lrgsg_customs.h": "c",
-        "prova.h": "c"
+        "prova.h": "c",
+        "lrgsg_utils.h": "c",
+        "lrgsg_rbim.h": "c"
     },
     "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT"
 }

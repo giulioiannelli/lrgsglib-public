@@ -5,8 +5,8 @@
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define ARRAY_SIZE_2D(arr) (sizeof(arr) / sizeof((arr)[0][0]))
 /* files extension */
-#define extCSV ".csv"
-#define extBIN ".bin"
+#define BINX ".bin"
+#define TXTX ".txt"
 /*basic string formatters*/
 #define __ " "
 #define _C ","
@@ -59,5 +59,8 @@
 #define STRL512 512
 #define STRL1024 1024
 
+typedef double *double_p;
+typedef size_t *size_tp;
+typedef int8_t *spin_tp; 
 
 #endif /* __CUSTOM_H_INC__ */
