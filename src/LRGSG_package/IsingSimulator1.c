@@ -3,8 +3,8 @@
 #include "LRGSG_rbim.h"
 #include "sfmtrng.h"
 
-#define T_MAX_STEP (10 * N)
-#define T_THERM_STEP (4 * N)
+#define T_MAX_STEP (1 * N)
+#define T_THERM_STEP (8 * N)
 #define DEFAULT_DATA_OUTDIR "data/l2d_sq_ising/"
 #define DEFAULT_GRAPH_OUTDIR DEFAULT_DATA_OUTDIR "graphs/"
 
@@ -13,7 +13,7 @@ uint32_t *seed_rand;
 
 int main(int argc, char *argv[])
 {
-    print_stdout_cwd();
+    // print_stdout_cwd();
     /* seed the SFMT RNG */
     __set_seed_SFMT();
     /* variables */
