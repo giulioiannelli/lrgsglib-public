@@ -19,8 +19,11 @@ double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs, dou
 double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs, double_p *edgl)
 {
     double sum = 0.;
+    double tmp = 0.;
     for (size_t i = 0; i < N; i++)
-        sum += neigh_weight_magn(i, *(nlen + i), s, neighs, edgl);
+{        
+    tmp = neigh_weight_magn(i, *(nlen + i), s, neighs, edgl);
+        sum += tmp;}
     return sum;
 }
 void flip_spin(size_t nd, spin_tp s)

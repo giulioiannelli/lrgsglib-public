@@ -453,19 +453,20 @@ class IsingDynamics:
         if self.IsingIC == "uniform":
             self.s = np.random.choice([-1, 1], size=self.system.N)
         elif self.IsingIC.startswith("ground_state"):
+            number = int(self.IsingIC.split("_")[-1])
             try:
-                bineigv = self.system.bin_eigV()
+                bineigv = self.system.bin_eigV(which=number)
             except AttributeError:
-                self.system.compute_k_eigvV()
-                bineigv = self.system.bin_eigV()
+                self.system.compute_k_eigvV(howmany=number+1)
+                bineigv = self.system.bin_eigV(which=number)
             self.s = bineigv
-            if len(self.IsingIC) > len("ground_state"):
-                IICnoise = float(self.IsingIC.split("_")[-1])
-                if IICnoise < 0 or IICnoise > 1:
-                    print("error")
-                self.s = self.s * np.random.choice(
-                    [-1, 1], size=self.system.N, p=[IICnoise, 1 - IICnoise]
-                )
+            # if len(self.IsingIC) > len("ground_state"):
+            #     IICnoise = float(self.IsingIC.split("_")[-1])
+            #     if IICnoise < 0 or IICnoise > 1:
+            #         print("error")
+            #     self.s = self.s * np.random.choice(
+            #         [-1, 1], size=self.system.N, p=[IICnoise, 1 - IICnoise]
+            #     )
         if self.MODE_RUN.startswith("C"):
             self.export_s_init()
 

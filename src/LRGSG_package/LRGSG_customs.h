@@ -2,6 +2,7 @@
 #define __CUSTOM_H_INC__
 /* preprocessors functions */
 #define DUMP(x) (#x)
+#define UNUSED(x) (void)(x)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define ARRAY_SIZE_2D(arr) (sizeof(arr) / sizeof((arr)[0][0]))
 /* files extension */

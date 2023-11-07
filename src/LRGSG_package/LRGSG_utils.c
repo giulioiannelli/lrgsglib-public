@@ -407,6 +407,53 @@ extern void __fill_adj__(FILE **f, size_t N, double_p **adj)
     }
 }
 
+extern void __fill_edgl_read__(FILE **f, double_p **edgl, size_tp **neighs, size_tp *neigh_len)
+{
+    size_t node_i, cntr, last = 0;
+    double w_ij;
+    cntr = 0;
+    node_i = 0;
+    for(size_t i, j; fscanf(*f, "%zu %zu %lf", &i, &j, &w_ij) != EOF;)
+    {
+        last = i;
+        if (i != node_i)
+        {
+            *(*neigh_len + i-1) = cntr;
+            node_i++;
+            // printf("%zu, %zu, %zu\n", i-1, *(*neigh_len + i-1), cntr);
+            cntr = 0;
+        }
+        *(*(*neighs + i) + cntr) = j;
+        *(*(*edgl + i) + cntr) = w_ij;
+        *(*edgl + i) = realloc(*(*edgl + i), (++cntr + 1) * sizeof(**edgl));
+        *(*neighs + i) = realloc(*(*neighs + i), (cntr + 1) * sizeof(**neighs));
+    }
+    *(*neigh_len + last) = cntr;
+}
+
+extern void __fill_edgl_make__(FILE **f, size_t N, double_p **adj, double_p **edgl, size_tp **neighs, size_tp *neigh_len)
+{
+    size_t cntr;
+    for (size_t i = 0; i < N; i++)
+    {
+        cntr = 0;
+        *(*edgl + i) = __chMalloc(1 * sizeof(**edgl));
+        *(*neighs + i) = __chMalloc(1 * sizeof(**neighs));
+        for (size_t j = 0; j < N; j++)
+        {
+            if (fabs(*(*(*adj + j) + i)) > 0.)
+            {
+                *(*(*neighs + i) + cntr) = j;
+                *(*(*edgl + i) + cntr) = *(*(*adj + j) + i);
+                *(*edgl + i) = realloc(*(*edgl + i), (++cntr + 1) * sizeof(**edgl));
+                *(*neighs + i) = realloc(*(*neighs + i), (cntr + 1) * sizeof(**neighs));
+                fprintf(*f, "%zu %zu %lf\n", i, j, *(*(*adj + j) + i));
+            }
+        }
+        *(*neigh_len + i) = cntr;
+        // printf("%zu, %zu, %zu\n", i, *(*neigh_len + i), cntr);
+    }
+}
 
 // extern void __make_adj_fromfile(size_t i, size_t j, double tmp, double_p **adj)
 // {
