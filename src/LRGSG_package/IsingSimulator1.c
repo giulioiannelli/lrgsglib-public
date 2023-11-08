@@ -64,10 +64,10 @@ int main(int argc, char *argv[]) {
     f_out = malloc(sizeof(*f_out) * Noclust);
     for (size_t i = 0; i < Noclust; i++) {
         sprintf(buf, CLOUT_FNAME, datdir, N, i, code_id, T, out_id);
-        __fopen((f_out + i), buf, "wb");
+        __fopen((f_out + i), buf, "ab");
     }
     sprintf(buf, ENE_FNAME, datdir, N, code_id, T, out_id);
-    __fopen(&f_ene, buf, "wb");
+    __fopen(&f_ene, buf, "ab");
     /* fill adjacency matrix */
     adj = __chMalloc(N * sizeof(*adj));
     for (size_t i = 0; i < N; i++)

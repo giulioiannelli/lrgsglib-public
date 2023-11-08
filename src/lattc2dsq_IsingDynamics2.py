@@ -1,4 +1,7 @@
 from LRGSG_package.LRGSG import *
+from LRGSG_package.LRGSG_utils import move_to_rootf
+
+move_to_rootf()
 
 #
 description = """
@@ -100,13 +103,11 @@ sqlatt = Lattice2D(
     side1=args.L,
     geometry="squared",
     import_on=import_on,
-    pflip=args.p,
-    stdFname=args.graph_filename + f"_p={args.p:.3g}",
-    expathc= f"N={args.L**2:}/"
+    pflip=args.p
 )
 if not import_on:
     sqlatt.flip_random_fract_edges()
-    sqlatt.export_graph_pickle()
+    sqlatt.export_graph()
     sqlatt.export_adj_bin()
 
 ising_dyn = IsingDynamics(
@@ -133,8 +134,7 @@ if args.p < 0.103:
         + f"_p={args.p:.3g}.pickle"
     ):
         ising_dyn.find_ising_clusters()
-        ising_dyn.mapping_nodes_to_clusters()
-        ising_dyn.export_ising_clust(howmany=1)
+        ising_dyn.export_ising_clust()
 for _ in range(args.number_of_averages):
-    ising_dyn.run(out_suffix=args.out_suffix, tqdm_on=False)
+    ising_dyn.run(tqdm_on=False)
 
