@@ -4,4 +4,3 @@ Version: 0.0.1
 Summary: A useful module
 Author: Giulio Iannelli
 Author-email: giulioiannelli.w@gmail.com
-Requires-Dist: numpy

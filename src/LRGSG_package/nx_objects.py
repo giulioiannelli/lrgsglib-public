@@ -223,6 +223,11 @@ class SignedGraph:
 
     #
     def bin_eigV(self, which=0):
+        try:
+            eigVbin = np.sign(self.eigV[which])
+            eigVbin[eigVbin == 0] = +1
+        except (AttributeError, IndexError):
+            self.compute_k_eigvV(howmany=which+1)
         eigVbin = np.sign(self.eigV[which])
         eigVbin[eigVbin == 0] = +1
         return eigVbin

@@ -442,7 +442,7 @@ class IsingDynamics:
     def calc_full_energy(self):
         return np.array(
             [
-                self.neigh_ene(self.neigh_weight_magn(node))
+                -self.s[node]*self.neigh_ene(self.neigh_weight_magn(node))
                 for node in range(self.system.N)
             ]
         ).sum()
@@ -454,11 +454,7 @@ class IsingDynamics:
             self.s = np.random.choice([-1, 1], size=self.system.N)
         elif self.IsingIC.startswith("ground_state"):
             number = int(self.IsingIC.split("_")[-1])
-            try:
-                bineigv = self.system.bin_eigV(which=number)
-            except AttributeError:
-                self.system.compute_k_eigvV(howmany=number+1)
-                bineigv = self.system.bin_eigV(which=number)
+            bineigv = self.system.bin_eigV(which=number)
             self.s = bineigv
         if self.MODE_RUN.startswith("C"):
             self.export_s_init()
@@ -527,11 +523,9 @@ class IsingDynamics:
             if tqdm_on
             else range(self.nstepsIsing)
         )
+        self.ene = []
         for _ in iterator:
             self.magn.append(np.sum(self.s))
-            self.magnc1.append(
-                np.sum(self.s[np.array(self.Ising_clusters[0])])
-            )
             self.ene.append(self.calc_full_energy())
             # for i in range(self.system.N):
             #     self.metropolis(sample[i])
