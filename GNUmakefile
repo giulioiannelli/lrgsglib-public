@@ -1,7 +1,7 @@
 # Minimal makefile for hnn-main.c
 #
 # create directories
-DIRS := data/l2d_sq_ising/graphs/ src/LRGSG_package/dump 
+DIRS := src/LRGSG_package/dump 
 $(shell mkdir -p $(DIRS))
 #
 PATH_SRC  = src/LRGSG_package/

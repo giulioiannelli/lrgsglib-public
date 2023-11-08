@@ -470,28 +470,13 @@ class IsingDynamics:
     ):
         #name C0 and C1 to be modified, in C0 -> CS that is a single eigenstate is studied with all of his subclusters
         # name C1 -> CM where one studies the largest component of all the clusters
-        if self.MODE_RUN == "C0":
+        if self.MODE_RUN.startswith("C"):
             if adjfname == "":
                 adjfname = self.system.stdFname
             if out_suffix == "":
                 out_suffix = self.id_string_isingdyn
             self.cprogram = [
-                "src/LRGSG_package/IsingSimulator0",
-                f"{self.system.N}",
-                f"{self.T}",
-                f"{self.system.pflip}",
-                adjfname,
-                out_suffix,
-            ]
-            call(self.cprogram)
-            return
-        elif self.MODE_RUN == "C1":
-            if adjfname == "":
-                adjfname = self.system.stdFname
-            if out_suffix == "":
-                out_suffix = self.id_string_isingdyn
-            self.cprogram = [
-                "src/LRGSG_package/IsingSimulator1",
+                f"src/LRGSG_package/IsingSimulator{self.MODE_RUN[-1]}",
                 f"{self.system.N}",
                 f"{self.T}",
                 f"{self.system.pflip}",
@@ -503,34 +488,30 @@ class IsingDynamics:
                 out_suffix,
             ]
             call(self.cprogram)
-            return
-        metropolis_1step = np.vectorize(self.metropolis, excluded="self")
-        if self.save_magnetization:
-
-            def save_magn_array():
-                self.magn_array_save.append(self.s)
-
         else:
-
-            def save_magn_array():
-                pass
-
-        sample = list(
-            range(self.system.N)
-        )  # rd.sample(list(self.system.H.nodes()), self.system.N)
-        iterator = (
-            tqdm(range(self.nstepsIsing))
-            if tqdm_on
-            else range(self.nstepsIsing)
-        )
-        self.ene = []
-        for _ in iterator:
-            self.magn.append(np.sum(self.s))
-            self.ene.append(self.calc_full_energy())
-            # for i in range(self.system.N):
-            #     self.metropolis(sample[i])
-            metropolis_1step(sample)
-            save_magn_array()
+            metropolis_1step = np.vectorize(self.metropolis, excluded="self")
+            if self.save_magnetization:
+                def save_magn_array():
+                    self.magn_array_save.append(self.s)
+            else:
+                def save_magn_array():
+                    pass
+            sample = list(
+                range(self.system.N)
+            )  # rd.sample(list(self.system.H.nodes()), self.system.N)
+            iterator = (
+                tqdm(range(self.nstepsIsing))
+                if tqdm_on
+                else range(self.nstepsIsing)
+            )
+            self.ene = []
+            for _ in iterator:
+                self.magn.append(np.sum(self.s))
+                self.ene.append(self.calc_full_energy())
+                # for i in range(self.system.N):
+                #     self.metropolis(sample[i])
+                metropolis_1step(sample)
+                save_magn_array()
 
     def find_ising_clusters(self, import_cl: bool = False):
         if import_cl:

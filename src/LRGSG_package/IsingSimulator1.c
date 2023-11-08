@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     /* fill adjacency matrix */
     adj = __chMalloc(N * sizeof(*adj));
     for (size_t i = 0; i < N; i++)
-        adj[i] = __chMalloc(N * sizeof(**adj));
+        *(adj + i) = __chMalloc(N * sizeof(**adj));
     __fill_adj__(&f_adj, N, &adj);
     /* fill initial condition */
     s = __chMalloc(N * sizeof(*s));

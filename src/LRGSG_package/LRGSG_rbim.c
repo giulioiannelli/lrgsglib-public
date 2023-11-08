@@ -12,25 +12,30 @@ double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs,
     double sum = 0.;
     for (size_t i = 0; i < n_nn; i++)
         sum += *(*(edgl + nd) + i) * *(s + *(*(neighs + nd) + i));
-    return -sum / n_nn;
+    return sum / n_nn;
+}
+double calc_magn(size_t N, spin_tp s) {
+    double m = 0.;
+    for (size_t i = 0; i < N; i++)
+        m += *(s + i);
+    return m / N;
 }
 double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
                         double_p *edgl) {
-    double sum = 0.;
-    double tmp = 0.;
+    double sum = 0., tmp = 0.;
     for (size_t i = 0; i < N; i++) {
-        tmp = neigh_weight_magn(i, *(nlen + i), s, neighs, edgl);
+        tmp = *(s + i) * neigh_weight_magn(i, *(nlen + i), s, neighs, edgl);
         sum += tmp;
     }
-    return sum;
+    return -sum / N;
 }
 void flip_spin(size_t nd, spin_tp s) { s[nd] = -s[nd]; }
 void one_step_metropolis(size_t nd, double T, spin_tp s, size_tp nlen,
                          size_tp *neighs, double_p *edgl) {
     double nene, E_old, E_new, DeltaE;
     nene = neigh_weight_magn(nd, *(nlen + nd), s, neighs, edgl);
-    E_old = s[nd] * nene;
-    E_new = -s[nd] * nene;
+    E_old = -s[nd] * nene;
+    E_new = +s[nd] * nene;
     DeltaE = E_new - E_old;
     if (DeltaE < 0) {
         flip_spin(nd, s);
