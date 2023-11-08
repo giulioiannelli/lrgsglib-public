@@ -10,6 +10,7 @@ DEFAULT_DATA_OUTDIR = "data/l2d_sq_ising/"
 DEFAULT_GRAPH_OUTDIR = DEFAULT_DATA_OUTDIR + "graphs/"
 DEFAULT_GRAPH_NAME = "sqLattice"
 DEFAULT_OUT_SUFFIX = 0
+DEFAULT_INITCON = "ground_state_0"
 HELP_L = f"""
     (int) L of the square lattice
 """
@@ -39,6 +40,11 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "L",
     help=HELP_L,
+    type=int,
+)
+parser.add_argument(
+    "Nclust",
+    default=5,
     type=int,
 )
 parser.add_argument(
@@ -73,11 +79,13 @@ parser.add_argument(
     help=HELP_o,
     type=str,
 )
+parser.add_argument(
+    "--initial_cond",
+    default=DEFAULT_INITCON,
+    type=str,
+)
 
 args = parser.parse_args()
-DEFAULT_GRAPH_OUTDIR
-os.makedirs(DEFAULT_GRAPH_OUTDIR + f"N={args.L**2:d}/", exist_ok=True)
-os.makedirs(DEFAULT_DATA_OUTDIR + f"N={args.L**2:d}/", exist_ok=True)
 #
 import_on = False
 if os.path.exists(
@@ -102,7 +110,11 @@ if not import_on:
     sqlatt.export_adj_bin()
 
 ising_dyn = IsingDynamics(
-    system=sqlatt, T=args.T, IsingIC="ground_state", MODE_RUN="C"
+    system=sqlatt, 
+    T=args.T, 
+    IsingIC=args.initial_cond,
+    MODE_RUN="C1", 
+    NoClust = 5
 )
 
 ising_dyn.init_ising_dynamics()
@@ -123,16 +135,6 @@ if args.p < 0.103:
         ising_dyn.find_ising_clusters()
         ising_dyn.mapping_nodes_to_clusters()
         ising_dyn.export_ising_clust(howmany=1)
-else:
-    if not os.path.exists(
-        DEFAULT_GRAPH_OUTDIR
-        + "cl1_"
-        + args.graph_filename
-        + f"_p={args.p:.3g}.pickle"
-    ):
-        ising_dyn.find_ising_clusters()
-        ising_dyn.mapping_nodes_to_clusters()
-        ising_dyn.export_ising_clust(howmany=2)
 for _ in range(args.number_of_averages):
     ising_dyn.run(out_suffix=args.out_suffix, tqdm_on=False)
 
