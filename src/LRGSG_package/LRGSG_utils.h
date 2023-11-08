@@ -48,7 +48,7 @@ char *rand_string(char *str, size_t size);
 
 extern void __make_adj_from_tmp(size_t i, size_t j, double tmp, double_p **adj);
 extern void __fill_adj__(FILE **f, size_t N, double_p **adj);
-extern void __fill_edgl_read__(FILE **f, double_p **edgl, size_tp **neighs, size_tp *neigh_len);
+extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, size_tp **neighs, size_tp *neigh_len);
 extern void __fill_edgl_make__(FILE **f, size_t N, double_p **adj, double_p **edgl, size_tp **neighs, size_tp *neigh_len);
 
 #endif /* __LRSGLIB_H_INC__ */

@@ -407,10 +407,15 @@ extern void __fill_adj__(FILE **f, size_t N, double_p **adj)
     }
 }
 
-extern void __fill_edgl_read__(FILE **f, double_p **edgl, size_tp **neighs, size_tp *neigh_len)
+extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, size_tp **neighs, size_tp *neigh_len)
 {
     size_t node_i, cntr, last = 0;
     double w_ij;
+    for (size_t i = 0; i < N; i++)
+    {
+        *(*edgl + i) = __chMalloc(1 * sizeof(**edgl));
+        *(*neighs + i) = __chMalloc(1 * sizeof(**neighs));
+    }
     cntr = 0;
     node_i = 0;
     for(size_t i, j; fscanf(*f, "%zu %zu %lf", &i, &j, &w_ij) != EOF;)

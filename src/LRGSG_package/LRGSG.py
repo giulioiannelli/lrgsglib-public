@@ -460,13 +460,6 @@ class IsingDynamics:
                 self.system.compute_k_eigvV(howmany=number+1)
                 bineigv = self.system.bin_eigV(which=number)
             self.s = bineigv
-            # if len(self.IsingIC) > len("ground_state"):
-            #     IICnoise = float(self.IsingIC.split("_")[-1])
-            #     if IICnoise < 0 or IICnoise > 1:
-            #         print("error")
-            #     self.s = self.s * np.random.choice(
-            #         [-1, 1], size=self.system.N, p=[IICnoise, 1 - IICnoise]
-            #     )
         if self.MODE_RUN.startswith("C"):
             self.export_s_init()
 
@@ -476,7 +469,11 @@ class IsingDynamics:
         adjfname: str = "",
         out_suffix: str = "",
         tqdm_on: bool = True,
+        thrmSTEP: int = 2,
+        eqSTEP: int = 10
     ):
+        #name C0 and C1 to be modified, in C0 -> CS that is a single eigenstate is studied with all of his subclusters
+        # name C1 -> CM where one studies the largest component of all the clusters
         if self.MODE_RUN == "C0":
             if adjfname == "":
                 adjfname = self.system.stdFname
@@ -504,6 +501,9 @@ class IsingDynamics:
                 f"{self.system.pflip}",
                 adjfname,
                 f"{self.NoClust}",
+                f"{thrmSTEP}",
+                f"{eqSTEP}",
+                self.system.datPath,
                 out_suffix,
             ]
             call(self.cprogram)
@@ -538,50 +538,12 @@ class IsingDynamics:
             metropolis_1step(sample)
             save_magn_array()
 
-    #
-    # def find_ising_clusters(self):
-    #     if self.Ising_clusters:
-    #         print("exit function")
-    #         return
-    #     lnodes = list(self.system.H.nodes())
-    #     lnodes_tmp = lnodes[:]
-    #     #
-    #     self.system.compute_k_eigvV()
-    #     eigVbin = self.system.bin_eigV()
-    #     #
-    #     def recursive_search(seed, magn_i, clustertmp):
-    #         neighs = get_kth_order_neighbours(self.system.H, seed, 1)
-    #         neighs = np.array([e for e in neighs if e not in set(clustertmp)])
-    #         if not neighs.size:
-    #             return
-    #         samecluster = np.array(eigVbin[neighs] == magn_i)
-    #         if not samecluster.any():
-    #             return
-    #         neighs_samecluster = list(neighs[samecluster])
-    #         clustertmp.extend(neighs_samecluster)
-    #         for ss in neighs_samecluster:
-    #             recursive_search(ss, magn_i, clustertmp)
-    #     #
-    #     for i in lnodes:
-    #         if i not in lnodes_tmp:
-    #             continue
-    #         if not lnodes_tmp:
-    #             break
-    #         #
-    #         clustertmp = []
-    #         clustertmp.extend([i])
-    #         #
-    #         recursive_search(i, eigVbin[i], clustertmp)
-    #         lnodes_tmp = [e for e in lnodes_tmp if e not in set(clustertmp)]
-    #         self.Ising_clusters.append(clustertmp)
-    #     self.numIsing_cl = len(self.Ising_clusters)
-    #     self.Ising_clusters.sort(key=len, reverse=True)
     def find_ising_clusters(self, import_cl: bool = False):
         if import_cl:
             for i in range(self.NoClust):
                 self.Ising_clusters.append(
                     np.fromfile(
-                        f"{self.system.DEFAULT_OUTDIR}N={self.system.N}/cl{i}_{self.system.stdFname}.bin",
+                        f"{self.system.isingpath}cl{i}_{self.system.stdFname}.bin",
                         dtype=int
                     )
                 )
@@ -660,13 +622,12 @@ class IsingDynamics:
                 i, self.system.side1
             )  # Calculate the row and column index
             result_array[row, col] = sublist[1]
-        # self.distr = np.unique(result_array, return_counts=True)
         self.mapping = result_array
 
     #
     def export_s_init(self):
         output_file = open(
-            f"{self.system.DEFAULT_OUTDIR}N={self.system.N}/s_{self.system.stdFname}.bin",
+            f"{self.system.isingpath}s_{self.system.stdFname}.bin",
             "wb",
         )
         self.s.astype("int8").tofile(output_file)
@@ -684,7 +645,7 @@ class IsingDynamics:
 
         for i in range(self.NoClust):
             output_file = open(
-                f"{self.system.DEFAULT_OUTDIR}N={self.system.N}/cl{i}_{self.system.stdFname}.bin",
+                f"{self.system.isingpath}cl{i}_{self.system.stdFname}.bin",
                 "wb",
             )
             np.array(self.Ising_clusters[i]).astype(int).tofile(
@@ -734,6 +695,55 @@ class IsingDynamics:
 #        @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 #         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&
 #          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&
+
+# if len(self.IsingIC) > len("ground_state"):
+#     IICnoise = float(self.IsingIC.split("_")[-1])
+#     if IICnoise < 0 or IICnoise > 1:
+#         print("error")
+#     self.s = self.s * np.random.choice(
+#         [-1, 1], size=self.system.N, p=[IICnoise, 1 - IICnoise]
+#     )
+
+# self.distr = np.unique(result_array, return_counts=True)
+
+    #
+    # def find_ising_clusters(self):
+    #     if self.Ising_clusters:
+    #         print("exit function")
+    #         return
+    #     lnodes = list(self.system.H.nodes())
+    #     lnodes_tmp = lnodes[:]
+    #     #
+    #     self.system.compute_k_eigvV()
+    #     eigVbin = self.system.bin_eigV()
+    #     #
+    #     def recursive_search(seed, magn_i, clustertmp):
+    #         neighs = get_kth_order_neighbours(self.system.H, seed, 1)
+    #         neighs = np.array([e for e in neighs if e not in set(clustertmp)])
+    #         if not neighs.size:
+    #             return
+    #         samecluster = np.array(eigVbin[neighs] == magn_i)
+    #         if not samecluster.any():
+    #             return
+    #         neighs_samecluster = list(neighs[samecluster])
+    #         clustertmp.extend(neighs_samecluster)
+    #         for ss in neighs_samecluster:
+    #             recursive_search(ss, magn_i, clustertmp)
+    #     #
+    #     for i in lnodes:
+    #         if i not in lnodes_tmp:
+    #             continue
+    #         if not lnodes_tmp:
+    #             break
+    #         #
+    #         clustertmp = []
+    #         clustertmp.extend([i])
+    #         #
+    #         recursive_search(i, eigVbin[i], clustertmp)
+    #         lnodes_tmp = [e for e in lnodes_tmp if e not in set(clustertmp)]
+    #         self.Ising_clusters.append(clustertmp)
+    #     self.numIsing_cl = len(self.Ising_clusters)
+    #     self.Ising_clusters.sort(key=len, reverse=True)
 
 
 # def run_ising_dynamics(

@@ -4,6 +4,7 @@
     },
     "python.formatting.provider": "none",
     "C_Cpp.default.compilerPath": "/home/opisthofulax/anaconda3/envs/LRG-Signed/bin/gcc",
+    "C_Cpp.clang_format_fallbackStyle": "{ ColumnLimit: 80, IndentWidth: 4 }",
     "files.associations": {
         "Makefile": "c",
         "lrsg_utils.h": "c",
@@ -11,7 +12,8 @@
         "lrgsg_customs.h": "c",
         "prova.h": "c",
         "lrgsg_utils.h": "c",
-        "lrgsg_rbim.h": "c"
+        "lrgsg_rbim.h": "c",
+        "stddef.h": "c"
     },
     "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT"
 }

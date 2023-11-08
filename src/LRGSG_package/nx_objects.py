@@ -1,3 +1,4 @@
+import os
 import pickle
 import random
 import scipy
@@ -20,31 +21,40 @@ from typing import Union
 class SignedGraph:
     p_c = None
     lsp = None
-    DEFAULT_OUTDIR = "data/l2d_sq_ising/graphs/"
 
     def __init__(
         self,
         G: Graph,
         lsp_mode: str = "intervals",
-        stdFname: str = "graph",
         import_on: bool = False,
         pflip: float = 0.0,
-        expathc: str = ""
+        expathc: str = "",
     ):
         self.lsp_mode = lsp_mode
-        self.stdFname = stdFname
         self.import_on = import_on
-        self.expath = self.DEFAULT_OUTDIR + expathc
+        self.expath = (
+            expathc if expathc else f"{self.DEFAULT_GRAPHDIR}{self.syshapePTH}"
+        )
+        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePTH}"
         if import_on:
+            self.graphfname = self.expath + self.stdFname
             self.G = self.__init_graph_fromfile__()
         else:
             self.G = G
             self.pflip = pflip
+            self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
+            self.graphfname = self.expath + self.stdFname
         self.init_sgraph()
+        self.make_directories()
 
     #
     def __init_graph_fromfile__(self):
-        return pickle.load(open(f"{self.expath}{self.stdFname}.pickle", "rb"))
+        return pickle.load(open(f"{self.graphfname}.pickle", "rb"))
+
+    #
+    def make_directories(self):
+        os.makedirs(self.expath, exist_ok=True)
+        os.makedirs(self.isingpath, exist_ok=True)
 
     #
     def init_weights(self):
@@ -72,7 +82,7 @@ class SignedGraph:
         self.node_map = dict(zip(self.G, self.H))
         self.edge_map = dict(zip(self.G.edges(), self.H.edges()))
         self.number_of_negative_links()
-    
+
     def init_n_nodes_edges(self):
         self.N = self.G.number_of_nodes()
         self.Ne = self.G.number_of_edges()
@@ -84,11 +94,13 @@ class SignedGraph:
             self.upd_H_graph()
             self.nflip = self.Ne_n
             self.pflip = self.nflip / self.Ne
-            self.upd_graph_matrices() 
-            self.randsample = np.where(np.array(self.Adj.todense()).flatten() < 0)
+            self.upd_graph_matrices()
+            self.randsample = np.where(
+                np.array(self.Adj.todense()).flatten() < 0
+            )
         else:
             self.nflip = int(self.pflip * self.Ne)
-            self.randsample = random.sample(range(self.Ne), self.nflip) 
+            self.randsample = random.sample(range(self.Ne), self.nflip)
             self.init_weights()
             self.upd_H_graph()
 
@@ -98,7 +110,9 @@ class SignedGraph:
 
     #
     def degree_matrix(self, A: csr_array) -> csr_array:
-        return csr_array(scsp.spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
+        return csr_array(
+            scsp.spdiags(A.sum(axis=1), 0, *A.shape, format="csr")
+        )
 
     #
     def absolute_degree_matrix(self, A: csr_array) -> csr_array:
@@ -212,10 +226,12 @@ class SignedGraph:
         eigVbin = np.sign(self.eigV[which])
         eigVbin[eigVbin == 0] = +1
         return eigVbin
+
     def bin_eigV_all(self):
         eigVbin = np.sign(self.eigV)
         eigVbin[eigVbin == 0] = +1
         return eigVbin
+
     #
     def rescaled_signed_laplacian(self, MODE: str = "field"):
         if MODE == "field":
@@ -286,18 +302,22 @@ class SignedGraph:
         return d
 
     #
-    def export_graph(self, MODE: str = "pickle", expath: str = DEFAULT_OUTDIR):
-        fname = f"{expath}N={self.N:d}/{self.stdFname}"
+    def export_graph(self, MODE: str = "pickle"):
         if MODE == "pickle":
             pickle.dump(
-                self.G, open(f"{fname}.pickle", "wb"), pickle.HIGHEST_PROTOCOL
+                self.G,
+                open(f"{self.graphfname}.pickle", "wb"),
+                pickle.HIGHEST_PROTOCOL,
             )
         elif MODE == "gml":
-            nx.write_gml(self.G, f"{fname}.gml")
+            nx.write_gml(self.G, f"{self.graphfname}.gml")
+
     #
-    def export_adj_bin(self, expath: str = DEFAULT_OUTDIR):
+    def export_adj_bin(self):
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
-        with open(f"{expath}N={self.N:d}/adj_{self.stdFname}.bin", "wb") as f:
+        with open(
+            f"{self.expath}adj_{self.stdFname}.bin", "wb"
+        ) as f:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)
 
@@ -319,7 +339,9 @@ class FullyConnected(SignedGraph):
         super(FullyConnected, self).__init__(self.G)
         self.init_graph()
         self.pbc = True
-        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {
+            self.esetG[len(self.esetG) // 2]: -1
+        }
         self.DEFAULT_NEG_WEIGHTS_DICT_H = self.DEFAULT_NEG_WEIGHTS_DICT_G
         self.animation_graph_embedding = anigemb
 
@@ -378,6 +400,7 @@ class Lattice2D(SignedGraph):
         side2: int = 0,
         pbc: bool = True,
         fbc_val: float = 1.0,
+        stdFnameSFFX: str = "",
         **kwargs,
     ) -> None:
         try:
@@ -404,11 +427,16 @@ class Lattice2D(SignedGraph):
         self.pbc = pbc
         self.fbc_val = fbc_val
         self.G = self.lattice_selection()
+        self.init_paths()
+        self.init_stdFname(stdFnameSFFX)
         super(Lattice2D, self).__init__(self.G, **kwargs)
         self.init_graph()
-        self.init_paths()
-        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
-        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH) // 2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {
+            self.esetG[len(self.esetG) // 2]: -1
+        }
+        self.DEFAULT_NEG_WEIGHTS_DICT_H = {
+            self.esetH[len(self.esetH) // 2]: -1
+        }
 
     #
     def init_graph(self):
@@ -419,15 +447,21 @@ class Lattice2D(SignedGraph):
 
     #
     def init_paths(self):
-        if self.geometry == "triangular":
-            self.stdFname = "trLattice" + f"_p={self.pflip:.3g}"
-        elif self.geometry == "squared":
-            self.stdFname = "sqLattice" + f"_p={self.pflip:.3g}"
-        elif self.geometry == "hexagonal":
-            self.stdFname = "hxLattice" + f"_p={self.pflip:.3g}"
         self.lambdaPath = f"l2d_{self.geometry}/"
         self.pltPath = f"data/plot/{self.lambdaPath}"
         self.datPath = f"data/{self.lambdaPath}"
+        self.DEFAULT_GRAPHDIR = self.datPath + "graphs/"
+        self.DEFAULT_ISINGDIR = self.datPath + "ising/"
+
+    #
+    def init_stdFname(self, SFFX):
+        if self.geometry == "triangular":
+            self.stdFname = "trLattice"
+        elif self.geometry == "squared":
+            self.stdFname = "sqLattice"
+        elif self.geometry == "hexagonal":
+            self.stdFname = "hxLattice"
+        self.stdFname = self.stdFname + SFFX
 
     def lattice_selection(self, pbc=None) -> Graph:
         if pbc is None:
@@ -447,6 +481,11 @@ class Lattice2D(SignedGraph):
             nxfunc = nx.hexagonal_lattice_graph
             self.p_c = 0.065
             kwdict = {"with_positions": True}
+        self.syshapePTH = (
+            f"N={self.side1**2}/"
+            if self.side1 == self.side2
+            else f"L1={self.side1}_L2={self.side2}/"
+        )
         return nxfunc(self.side1, self.side2, periodic=pbc, **kwdict)
 
     #

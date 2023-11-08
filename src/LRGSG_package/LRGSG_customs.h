@@ -1,3 +1,6 @@
+#include <stddef.h>
+#include <inttypes.h>
+
 #ifndef __CUSTOM_H_INC__
 #define __CUSTOM_H_INC__
 /* preprocessors functions */
