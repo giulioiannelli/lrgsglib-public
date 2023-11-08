@@ -2,7 +2,6 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "python.formatting.provider": "none",
     "C_Cpp.default.compilerPath": "/home/opisthofulax/anaconda3/envs/LRG-Signed/bin/gcc",
     "C_Cpp.clang_format_fallbackStyle": "{ ColumnLimit: 80, IndentWidth: 4 }",
     "files.associations": {

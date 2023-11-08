@@ -110,9 +110,7 @@ class SignedGraph:
 
     #
     def degree_matrix(self, A: csr_array) -> csr_array:
-        return csr_array(
-            scsp.spdiags(A.sum(axis=1), 0, *A.shape, format="csr")
-        )
+        return csr_array(scsp.spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
 
     #
     def absolute_degree_matrix(self, A: csr_array) -> csr_array:
@@ -227,7 +225,7 @@ class SignedGraph:
             eigVbin = np.sign(self.eigV[which])
             eigVbin[eigVbin == 0] = +1
         except (AttributeError, IndexError):
-            self.compute_k_eigvV(howmany=which+1)
+            self.compute_k_eigvV(howmany=which + 1)
         eigVbin = np.sign(self.eigV[which])
         eigVbin[eigVbin == 0] = +1
         return eigVbin
@@ -320,9 +318,7 @@ class SignedGraph:
     #
     def export_adj_bin(self):
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
-        with open(
-            f"{self.expath}adj_{self.stdFname}.bin", "wb"
-        ) as f:
+        with open(f"{self.expath}adj_{self.stdFname}.bin", "wb") as f:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)
 
@@ -344,9 +340,7 @@ class FullyConnected(SignedGraph):
         super(FullyConnected, self).__init__(self.G)
         self.init_graph()
         self.pbc = True
-        self.DEFAULT_NEG_WEIGHTS_DICT_G = {
-            self.esetG[len(self.esetG) // 2]: -1
-        }
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
         self.DEFAULT_NEG_WEIGHTS_DICT_H = self.DEFAULT_NEG_WEIGHTS_DICT_G
         self.animation_graph_embedding = anigemb
 
@@ -417,18 +411,18 @@ class Lattice2D(SignedGraph):
                                      for a 2d regular grid."""
                 )
         except:
-            self.geometry = self.DEFAULT_GEOMETRY
+            self.geometry = DEFAULT_LATTICE2D_GEOMETRY
         self.side1 = side1
         if side2:
             self.side2 = side2
         else:
-            if self.geometry == "triangular":
+            if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
                 self.side2 = int(self.side1 * np.sqrt(3))
-            elif self.geometry == "hexagonal":
+            elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
+                self.side2 = self.side1
+            elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[2]:
                 self.side1 = int(self.side1 * np.sqrt(3))
                 self.side2 = side1
-            elif self.geometry == "squared":
-                self.side2 = self.side1
         self.pbc = pbc
         self.fbc_val = fbc_val
         self.G = self.lattice_selection()
@@ -436,36 +430,34 @@ class Lattice2D(SignedGraph):
         self.init_stdFname(stdFnameSFFX)
         super(Lattice2D, self).__init__(self.G, **kwargs)
         self.init_graph()
-        self.DEFAULT_NEG_WEIGHTS_DICT_G = {
-            self.esetG[len(self.esetG) // 2]: -1
-        }
-        self.DEFAULT_NEG_WEIGHTS_DICT_H = {
-            self.esetH[len(self.esetH) // 2]: -1
-        }
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH) // 2]: -1}
 
     #
     def init_graph(self):
-        if self.geometry == "squared":
+        if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
             self.posG = dict(zip(self.G, self.G))
             nx.set_node_attributes(self.G, values=self.posG, name="pos")
         self.upd_graph_matrices()
 
     #
     def init_paths(self):
-        self.lambdaPath = f"l2d_{self.geometry}/"
-        self.pltPath = f"data/plot/{self.lambdaPath}"
-        self.datPath = f"data/{self.lambdaPath}"
-        self.DEFAULT_GRAPHDIR = self.datPath + "graphs/"
-        self.DEFAULT_ISINGDIR = self.datPath + "ising/"
+        self.lambdaPath = f"{DEFAULT_LATTICE2D_PATHABBRV}_{self.geometry}/"
+        self.pltPath = (
+            f"{DEFAULT_DATA_OUTDIR}{DEFAULT_PLOT_OUTDIR}{self.lambdaPath}"
+        )
+        self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.lambdaPath}"
+        self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
+        self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
 
     #
     def init_stdFname(self, SFFX):
-        if self.geometry == "triangular":
-            self.stdFname = "trLattice"
-        elif self.geometry == "squared":
-            self.stdFname = "sqLattice"
-        elif self.geometry == "hexagonal":
-            self.stdFname = "hxLattice"
+        if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
+            self.stdFname = DEFLIST_LATTICE2D_GEOABBRV[0]
+        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
+            self.stdFname = DEFLIST_LATTICE2D_GEOABBRV[1]
+        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[2]:
+            self.stdFname = DEFLIST_LATTICE2D_GEOABBRV[2]
         self.stdFname = self.stdFname + SFFX
 
     def lattice_selection(self, pbc=None) -> Graph:
@@ -473,16 +465,16 @@ class Lattice2D(SignedGraph):
             pbc = self.pbc
         else:
             pbc = False
-        if self.geometry == "triangular":
+        if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
             nxfunc = nx.triangular_lattice_graph
             self.p_c = 0.146
             kwdict = {"with_positions": True}
-        elif self.geometry == "squared":
+        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
             nxfunc = nx.grid_2d_graph
             self.p_c = 0.103
             kwdict = {}
             self.syshape = (self.side1, self.side2)
-        elif self.geometry == "hexagonal":
+        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[2]:
             nxfunc = nx.hexagonal_lattice_graph
             self.p_c = 0.065
             kwdict = {"with_positions": True}

@@ -3,6 +3,8 @@
 #include "LRGSG_utils.h"
 #include "sfmtrng.h"
 
+#define MOD_SAVE 0
+
 #define T_THERM_STEP (thrmSTEP * N)
 #define T_EQ_STEP (eqSTEP * N)
 
@@ -25,6 +27,7 @@ int main(int argc, char *argv[]) {
     /* variables */
     FILE *f_sini, *f_adj, *f_edgel, *f_ene;
     FILE **f_cl, **f_out;
+    const char *mod_save;
     char *ptr, *datdir, *code_id, *out_id, buf[STRL512];
     double T, p;
     double *ene;
@@ -61,13 +64,21 @@ int main(int argc, char *argv[]) {
         __fopen((f_cl + i), buf, "rb");
     }
     /* open out files */
+    switch (MOD_SAVE) {
+    case 0: {
+        mod_save = "ab";
+        break;
+    }
+    case 1: {
+        mod_save = "a+";
+        break;
+    }
+    }
     f_out = malloc(sizeof(*f_out) * Noclust);
     for (size_t i = 0; i < Noclust; i++) {
         sprintf(buf, CLOUT_FNAME, datdir, N, i, code_id, T, out_id);
-        __fopen((f_out + i), buf, "ab");
+        __fopen((f_out + i), buf, mod_save);
     }
-    sprintf(buf, ENE_FNAME, datdir, N, code_id, T, out_id);
-    __fopen(&f_ene, buf, "ab");
     /* fill adjacency matrix */
     adj = __chMalloc(N * sizeof(*adj));
     for (size_t i = 0; i < N; i++)
@@ -113,12 +124,24 @@ int main(int argc, char *argv[]) {
             mclus[i][t] = calc_clust_magn(cl_l[i], cl_i[i], s);
         N_step_metropolis(N, T, s, neigh_len, neighs, edgl);
     }
-    for (size_t i = 0; i < Noclust; i++)
-        fwrite(mclus[i], sizeof(**mclus), T_EQ_STEP, f_out[i]);
-    fwrite(ene, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_ene);
+    switch (MOD_SAVE) {
+    case 0:
+        sprintf(buf, ENE_FNAME, datdir, N, code_id, T, out_id);
+        __fopen(&f_ene, buf, "ab");
+        for (size_t i = 0; i < Noclust; i++)
+            fwrite(mclus[i], sizeof(**mclus), T_EQ_STEP, f_out[i]);
+        fwrite(ene, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_ene);
+        fclose(f_ene);
+        break;
+    case 1:
+        for (size_t i = 0; i < Noclust; i++)
+            fprintf(*(f_out + i), "%g %g\n",
+                    sum_vs(T_EQ_STEP, *(mclus + i)) / T_EQ_STEP,
+                    sum_vs_2(T_EQ_STEP, *(mclus + i)) / T_EQ_STEP);
+        break;
+    }
 
     fclose(f_edgel);
-    fclose(f_ene);
     fclose(f_sini);
     fclose(f_adj);
     tmp = Noclust;
