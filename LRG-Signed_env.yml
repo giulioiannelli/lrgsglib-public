@@ -8,11 +8,12 @@ dependencies:
   - asttokens=2.0.5=pyhd3eb1b0_0
   - backcall=0.2.0=pyhd3eb1b0_0
   - binutils_impl_linux-64=2.38=h2a08ee3_1
+  - binutils_linux-64=2.28.1=he4fe6c7_1
   - blas=1.0=openblas
   - brotli=1.0.9=h5eee18b_7
   - brotli-bin=1.0.9=h5eee18b_7
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2023.5.7=hbcca054_0
+  - ca-certificates=2023.7.22=hbcca054_0
   - colorama=0.4.6=py39h06a4308_0
   - comm=0.1.2=py39h06a4308_0
   - contourpy=1.0.5=py39hdb19cb5_0
@@ -27,8 +28,10 @@ dependencies:
   - freetype=2.12.1=h4a9f257_0
   - gcc=12.1.0=h9ea6d83_10
   - gcc_impl_linux-64=12.1.0=hea43390_17
+  - gcc_linux-64=7.2.0=hc7b1ceb_1
   - giflib=5.2.1=h5eee18b_3
   - glib=2.69.1=he621ea3_2
+  - gsl=2.7=he838d99_0
   - gst-plugins-base=1.14.1=h6a678d5_1
   - gstreamer=1.14.1=h5eee18b_1
   - icu=58.2=he6710b0_3
@@ -91,7 +94,7 @@ dependencies:
   - nss=3.74=h0370c37_0
   - numpy=1.24.3=py39hf838250_0
   - numpy-base=1.24.3=py39h1e6e340_0
-  - openssl=1.1.1u=hd590300_0
+  - openssl=1.1.1w=hd590300_0
   - packaging=23.0=py39h06a4308_0
   - pandas=2.0.2=py39h40cae4c_0
   - parso=0.8.3=pyhd3eb1b0_0
