@@ -65,11 +65,13 @@ grphpth = f"{grphNdir}{args.graph_filename}_p={args.p:.3g}.pickle"
 if os.path.exists(grphpth):
     import_on = True
 #
+stdFnameSFFX = "" if args.graph_filename == DEFAULT_GRAPH_NAME else args.graph_filename
 sqlatt = Lattice2D(
     side1=args.L, 
     geometry="squared", 
     pflip=args.p, 
-    import_on=import_on
+    import_on=import_on,
+    stdFnameSFFX=stdFnameSFFX
 )
 if not import_on:
     sqlatt.flip_random_fract_edges()

@@ -473,8 +473,7 @@ class IsingDynamics:
         if self.MODE_RUN.startswith("C"):
             if adjfname == "":
                 adjfname = self.system.stdFname
-            if out_suffix == "":
-                out_suffix = self.id_string_isingdyn
+            out_suffix = out_suffix+self.id_string_isingdyn
             self.cprogram = [
                 f"src/LRGSG_package/IsingSimulator{self.MODE_RUN[-1]}",
                 f"{self.system.N}",
