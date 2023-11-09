@@ -2,7 +2,7 @@ from LRGSG_package.LRGSG import *
 from LRGSG_package.LRGSG_utils import move_to_rootf
 from lattc2dsq_IsingDynamics_mClusters_Parser import *
 #
-move_to_rootf()
+# move_to_rootf()
 # per il programma C salva <m>, <m^2>
 # ogni volta sovrascrivi
 #
@@ -13,13 +13,13 @@ parser.add_argument(
     type=int,
 )
 parser.add_argument(
-    "p",
-    help=HELP_p,
+    "T",
+    help=HELP_T,
     type=float,
 )
 parser.add_argument(
-    "T",
-    help=HELP_T,
+    "p",
+    help=HELP_p,
     type=float,
 )
 parser.add_argument(
@@ -83,23 +83,15 @@ ising_dyn = IsingDynamics(
     MODE_RUN="C1",
     NoClust=args.Nclust,
 )
-
 ising_dyn.init_ising_dynamics()
+ising_dyn.export_s_init()
 if not os.path.exists(
     DEFAULT_GRAPH_OUTDIR
-    + "s_"
+    + "cl0_"
     + args.graph_filename
     + f"_p={args.p:.3g}.pickle"
 ):
-    ising_dyn.export_s_init()
-if args.p < 0.103:
-    if not os.path.exists(
-        DEFAULT_GRAPH_OUTDIR
-        + "cl1_"
-        + args.graph_filename
-        + f"_p={args.p:.3g}.pickle"
-    ):
-        ising_dyn.find_ising_clusters()
-        ising_dyn.export_ising_clust()
+    ising_dyn.find_ising_clusters()
+    ising_dyn.export_ising_clust()
 for _ in range(args.number_of_averages):
     ising_dyn.run(tqdm_on=False)

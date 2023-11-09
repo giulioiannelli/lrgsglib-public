@@ -3,7 +3,7 @@
 #include "LRGSG_utils.h"
 #include "sfmtrng.h"
 
-#define MOD_SAVE 0
+#define MOD_SAVE 1
 
 #define T_THERM_STEP (thrmSTEP * N)
 #define T_EQ_STEP (eqSTEP * N)
@@ -11,7 +11,7 @@
 #define ISNG_DIR "%sising/"
 #define SINI_FNAME ISNG_DIR "N=%zu/s_%s" BINX
 #define CLID_FNAME ISNG_DIR "N=%zu/cl%zu_%s" BINX
-#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_%s_T=%.3g_%s" BINX
+#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_%s_T=%.3g_%s%s"
 #define ENE_FNAME ISNG_DIR "N=%zu/ene_%s_T=%.3g_%s" BINX
 
 #define GRPH_DIR "%sgraphs/"
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     /* variables */
     FILE *f_sini, *f_adj, *f_edgel, *f_ene;
     FILE **f_cl, **f_out;
-    const char *mod_save;
+    const char *mod_save, *ext_save;
     char *ptr, *datdir, *code_id, *out_id, buf[STRL512];
     double T, p;
     double *ene;
@@ -67,16 +67,18 @@ int main(int argc, char *argv[]) {
     switch (MOD_SAVE) {
     case 0: {
         mod_save = "ab";
+        ext_save = BINX;
         break;
     }
     case 1: {
         mod_save = "a+";
+        ext_save = TXTX;
         break;
     }
     }
     f_out = malloc(sizeof(*f_out) * Noclust);
     for (size_t i = 0; i < Noclust; i++) {
-        sprintf(buf, CLOUT_FNAME, datdir, N, i, code_id, T, out_id);
+        sprintf(buf, CLOUT_FNAME, datdir, N, i, code_id, T, out_id, ext_save);
         __fopen((f_out + i), buf, mod_save);
     }
     /* fill adjacency matrix */

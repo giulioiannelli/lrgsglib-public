@@ -487,7 +487,6 @@ class IsingDynamics:
                 self.system.datPath,
                 out_suffix,
             ]
-            print(self.cprogram)
             call(self.cprogram)
         else:
             metropolis_1step = np.vectorize(self.metropolis, excluded="self")
