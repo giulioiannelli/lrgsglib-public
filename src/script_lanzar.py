@@ -3,16 +3,11 @@ import os
 import sys
 
 L = int(sys.argv[1])
-p2 = float(sys.argv[2])
-t1 = np.linspace(0.005, 0.5, 100)
+p = float(sys.argv[2])
+T_l = np.linspace(0.005, 0.5, 100)
 
-for t in t1:
+for T in T_l:
     os.system(
         "slanzarv python3.10 lattc2dsq_IsingDynamics_mClusters.py "
-        + str(L)
-        + " "
-        + str(p2)
-        + " "
-        + str(t)
-        + " -nA 1000"
+        + f"{L} {p:.3g} {T:.4g} -nA 1000"
     )
