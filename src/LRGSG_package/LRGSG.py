@@ -33,7 +33,7 @@ from scipy import stats
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.interpolate import make_interp_spline
-from scipy.linalg import expm, fractional_matrix_power, ishermitian
+from scipy.linalg import expm, fractional_matrix_power
 from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema
 from scipy.sparse import csr_array

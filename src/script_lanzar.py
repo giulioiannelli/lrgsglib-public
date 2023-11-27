@@ -7,7 +7,12 @@ p = float(sys.argv[2])
 T_l = np.linspace(0.005, 0.5, 100)
 
 for T in T_l:
-    os.system(
+    # os.system(
+    #     "slanzarv python3.10 lattc2dsq_IsingDynamics_mClusters.py "
+    #     + f"{L} {p:.3g} {T:.4g} -nA 1000"
+    # )
+    print(
         "slanzarv python3.10 lattc2dsq_IsingDynamics_mClusters.py "
         + f"{L} {p:.3g} {T:.4g} -nA 1000"
     )
+
