@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     sprintf(buf, SINI_FNAME, datdir, N, code_id);
     __fopen(&f_sini, buf, "rb");
     /* open cluster indices files */
-    f_cl = malloc(sizeof(*f_cl) * Noclust);
+    f_cl = __chMalloc(sizeof(*f_cl) * Noclust);
     for (size_t i = 0; i < Noclust; i++) {
         sprintf(buf, CLID_FNAME, datdir, N, i, code_id);
         __fopen((f_cl + i), buf, "rb");
@@ -142,10 +142,9 @@ int main(int argc, char *argv[]) {
                     sum_vs_2(T_EQ_STEP, *(mclus + i)) / T_EQ_STEP);
         break;
     }
-
-    fclose(f_edgel);
-    fclose(f_sini);
+    /* closing files and freeing arrays*/
     fclose(f_adj);
+    fclose(f_sini);
     tmp = Noclust;
     while (tmp)
         fclose(f_cl[--tmp]);
@@ -154,32 +153,31 @@ int main(int argc, char *argv[]) {
     while (tmp)
         fclose(f_out[--tmp]);
     free(f_out);
+    tmp = N;
+    while (tmp)
+        free(adj[--tmp]);
+    free(adj);
+    free(s);
     tmp = Noclust;
     while (tmp)
         free(cl_i[--tmp]);
-    free(neigh_len);
-
-    free(s);
+    free(cl_i);
     free(cl_l);
+    fclose(f_edgel);
+    tmp = N;
+    while (tmp)
+        free(edgl[--tmp]);
+    free(edgl);
+    free(neigh_len);
+    tmp = N;
+    while (tmp)
+        free(neighs[--tmp]);
+    free(neighs);
     free(ene);
     tmp = Noclust;
     while (tmp)
         free(mclus[--tmp]);
     free(mclus);
-    tmp = N;
-    while (tmp)
-        free(adj[--tmp]);
-    free(adj);
-
-    tmp = N;
-    while (tmp)
-        free(edgl[--tmp]);
-    free(edgl);
-
-    tmp = N;
-    while (tmp)
-        free(neighs[--tmp]);
-    free(neighs);
 }
 
 // OLD EDL READ

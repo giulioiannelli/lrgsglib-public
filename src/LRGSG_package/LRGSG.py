@@ -26,7 +26,6 @@ from itertools import product
 from matplotlib.patches import Circle, Rectangle
 from matplotlib.ticker import ScalarFormatter
 from networkx.classes.graph import Graph
-from numba import jit
 from numpy import inf, ndarray
 from numpy.linalg import eigvals, eigvalsh
 from numpy.typing import NDArray

@@ -20,7 +20,7 @@ conda env create -f LRG-Signed_env.yml
 ```
 conda activate LRG-Signed
 ``` 
-4. For installing in [development mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html) the package just move to the package directory with `cd src` and then run
+4. For installing in [development mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html) the package just move to the package directory (with `cd src` from the project directory) and then run
 ```
 pip install --editable .
 ```

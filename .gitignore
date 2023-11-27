@@ -1,3 +1,6 @@
+#paths
+data/*
+#extensions
 *.pdf
 *.bin
 *.png
