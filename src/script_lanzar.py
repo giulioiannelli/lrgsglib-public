@@ -10,7 +10,7 @@ for p in p_l:
     for T in T_l:
         os.system(
             "slanzarv python lattc2dsq_IsingDynamics_mClusters.py "
-            + f"{L} {p:.3g} {T:.4g} -nA 1000"
+            + f"{L} {T:.4g} {p:.3g} -nA 1000"
         )
         # print(
         #     "slanzarv python lattc2dsq_IsingDynamics_mClusters.py "
