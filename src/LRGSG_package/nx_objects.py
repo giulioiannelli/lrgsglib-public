@@ -36,13 +36,13 @@ class SignedGraph:
             expathc if expathc else f"{self.DEFAULT_GRAPHDIR}{self.syshapePTH}"
         )
         self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePTH}"
+        self.pflip = pflip
+        self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
         if import_on:
             self.graphfname = self.expath + self.stdFname
             self.G = self.__init_graph_fromfile__()
         else:
             self.G = G
-            self.pflip = pflip
-            self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
             self.graphfname = self.expath + self.stdFname
         self.init_sgraph()
         self.make_directories()

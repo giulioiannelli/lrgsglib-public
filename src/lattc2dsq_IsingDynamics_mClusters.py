@@ -87,13 +87,14 @@ ising_dyn = IsingDynamics(
 )
 ising_dyn.init_ising_dynamics()
 ising_dyn.export_s_init()
-if not os.path.exists(
-    DEFAULT_GRAPH_OUTDIR
-    + "cl0_"
-    + args.graph_filename
-    + f"_p={args.p:.3g}.pickle"
-):
+
+pathcl = lambda i: f"{ising_dyn.system.isingpath}cl{i}_{ising_dyn.system.stdFname}.bin"
+pathcl_list = [pathcl(i) for i in range(ising_dyn.NoClust)]
+cluster_idxs = [os.path.exists(pathcl(i)) for i in range(ising_dyn.NoClust)]
+
+if not all(cluster_idxs):
     ising_dyn.find_ising_clusters()
     ising_dyn.export_ising_clust()
+
 for _ in range(args.number_of_averages):
     ising_dyn.run(tqdm_on=False)
