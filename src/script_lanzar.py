@@ -9,7 +9,7 @@ T_l = np.linspace(0.005, 0.5, 100)
 for p in p_l:
     for T in T_l:
         os.system(
-            "slanzarv python lattc2dsq_IsingDynamics_mClusters.py "
+            "slanzarv python src/lattc2dsq_IsingDynamics_mClusters.py "
             + f"{L} {T:.4g} {p:.3g} -nA 1000"
         )
         # print(
