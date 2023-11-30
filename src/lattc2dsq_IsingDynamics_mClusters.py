@@ -29,7 +29,7 @@ if not import_on:
     sqlatt.export_graph()
     sqlatt.export_adj_bin()
 if args.only_graphs:
-    print("EXIT!", sys.argv)
+    # print("EXIT!", sys.argv)
     exit()
 #
 ising_dyn = IsingDynamics(
