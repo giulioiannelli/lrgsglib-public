@@ -447,15 +447,15 @@ class IsingDynamics:
         ).sum()
 
     #
-    def init_ising_dynamics(self):
-        self.id_string_isingdyn = randstring()
+    def init_ising_dynamics(self, randstring_OPT: bool = True):
+        self.id_string_isingdyn = randstring() if randstring_OPT else ""
         if self.IsingIC == "uniform":
             self.s = np.random.choice([-1, 1], size=self.system.N)
         elif self.IsingIC.startswith("ground_state"):
             number = int(self.IsingIC.split("_")[-1])
             bineigv = self.system.bin_eigV(which=number)
             self.s = bineigv
-        if self.MODE_RUN.startswith("C"):
+        if self.MODE_RUN.startswith("C") and not self.system.import_on:
             self.export_s_init()
 
     #
@@ -473,6 +473,8 @@ class IsingDynamics:
             if adjfname == "":
                 adjfname = self.system.stdFname
             out_suffix = out_suffix+self.id_string_isingdyn
+            if out_suffix == "":
+                out_suffix = "\"\""
             self.cprogram = [
                 f"src/LRGSG_package/IsingSimulator{self.MODE_RUN[-1]}",
                 f"{self.system.N}",

@@ -1,3 +1,4 @@
+from LRGSG_package.LRGSG import *
 from LRGSG_package.LRGSG_const import *
 #
 description = """
@@ -37,3 +38,58 @@ HELP_o = f"""
     (str) file name of the graph container {DEFAULT_o:->10}
 """
 #
+parser = argparse.ArgumentParser(description=description)
+parser.add_argument(
+    "L",
+    help=HELP_L,
+    type=int,
+)
+parser.add_argument(
+    "T",
+    help=HELP_T,
+    type=float,
+)
+parser.add_argument(
+    "p",
+    help=HELP_p,
+    type=float,
+)
+parser.add_argument(
+    "-nC",
+    "--Nclust",
+    default=DEFAULT_ISING_NOCLUST,
+    help=HELP_Nclust,
+    type=int,
+)
+parser.add_argument(
+    "-nA",
+    "-navg",
+    "--number_of_averages",
+    default=DEFAULT_NUNMBER_AVERAGES,
+    help=HELP_nA,
+    type=int,
+)
+parser.add_argument(
+    "-gn",
+    "--graph_filename",
+    default=DEFAULT_GRAPH_NAME,
+    help=HELP_gn,
+    type=str,
+)
+parser.add_argument(
+    "-o",
+    "--out_suffix",
+    default=DEFAULT_OUT_SUFFIX,
+    help=HELP_o,
+    type=str,
+)
+parser.add_argument(
+    "-iC",
+    "--initial_cond",
+    default=DEFAULT_INITCON,
+    type=str,
+)
+parser.add_argument(
+    "--only_graphs",
+    action=argparse.BooleanOptionalAction
+)

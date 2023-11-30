@@ -481,3 +481,28 @@ def width_interval(a, b):
 
 def randstring(size=10, chars=string.ascii_lowercase + string.ascii_uppercase + string.digits):
     return ''.join(np.random.choice(list(chars), size))
+
+
+def inf_array_regularization(arrinfs):
+    """
+    Regularizes an array by replacing infinite values with extremes of non-infinite values.
+
+    Parameters:
+    - arrinfs (ndarray): Input array containing infinite and finite numerical values.
+
+    Returns:
+    - ndarray: Regularized array with infinite values replaced by extremes of non-infinite values.
+
+    Examples:
+    >>> arr = np.array([1, 2, np.inf, 5, -np.inf, 7])
+    >>> inf_array_regularization(arr)
+    array([1., 2., 7., 5., 7., 7.])
+    """
+    # Filtering out infinite values from the input array (arrinfs)
+    arrinfs_nnans = arrinfs[(arrinfs != np.inf) & (arrinfs != -np.inf)]
+
+    # Regularizing infinite values in the array using nan_to_num function
+    arrinfs = np.nan_to_num(arrinfs, posinf=np.max(arrinfs_nnans),
+                            neginf=np.min(arrinfs_nnans))
+
+    return arrinfs
