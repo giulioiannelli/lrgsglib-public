@@ -318,7 +318,9 @@ class SignedGraph:
     #
     def export_adj_bin(self):
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
-        with open(f"{self.expath}adj_{self.stdFname}.bin", "wb") as f:
+        exname = f"{self.expath}adj_{self.stdFname}.bin"
+        print(f"exporting {exname}\n")
+        with open(exname, "wb") as f:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)
 
