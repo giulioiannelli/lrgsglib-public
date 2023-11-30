@@ -14,7 +14,7 @@ T_l = np.linspace(2/(L**2)**(1/2), 0.75, 40)
 
 for p in p_l:
     for T in T_l:
-        slanzarv_STR = f"slanzarv --nomail --jobname \"LRGSG_{L}_{T:.4g}_{p:.3g}\"" if slanzarv_OPT == "--slanzarv" else ""
+        slanzarv_STR = f"slanzarv -m 2400 --nomail --jobname \"LRGSG_{L}_{T:.4g}_{p:.3g}\"" if slanzarv_OPT == "--slanzarv" else ""
         the_string = slanzarv_STR + " python src/lattc2dsq_IsingDynamics_mClusters.py "\
             + f"{L} {T:.4g} {p:.3g} -nA 500 {onlygraph_OPT}"
         if do_print == "--print":
