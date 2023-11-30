@@ -28,10 +28,7 @@ if not import_on:
     sqlatt.flip_random_fract_edges()
     sqlatt.export_graph()
     sqlatt.export_adj_bin()
-if args.only_graphs:
-    # print("EXIT!", sys.argv)
-    exit()
-#
+
 ising_dyn = IsingDynamics(
     system=sqlatt,
     T=args.T,
@@ -40,6 +37,10 @@ ising_dyn = IsingDynamics(
     NoClust=args.Nclust,
 )
 ising_dyn.init_ising_dynamics(randstring_OPT = False)
+#
+if args.only_graphs:
+    # print("EXIT!", sys.argv)
+    exit()
 #
 pathcl = (
     lambda i: (
