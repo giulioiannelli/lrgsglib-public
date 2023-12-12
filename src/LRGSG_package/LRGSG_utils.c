@@ -20,7 +20,7 @@ double calc_ext_magn(size_t N, spin_tp s) {
     return m;
 }
 double calc_magn(size_t N, spin_tp s) {
-    return calc_ext_magn(N, s) / N;
+    return (calc_ext_magn(N, s) / N);
 }
 double calc_ext_magn2(size_t N, spin_tp s) {
     double m2 = 0.;
