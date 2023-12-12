@@ -11,7 +11,7 @@
 void voter_model_1step(size_t nd, spin_tp s, size_tp nlen, size_tp *neighs, double_p *edgl) {
     size_t sel_neigh_n = (size_t) (RNG_u64() % *(nlen + nd));
     size_t sel_neigh = *(*(neighs + nd) + sel_neigh_n);
-    *(s + nd) = *(*(edgl + nd) + sel_neigh) * *(s + sel_neigh);
+    *(s + nd) = *(*(edgl + nd) + sel_neigh_n) * *(s + sel_neigh);
 }
 
 /** 

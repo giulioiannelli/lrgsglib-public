@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     const char *mod_save, *ext_save;
     char *ptr, *datdir, *code_id, *out_id, buf[STRL512];
     double T, p;
-    double *ene;
+    double *ene, *magn;
     spin_tp s;
     size_t N, side, Noclust, tmp, eqSTEP;
     size_tp neigh_len, cl_l;
@@ -122,11 +122,13 @@ int main(int argc, char *argv[]) {
     // mclus = __chMalloc(sizeof(*mclus) * Noclust);
     // for (size_t i = 0; i < Noclust; i++)
     //     mclus[i] = __chMalloc(sizeof(**mclus) * T_EQ_STEP);
-
+    magn = __chMalloc(T_EQ_STEP * sizeof(*magn));
     for (size_t t = 0; t < T_EQ_STEP; t++) {
         voter_model_Nstep(N, s, neigh_len, neighs, edgl);
-        fwrite(s, sizeof(*s), N, f_out0);
+        magn[t] = calc_magn(N, s);
+        // fwrite(s, sizeof(*s), N, f_out0);
     }
+    fwrite(magn, sizeof(*magn), T_EQ_STEP, f_out0);
     // switch (MOD_SAVE) {
     // case 0:
     //     sprintf(buf, ENE_FNAME, datdir, N, code_id, T, out_id);
@@ -144,6 +146,7 @@ int main(int argc, char *argv[]) {
     //     break;
     // }
     /* closing files and freeing arrays*/
+    free(magn);
     fclose(f_out0);
     fclose(f_adj);
     fclose(f_sini);

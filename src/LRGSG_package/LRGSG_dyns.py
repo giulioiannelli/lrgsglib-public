@@ -56,7 +56,8 @@ class BinDynSys:
 
 
 class VoterModel(BinDynSys):
-    dyn_UVclass = "votermodel"
+    dyn_UVclass = "voter_model"
+    eqSTEP_def = 10
     id_string_voterdyn = ""
 
     def __init__(self, sg: SignedGraph = Lattice2D, **kwargs) -> None:
@@ -82,20 +83,22 @@ class VoterModel(BinDynSys):
     def run_c(self,
               adjfname: str = "",
               out_suffix: str = "",
-              eqSTEP: int = 10):
+              eqSTEP: int = 0):
+        if eqSTEP:
+            self.eqSTEP_def = eqSTEP
         if adjfname == "":
             adjfname = self.sg.stdFname
         out_suffix = out_suffix + self.id_string_voterdyn
         if out_suffix == "":
-            out_suffix = '""'
+            out_suffix = '\'\''
         self.cprogram = [
-            f"src/LRGSG_package/voter_model",
+            f"{DEFAULT_PACKG_DIR}{self.dyn_UVclass}",
             f"{self.sg.N}",
             f"{self.sg.pflip}",
-            f"{eqSTEP}",
+            f"{self.eqSTEP_def}",
             self.sg.datPath,
             adjfname,
-            out_suffix,
+            out_suffix
         ]
         call(self.cprogram)
 
@@ -109,6 +112,9 @@ class VoterModel(BinDynSys):
 
 
 class IsingDynamics_DEV(BinDynSys):
+    dyn_UVclass = "isingmodel"
+    id_string_isingdyn = ""
+
     magn = []
     ene = []
     magnc1 = []
@@ -128,6 +134,7 @@ class IsingDynamics_DEV(BinDynSys):
     ) -> None:
         self.T = T
         self.sg = sg
+        self.dynpath = f"{self.sg.DEFAULT_ISINGDIR}{self.sg.syshapePTH}"
         super(IsingDynamics_DEV, self).__init__(self.sg, **kwargs)
         self.nstepsIsing = nstepsIsing
         self.save_magnetization = save_magnetization

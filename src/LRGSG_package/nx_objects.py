@@ -446,7 +446,7 @@ class Lattice2D(SignedGraph):
 
     #
     def init_paths(self):
-        self.lambdaPath = f"{DEFAULT_LATTICE2D_PATHABBRV}_{self.geometry}/"
+        self.lambdaPath = f"{DEFAULT_LATTICE2D_PATHABBRV}{self.geometry}/"
         self.pltPath = (
             f"{DEFAULT_DATA_OUTDIR}{DEFAULT_PLOT_OUTDIR}{self.lambdaPath}"
         )
