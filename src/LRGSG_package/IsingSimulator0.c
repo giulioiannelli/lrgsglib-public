@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     {
         m[t] = calc_magn(N, s);
         ene[t] = calc_energy_full(N, s, neigh_len, neighs, edgl);
-        N_step_metropolis(N, T, s, neigh_len, neighs, edgl);
+        glauber_metropolis_Nstep(N, T, s, neigh_len, neighs, edgl);
     }
     fwrite(ene, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_ene);
     fwrite(m, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_magn);

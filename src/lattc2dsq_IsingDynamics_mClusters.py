@@ -30,10 +30,10 @@ if not import_on:
     sqlatt.export_adj_bin()
 
 ising_dyn = IsingDynamics(
-    system=sqlatt,
+    sg=sqlatt,
     T=args.T,
-    IsingIC=args.initial_cond,
-    MODE_RUN="C1",
+    ic=args.initial_cond,
+    runlang="C1",
     NoClust=args.Nclust,
 )
 ising_dyn.init_ising_dynamics(randstring_OPT = False)
@@ -44,7 +44,7 @@ if args.only_graphs:
 #
 pathcl = (
     lambda i: (
-        f"{ising_dyn.system.isingpath}cl{i}_{ising_dyn.system.stdFname}.bin"
+        f"{ising_dyn.sg.isingpath}cl{i}_{ising_dyn.sg.stdFname}.bin"
     )
 )
 pathcl_list = [pathcl(i) for i in range(ising_dyn.NoClust)]

@@ -1,63 +1,42 @@
+#include "LRGSG_utils.h"
 #include "LRGSG_rbim.h"
 
-double calc_clust_magn(size_t cli_l, size_tp cli, spin_tp s) {
-    double clm = 0.;
-    for (size_t i = 0; i < cli_l; i++)
-        clm += s[cli[i]];
-    return clm / cli_l;
-}
-
-double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs,
-                         double_p *edgl) {
-    double sum = 0.;
-    for (size_t i = 0; i < n_nn; i++)
-        sum += *(*(edgl + nd) + i) * *(s + *(*(neighs + nd) + i));
-    return sum / n_nn;
-}
-double calc_magn(size_t N, spin_tp s) {
-    double m = 0.;
-    for (size_t i = 0; i < N; i++)
-        m += *(s + i);
-    return m / N;
-}
-double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
-                        double_p *edgl) {
-    double sum = 0., tmp = 0.;
-    for (size_t i = 0; i < N; i++) {
-        tmp = *(s + i) * neigh_weight_magn(i, *(nlen + i), s, neighs, edgl);
-        sum += tmp;
-    }
-    return -sum / N;
-}
-void flip_spin(size_t nd, spin_tp s) { s[nd] = -s[nd]; }
-void one_step_metropolis(size_t nd, double T, spin_tp s, size_tp nlen,
+/** 
+ * @brief applies the Glauber-Metropolis dynamics to an Ising system (1 step).
+ * 
+ * @param nd         (size_t) Index of the spin in the system.
+ * @param T          (double) Temperature of the system.
+ * @param s          (spin_tp) Array representing the spin configuration.
+ * @param nlen       (size_tp) Length of the neighbor list.
+ * @param neighs     (size_tp *) Array containing neighbor indices.
+ * @param edgl       (double_p *) Array containing edge weights.
+ * 
+ * @return           None
+ */
+void glauber_metropolis_1step(size_t nd, double T, spin_tp s, size_tp nlen,
                          size_tp *neighs, double_p *edgl) {
-    double nene, E_old, E_new, DeltaE;
-    nene = neigh_weight_magn(nd, *(nlen + nd), s, neighs, edgl);
-    E_old = -s[nd] * nene;
-    E_new = +s[nd] * nene;
-    DeltaE = E_new - E_old;
-    if (DeltaE < 0) {
+    double nene = neigh_weight_magn(nd, *(nlen + nd), s, neighs, edgl);
+    double DE = 2 * s[nd] * nene;
+    if (DE < 0) {
         flip_spin(nd, s);
-    } else if (RNG_dbl() < BOLTZMANN_FACTOR(DeltaE, T)) {
+    } else if (RNG_dbl() < BOLTZMANN_FACTOR(DE, T)) {
         flip_spin(nd, s);
     }
 }
-void N_step_metropolis(size_t N, double T, spin_tp s, size_tp nlen,
+/** 
+ * @brief applies the Glauber-Metropolis dynamics to an Ising system (N steps).
+ * 
+ * @param N          (size_t) Number of steps to evolve the system.
+ * @param T          (double) Temperature of the system.
+ * @param s          (spin_tp) Array representing the spin configuration.
+ * @param nlen       (size_tp) Length of the neighbor list.
+ * @param neighs     (size_tp *) Array containing neighbor indices.
+ * @param edgl       (double_p *) Array containing edge weights.
+ * 
+ * @return           None
+ */
+void glauber_metropolis_Nstep(size_t N, double T, spin_tp s, size_tp nlen,
                        size_tp *neighs, double_p *edgl) {
     for (size_t i = 0; i < N; i++)
-        one_step_metropolis(i, T, s, nlen, neighs, edgl);
-}
-
-double calc_ext_magn(size_t N, spin_tp s) {
-    double m = 0.;
-    for (size_t i = 0; i < N; i++)
-        m += s[i];
-    return m;
-}
-double calc_ext_magn2(size_t N, spin_tp s) {
-    double m2 = 0.;
-    for (size_t i = 0; i < N; i++)
-        m2 += s[i] * s[i];
-    return m2;
+        glauber_metropolis_1step(i, T, s, nlen, neighs, edgl);
 }

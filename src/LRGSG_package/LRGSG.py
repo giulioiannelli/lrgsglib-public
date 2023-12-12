@@ -41,13 +41,12 @@ from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
 from subprocess import call
 from typing import Any, Optional, Union
-
 #
 from tqdm import tqdm
-
 #
 from .nx_patches import *
 from .nx_objects import *
+from .LRGSG_dyns import *
 from .LRGSG_const import *
 from .LRGSG_errwar import *
 from .LRGSG_plots import *
@@ -382,249 +381,15 @@ def lsp_read_values(folder_path, fpattern="Sm1_avg_p", sort=True):
     return np.array(values)
 
 
-class IsingDynamics:
-    magn = []
-    ene = []
-    magnc1 = []
-    magn_array_save = []
-    Ising_clusters = []
 
-    def __init__(
-        self,
-        system: SignedGraph,
-        T: float,
-        IsingIC: str,
-        MODE_RUN: str = "py",
-        NoClust: int = 1,
-        nstepsIsing: int = 100,
-        save_magnetization: bool = False,
-    ) -> None:
-        self.MODE_RUN = MODE_RUN
-        self.system = system
-        self.T = T
-        self.IsingIC = IsingIC
-        self.nstepsIsing = nstepsIsing
-        self.save_magnetization = save_magnetization
-        self.NoClust = NoClust
-        pass
 
-    def boltzmann_factor(self, energy: float) -> float:
-        return np.exp(-energy / self.T)
 
-    #
-    def neigh_weight_magn(self, node: int) -> list:
-        node_dict = dict(self.system.H[node])
-        return [w["weight"] * self.s[nn] for nn, w in node_dict.items()]
 
-    #
-    def neigh_ene(self, neigh: list) -> float:
-        return np.sum(neigh) / len(neigh)
 
-    #
-    def flip_spin(self, node: int):
-        self.s[node] = -self.s[node]
 
-    #
-    def metropolis(self, node):
-        neigh = self.neigh_weight_magn(node)
-        neighene = self.neigh_ene(neigh)
-        E_old = -self.s[node] * neighene
-        E_new = +self.s[node] * neighene
-        DeltaE = E_new - E_old
-        if DeltaE < 0:
-            self.flip_spin(node)
-        elif np.random.uniform() < self.boltzmann_factor(DeltaE):
-            self.flip_spin(node)
 
-    #
-    def calc_full_energy(self):
-        return np.array(
-            [
-                -self.s[node] * self.neigh_ene(self.neigh_weight_magn(node))
-                for node in range(self.system.N)
-            ]
-        ).sum()
 
-    #
-    def init_ising_dynamics(self, randstring_OPT: bool = True):
-        self.id_string_isingdyn = randstring() if randstring_OPT else ""
-        if self.IsingIC == "uniform":
-            self.s = np.random.choice([-1, 1], size=self.system.N)
-        elif self.IsingIC.startswith("ground_state"):
-            number = int(self.IsingIC.split("_")[-1])
-            bineigv = self.system.bin_eigV(which=number)
-            self.s = bineigv
-        if self.MODE_RUN.startswith("C") and not self.system.import_on:
-            self.export_s_init()
 
-    #
-    def run(#
-        self,
-        adjfname: str = "",
-        out_suffix: str = "",
-        tqdm_on: bool = True,
-        thrmSTEP: int = 2,
-        eqSTEP: int = 10,
-    ):
-        # name C0 and C1 to be modified, in C0 -> CS that is a single eigenstate is studied with all of his subclusters
-        # name C1 -> CM where one studies the largest component of all the clusters
-        if self.MODE_RUN.startswith("C"):
-            if adjfname == "":
-                adjfname = self.system.stdFname
-            out_suffix = out_suffix + self.id_string_isingdyn
-            if out_suffix == "":
-                out_suffix = '""'
-            self.cprogram = [
-                f"src/LRGSG_package/IsingSimulator{self.MODE_RUN[-1]}",
-                f"{self.system.N}",
-                f"{self.T}",
-                f"{self.system.pflip}",
-                adjfname,
-                f"{self.NoClust}",
-                f"{thrmSTEP}",
-                f"{eqSTEP}",
-                self.system.datPath,
-                out_suffix,
-            ]
-            call(self.cprogram)
-        else:
-            metropolis_1step = np.vectorize(self.metropolis, excluded="self")
-            if self.save_magnetization:
-
-                def save_magn_array():
-                    self.magn_array_save.append(self.s)
-
-            else:
-
-                def save_magn_array():
-                    pass
-
-            sample = list(
-                range(self.system.N)
-            )  # rd.sample(list(self.system.H.nodes()), self.system.N)
-            iterator = (
-                tqdm(range(self.nstepsIsing))
-                if tqdm_on
-                else range(self.nstepsIsing)
-            )
-            self.ene = []
-            for _ in iterator:
-                self.magn.append(np.sum(self.s))
-                self.ene.append(self.calc_full_energy())
-                # for i in range(self.system.N):
-                #     self.metropolis(sample[i])
-                metropolis_1step(sample)
-                save_magn_array()
-
-    def find_ising_clusters(self, import_cl: bool = False):
-        if import_cl:
-            for i in range(self.NoClust):
-                self.Ising_clusters.append(
-                    np.fromfile(
-                        f"{self.system.isingpath}cl{i}_{self.system.stdFname}.bin",
-                        dtype=int,
-                    )
-                )
-            self.numIsing_cl = len(self.Ising_clusters)
-        if self.Ising_clusters:
-            print("Ising Clusters already computed.")
-            return
-        #
-        self.system.compute_k_eigvV(howmany=self.NoClust)
-        eigVbin = self.system.bin_eigV_all()
-        #
-        self.Ising_clusters = []
-        for j in range(self.NoClust):
-            lnodes = list(self.system.H.nodes())
-            lnodes_tmp = lnodes[:]
-
-            def recursive_search(seed, magn_i, clustertmp):
-                neighs = get_kth_order_neighbours(self.system.H, seed, 1)
-                neighs = np.array(
-                    [e for e in neighs if e not in set(clustertmp)]
-                )
-                if not neighs.size:
-                    return
-                samecluster = np.array(eigVbin[j][neighs] == magn_i)
-                if not samecluster.any():
-                    return
-                neighs_samecluster = list(neighs[samecluster])
-                clustertmp.extend(neighs_samecluster)
-                for ss in neighs_samecluster:
-                    recursive_search(ss, magn_i, clustertmp)
-
-            allclusters = []
-            for i in lnodes:
-                if i not in lnodes_tmp:
-                    continue
-                if not lnodes_tmp:
-                    break
-                #
-                clustertmp = []
-                clustertmp.extend([i])
-                #
-                recursive_search(i, eigVbin[j][i], clustertmp)
-                lnodes_tmp = [e for e in lnodes_tmp if e not in set(clustertmp)]
-                allclusters.append(clustertmp)
-            allclusters.sort(key=len, reverse=True)
-            self.Ising_clusters.append(allclusters[0])
-        self.numIsing_cl = len(self.Ising_clusters)
-        if self.MODE_RUN.startswith("C"):
-            self.export_ising_clust()
-
-    #
-    def mapping_nodes_to_clusters(self):
-        if not self.Ising_clusters:
-            self.find_ising_clusters()
-        loc = [x for x in range(len(self.Ising_clusters))]
-        self.loc = loc
-        node_with_inherclust = [
-            [[j, loc[i]] for j in clus]
-            for i, clus in enumerate(self.Ising_clusters)
-        ]
-        self.node_with_inherclust = node_with_inherclust
-        node_inherclust_flat = [i for j in node_with_inherclust for i in j]
-        self.node_inherclust_flat = node_inherclust_flat
-        sorted_list = sorted(node_inherclust_flat, key=lambda x: x[0])
-        self.sorted_list = sorted_list
-        result_array = np.empty(
-            (self.system.side1, self.system.side2), dtype=object
-        )
-        self.result_array = result_array
-
-        # Fill the result_array with tuples from sorted_list
-        for i, sublist in enumerate(sorted_list):
-            row, col = divmod(
-                i, self.system.side1
-            )  # Calculate the row and column index
-            result_array[row, col] = sublist[1]
-        self.mapping = result_array
-
-    #
-    def export_s_init(self):
-        output_file = open(
-            f"{self.system.isingpath}s_{self.system.stdFname}.bin",
-            "wb",
-        )
-        self.s.astype("int8").tofile(output_file)
-
-    #
-    def export_ising_clust(self):
-        try:
-            if self.NoClust > self.numIsing_cl:
-                raise NoClustError(
-                    "Requested number of Cluster files is bigger than the one"
-                    " in selected topology."
-                )
-        except NoClustError as excpt:
-            print(excpt)
-
-        for i in range(self.NoClust):
-            output_file = open(
-                f"{self.system.isingpath}cl{i}_{self.system.stdFname}.bin",
-                "wb",
-            )
-            np.array(self.Ising_clusters[i]).astype(int).tofile(output_file)
 
 
 #                           ,((((((((((((((((((((((((.

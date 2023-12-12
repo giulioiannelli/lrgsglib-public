@@ -51,4 +51,13 @@ extern void __fill_adj__(FILE **f, size_t N, double_p **adj);
 extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, size_tp **neighs, size_tp *neigh_len);
 extern void __fill_edgl_make__(FILE **f, size_t N, double_p **adj, double_p **edgl, size_tp **neighs, size_tp *neigh_len);
 
+
+double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs,
+                         double_p *edgl);
+double calc_magn(size_t N, spin_tp s);
+double calc_ext_magn(size_t N, spin_tp s);
+double calc_ext_magn2(size_t N, spin_tp s);
+void flip_spin(size_t nd, spin_tp s);
+double calc_clust_magn(size_t cli_l, size_tp cli, spin_tp s);
+
 #endif /* __LRSGLIB_H_INC__ */

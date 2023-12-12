@@ -118,13 +118,13 @@ int main(int argc, char *argv[]) {
 
     for (size_t t = 0; t < T_THERM_STEP; t++) {
         ene[t] = calc_energy_full(N, s, neigh_len, neighs, edgl);
-        N_step_metropolis(N, T, s, neigh_len, neighs, edgl);
+        glauber_metropolis_Nstep(N, T, s, neigh_len, neighs, edgl);
     }
     for (size_t t = 0; t < T_EQ_STEP; t++) {
         ene[t + T_THERM_STEP] = calc_energy_full(N, s, neigh_len, neighs, edgl);
         for (size_t i = 0; i < Noclust; i++)
             mclus[i][t] = calc_clust_magn(cl_l[i], cl_i[i], s);
-        N_step_metropolis(N, T, s, neigh_len, neighs, edgl);
+        glauber_metropolis_Nstep(N, T, s, neigh_len, neighs, edgl);
     }
     switch (MOD_SAVE) {
     case 0:

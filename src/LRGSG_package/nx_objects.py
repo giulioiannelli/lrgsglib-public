@@ -36,6 +36,7 @@ class SignedGraph:
             expathc if expathc else f"{self.DEFAULT_GRAPHDIR}{self.syshapePTH}"
         )
         self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePTH}"
+        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePTH}"
         self.pflip = pflip
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
         if import_on:
@@ -55,6 +56,7 @@ class SignedGraph:
     def make_directories(self):
         os.makedirs(self.expath, exist_ok=True)
         os.makedirs(self.isingpath, exist_ok=True)
+        os.makedirs(self.voterpath, exist_ok=True)
 
     #
     def init_weights(self):
@@ -396,7 +398,7 @@ class Lattice2D(SignedGraph):
     #
     def __init__(
         self,
-        side1: int,
+        side1: int = 32,
         geometry: str = DEFAULT_LATTICE2D_GEOMETRY,
         side2: int = 0,
         pbc: bool = True,
@@ -451,6 +453,7 @@ class Lattice2D(SignedGraph):
         self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.lambdaPath}"
         self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
         self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
+        self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
 
     #
     def init_stdFname(self, SFFX):

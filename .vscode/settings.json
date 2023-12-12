@@ -12,7 +12,9 @@
         "prova.h": "c",
         "lrgsg_utils.h": "c",
         "lrgsg_rbim.h": "c",
-        "stddef.h": "c"
+        "stddef.h": "c",
+        "lrgsg_vm.h": "c",
+        "inttypes.h": "c"
     },
     "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT"
 }

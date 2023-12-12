@@ -4,11 +4,52 @@
 extern void print_stdout_cwd(void)
 {
     char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    printf("Current working directory: %s\n", cwd);
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        perror("getcwd() error");
+    else
+        printf("Current working directory: %s\n", cwd);
 }
 
-
+void flip_spin(size_t nd, spin_tp s) {
+    *(s + nd) = -*(s + nd);
+}
+double calc_ext_magn(size_t N, spin_tp s) {
+    double m = 0.;
+    for (size_t i = 0; i < N; i++)
+        m += *(s + i);
+    return m;
+}
+double calc_magn(size_t N, spin_tp s) {
+    return calc_ext_magn(N, s) / N;
+}
+double calc_ext_magn2(size_t N, spin_tp s) {
+    double m2 = 0.;
+    for (size_t i = 0; i < N; i++)
+        m2 += *(s + i) * *(s + i);
+    return m2;
+}
+double calc_clust_magn(size_t cli_l, size_tp cli, spin_tp s) {
+    double clm = 0.;
+    for (size_t i = 0; i < cli_l; i++)
+        clm += s[cli[i]];
+    return clm / cli_l;
+}
+double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs,
+                         double_p *edgl) {
+    double sum = 0.;
+    for (size_t i = 0; i < n_nn; i++)
+        sum += *(*(edgl + nd) + i) * *(s + *(*(neighs + nd) + i));
+    return sum / n_nn;
+}
+double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
+                        double_p *edgl) {
+    double sum = 0., tmp = 0.;
+    for (size_t i = 0; i < N; i++) {
+        tmp = *(s + i) * neigh_weight_magn(i, *(nlen + i), s, neighs, edgl);
+        sum += tmp;
+    }
+    return -sum / N;
+}
 
 /** perform the sum of a floating point array 
  * @param n (size_t) the number of vector components
@@ -19,7 +60,7 @@ extern double sum_vs(size_t n, double *v)
 {
     double s = 0.;
     for (size_t i = 0; i < n; i++)
-        s += v[i];
+        s += *(v + i);
     return s;
 }
 
@@ -58,8 +99,8 @@ extern uint32_t softplus_u32(int32_t x)
  * 
  * @param str1 (const char *) the first string to compare
  * @param str2 (const char *) the second string to compare
- * @return true if the two strings are the same
- * @return false if the two strings differ for some characters
+ * @return true if the two strings are the same false if the two strings differ 
+ * for some characters
  */
 extern bool strsme(const char *str1, const char *str2)
 {
