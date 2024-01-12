@@ -71,8 +71,10 @@ def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
     cmap = LinearSegmentedColormap.from_list("custom_colormap", colors)
     return cmap
 
-def generate_maxpercdiff_colormap(number_of_distinct_colors: int = 80, 
-                                  number_of_shades: int = 7):
+
+def generate_maxpercdiff_colormap(
+    number_of_distinct_colors: int = 80, number_of_shades: int = 7
+):
     """
     Generates a perceptually distinct colormap.
 
@@ -113,7 +115,8 @@ def generate_maxpercdiff_colormap(number_of_distinct_colors: int = 80,
 
     # Create an array with uniformly drawn floats taken from <0, 1) partition
     linearly_distributed_nums = (
-        np.arange(no_distinct_colors_wmultshades) / no_distinct_colors_wmultshades
+        np.arange(no_distinct_colors_wmultshades)
+        / no_distinct_colors_wmultshades
     )
 
     # We are going to reorganize monotonically growing numbers in such a way that there will be a single array with a saw-like pattern
@@ -233,3 +236,159 @@ def imshow_colorbar_caxdivider(
     #
     clb = plt.colorbar(**kwargs_colorbar)
     return divider, cax, clb
+
+def get_complementary_color(color_name):
+    """
+    Calculates the complementary color for a given color.
+
+    The function takes a color name or hex value and returns the complementary color in hex format.
+    It uses the matplotlib library for color conversions and calculations.
+
+    Parameters:
+    -----------
+    color_name : str
+        The name of the color or its hex value. This can be a common color name (like 'red')
+        or a hex code (like '#FF0000'). If a common color name is provided, the function first
+        converts it to its hex equivalent.
+
+    Returns:
+    --------
+    str
+        The hex code of the complementary color. The complementary color is calculated by inverting
+        the RGB values of the original color. For instance, the complementary color of 'red' ('#FF0000')
+        would be cyan ('#00FFFF').
+
+    Example:
+    --------
+    comp_color = get_complementary_color('red')  # Returns '#00FFFF', which is cyan
+
+    Notes:
+    ------
+    - The function assumes that the input color is either a valid named color in the matplotlib
+    color maps or a valid hex color code.
+    - If the color name is not recognized in the matplotlib color maps, it's treated as a hex code.
+    - The RGB values are assumed to be in the range [0, 1], as per matplotlib's color representation.
+    """
+
+    from matplotlib import colors as mplcol
+    if color_name in plt.colormaps():
+        hex_color = mplcol.to_hex(color_name)
+    else:
+        hex_color = color_name
+
+    # Convert hex to RGB
+    rgb = mplcol.to_rgb(hex_color)
+
+    # Calculate complementary color
+    comp_rgb = (1 - rgb[0], 1 - rgb[1], 1 - rgb[2])
+
+    # Convert back to hex
+    comp_hex = mplcol.to_hex(comp_rgb)
+
+    return comp_hex
+
+def plot_square_lattice(
+    ax,
+    size: int = 7,
+    kwargs_nodes: dict = dict(marker="o", ms=20, mec="k", mfc="w"),
+    kwargs_extl: dict = dict(ls=":"),
+    etxl_len: float = 0.75,
+    kwargs_lines: dict = dict(lw=3),
+    pec="blue",
+    cpec="red",
+):
+    """
+    Plots a 2D square lattice with customizable nodes, lines, and external lines,
+    each with their own styling parameters.
+
+    Parameters:
+    -----------
+    ax : matplotlib.axes.Axes
+        The axes object on which the lattice will be plotted.
+    size : int, optional
+        The size of the lattice (number of nodes in one dimension). Default is 7.
+    kwargs_nodes : dict, optional
+        Keyword arguments for styling the nodes in the plot.
+        Includes 'marker' (shape of the marker), 'ms' (marker size),
+        'mec' (marker edge color), and 'mfc' (marker face color). Default is a white filled circle.
+    kwargs_extl : dict, optional
+        Keyword arguments for styling the external (boundary) lines of the lattice.
+        Includes 'ls' (line style). Default is dotted lines.
+    extl_len : float, optional
+        Length of the external lines extending from the lattice boundaries. Default is 0.75.
+    kwargs_lines : dict, optional
+        Keyword arguments for styling the internal lines of the lattice.
+        Includes 'lw' (line width). Default is a line width of 3.
+    pec : str, optional
+        Primary edge color for the lattice lines. Default is 'blue'.
+    cpec : str, optional
+        Complementary edge color for the lattice lines. Default is 'red'.
+
+    Notes:
+    ------
+    The function randomly assigns the primary or complementary edge color to each line
+    in the lattice. This includes both the internal lines and the external boundary lines.
+    The nodes are plotted over the lines for a clear visualization.
+
+    Example:
+    --------
+    fig, ax = plt.subplots()
+    plot_square_lattice(ax, size=5, pec='green', cpec='magenta')
+    plt.show()
+
+    This will plot a 5x5 lattice with green and magenta lines, default node style, and default external line style.
+    """
+    x, y = np.meshgrid(range(size), range(size))
+    # Plot each point in the lattice
+    for i in range(size):
+        for j in range(size):
+            kwargs_lines["color"] = np.random.choice([pec, cpec])
+            if i < size - 1:
+                ax.plot(
+                    [x[i, j], x[i + 1, j]],
+                    [y[i, j], y[i + 1, j]],
+                    zorder=1,
+                    **kwargs_lines,
+                )  # Vertical
+            if j < size - 1:
+                ax.plot(
+                    [x[i, j], x[i, j + 1]],
+                    [y[i, j], y[i, j + 1]],
+                    zorder=1,
+                    **kwargs_lines,
+                )  # Horizontal
+            ax.plot(x[i, j], y[i, j], zorder=2, **kwargs_nodes)  # Nodes
+
+    # Adding dashed lines on the boundaries
+    for i in range(size):
+        kwargs_extl["color"] = np.random.choice([pec, cpec])
+        # Left and right boundaries
+        ax.plot(
+            [x[i, 0], x[i, 0] - etxl_len],
+            [y[i, 0], y[i, 0]],
+            zorder=0,
+            **kwargs_extl
+        )
+        ax.plot(
+            [x[i, -1], x[i, -1] + etxl_len],
+            [y[i, -1], y[i, -1]],
+            zorder=0,
+            **kwargs_extl
+        )
+
+        # Top and bottom boundaries
+        ax.plot(
+            [x[0, i], x[0, i]],
+            [y[0, i], y[0, i] - etxl_len],
+            zorder=0,
+            **kwargs_extl
+        )
+        ax.plot(
+            [x[-1, i], x[-1, i]],
+            [y[-1, i], y[-1, i] + etxl_len],
+            zorder=0,
+            **kwargs_extl
+        )
+
+    # Remove axes
+    ax.axis("off")

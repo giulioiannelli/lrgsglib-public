@@ -506,3 +506,41 @@ def inf_array_regularization(arrinfs):
                             neginf=np.min(arrinfs_nnans))
 
     return arrinfs
+
+
+
+def binder_cumulant(data):
+    """
+    Calculate the Binder cumulant for a set of data.
+
+    Parameters:
+    -----------
+    data : array_like
+        Input data representing measurements of the order parameter.
+
+    Returns:
+    --------
+    float
+        Binder cumulant of the data.
+
+    Notes:
+    ------
+    The Binder cumulant is a statistical measure used in the analysis of 
+    phase transitions in statistical physics. It is defined as 
+    1 - (mean(m^4) / (3 * mean(m^2)^2)), where m is the order parameter.
+    The Binder cumulant is particularly useful in finite-size scaling 
+    analysis as it is dimensionless and often has a universal value at 
+    the critical point for systems within the same universality class.
+
+    Examples:
+    ---------
+    >>> data = np.random.normal(size=1000)
+    >>> print(binder_cumulant(data))
+
+    >>> uniform_data = np.random.uniform(-1, 1, size=1000)
+    >>> print(binder_cumulant(uniform_data))
+    """
+    m2 = np.mean(data**2)
+    m4 = np.mean(data**4)
+    U4 = 1 - m4 / (3 * m2**2)
+    return U4

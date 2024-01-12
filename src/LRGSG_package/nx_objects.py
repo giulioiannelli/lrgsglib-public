@@ -318,10 +318,11 @@ class SignedGraph:
             nx.write_gml(self.G, f"{self.graphfname}.gml")
 
     #
-    def export_adj_bin(self):
+    def export_adj_bin(self, print_msg: bool = False) -> None:
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
         exname = f"{self.expath}adj_{self.stdFname}.bin"
-        print(f"exporting {exname}\n")
+        if print_msg:
+            print(f"exporting {exname}\n")
         with open(exname, "wb") as f:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)

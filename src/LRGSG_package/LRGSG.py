@@ -5,22 +5,18 @@ import re
 import os
 import sys
 import warnings
-
-warnings.simplefilter(action="ignore", category=FutureWarning)
 #
 import networkx as nx
 import numpy as np
 import random as rd
-
-# import pyfftlog
 #
 import matplotlib.animation as animation
+import matplotlib.cm as cm
 import matplotlib.colors as mplc
 import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 import scipy.special
 import scipy.sparse as scsp
-
 #
 from itertools import product
 from matplotlib.patches import Circle, Rectangle
@@ -51,11 +47,9 @@ from .LRGSG_const import *
 from .LRGSG_errwar import *
 from .LRGSG_plots import *
 from .LRGSG_utils import *
-
-# np.random.seed(0)
-# random.seed(0)
+#
 sys.setrecursionlimit(20000)
-
+warnings.simplefilter(action="ignore", category=FutureWarning)
 #
 # __all__ = [
 #     "np",
@@ -69,8 +63,6 @@ sys.setrecursionlimit(20000)
 #     "FullyConnected",
 #     "Lattice2D",
 # ]
-
-
 #
 # renormalization group for heterogenous network functions
 class SignedLaplacianAnalysis:
@@ -85,7 +77,6 @@ class SignedLaplacianAnalysis:
     eigv = None
     ACCERR_LAPL_DYN = 1e-10
     MAXVAL_LAPL_DYN = 200
-
     #
     def __init__(
         self,
