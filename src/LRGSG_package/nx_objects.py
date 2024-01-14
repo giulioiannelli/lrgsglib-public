@@ -21,15 +21,18 @@ from typing import Union
 class SignedGraph:
     p_c = None
     lsp = None
+    slspectrum = None
 
     def __init__(
         self,
         G: Graph,
-        lsp_mode: str = "intervals",
         import_on: bool = False,
         pflip: float = 0.0,
-        expathc: str = "",
+        lsp_mode: str = "intervals",
+        expathc: str = ""
     ):
+        self.__init_paths__()
+        self.pflip = pflip
         self.lsp_mode = lsp_mode
         self.import_on = import_on
         self.expath = (
@@ -37,7 +40,8 @@ class SignedGraph:
         )
         self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePTH}"
         self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePTH}"
-        self.pflip = pflip
+        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePTH}"
+        self.__make_dirs__()
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
         if import_on:
             self.graphfname = self.expath + self.stdFname
@@ -46,17 +50,26 @@ class SignedGraph:
             self.G = G
             self.graphfname = self.expath + self.stdFname
         self.init_sgraph()
-        self.make_directories()
 
     #
     def __init_graph_fromfile__(self):
         return pickle.load(open(f"{self.graphfname}.pickle", "rb"))
-
     #
-    def make_directories(self):
+    def __init_paths__(self):
+        self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.lambdaPath}"
+        self.pltPath = (
+            f"{DEFAULT_DATA_OUTDIR}{DEFAULT_PLOT_OUTDIR}{self.lambdaPath}"
+        )
+        self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
+        self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
+        self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
+        self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
+    #
+    def __make_dirs__(self):
         os.makedirs(self.expath, exist_ok=True)
         os.makedirs(self.isingpath, exist_ok=True)
         os.makedirs(self.voterpath, exist_ok=True)
+        os.makedirs(self.lrgsgpath, exist_ok=True)
 
     #
     def init_weights(self):
@@ -431,31 +444,18 @@ class Lattice2D(SignedGraph):
         self.pbc = pbc
         self.fbc_val = fbc_val
         self.G = self.lattice_selection()
-        self.init_paths()
+        self.lambdaPath = f"{DEFAULT_LATTICE2D_PATHABBRV}{self.geometry}/"
         self.init_stdFname(stdFnameSFFX)
         super(Lattice2D, self).__init__(self.G, **kwargs)
         self.init_graph()
         self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
         self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH) // 2]: -1}
-
     #
     def init_graph(self):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
             self.posG = dict(zip(self.G, self.G))
             nx.set_node_attributes(self.G, values=self.posG, name="pos")
         self.upd_graph_matrices()
-
-    #
-    def init_paths(self):
-        self.lambdaPath = f"{DEFAULT_LATTICE2D_PATHABBRV}{self.geometry}/"
-        self.pltPath = (
-            f"{DEFAULT_DATA_OUTDIR}{DEFAULT_PLOT_OUTDIR}{self.lambdaPath}"
-        )
-        self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.lambdaPath}"
-        self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
-        self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
-        self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
-
     #
     def init_stdFname(self, SFFX):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:

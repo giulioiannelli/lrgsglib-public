@@ -78,7 +78,7 @@ for pflip in lattice.lsp:
     for nr in range(nA):
         random.seed(nr)
         SLRG_obj = SignedLaplacianAnalysis(#
-            system = lattice,
+            sg = lattice,
             pflip = pflip,
             t1 = args.lowert_exponent,
             t2 = args.highert_exponent,

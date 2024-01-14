@@ -112,7 +112,7 @@ class VoterModel(BinDynSys):
 
 
 class IsingDynamics_DEV(BinDynSys):
-    dyn_UVclass = "isingmodel"
+    dyn_UVclass = "ising_model"
     id_string_isingdyn = ""
 
     magn = []

@@ -31,7 +31,7 @@ from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.interpolate import make_interp_spline
 from scipy.linalg import expm, fractional_matrix_power
 from scipy.optimize import curve_fit
-from scipy.signal import argrelextrema
+from scipy.signal import argrelextrema, medfilt
 from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
@@ -80,7 +80,7 @@ class SignedLaplacianAnalysis:
     #
     def __init__(
         self,
-        system: SignedGraph,
+        sg: SignedGraph,
         is_signed: bool = True,
         steps: int = DEFAULT_ENTROPY_STEPS,
         t1: float = -2,
@@ -91,7 +91,7 @@ class SignedLaplacianAnalysis:
         t_steps=10,
         no_obs=1,
     ) -> None:
-        self.system = system
+        self.system = sg
         self.is_signed = is_signed
         #
         self.nreplica = nreplica
@@ -103,21 +103,14 @@ class SignedLaplacianAnalysis:
         #
         self.t_steps = t_steps
         self.no_obs = no_obs
-
-    #
-    def timescale_for_S(self) -> ndarray:
-        return np.logspace(self.t1, self.t2, self.steps)
-
-    #
-    def timescale_for_C(self) -> ndarray:
-        return 0.5 * (self.tTsS[1:] + self.tTsS[:-1])
+        self.init_computation()
 
     #
     def init_computation(self):
         if self.system.slspectrum is None:
             self.system.compute_laplacian_spectrum()
-        self.tTsS = self.timescale_for_S()
-        self.tTsC = self.timescale_for_C()
+        self.tTsS = np.logspace(self.t1, self.t2, self.steps)
+        self.tTsC = 0.5 * (self.tTsS[1:] + self.tTsS[:-1])
 
     #
     def compute_entropy(self) -> None:

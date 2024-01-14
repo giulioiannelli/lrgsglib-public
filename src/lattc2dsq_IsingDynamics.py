@@ -25,7 +25,7 @@ theLattice = Lattice2D(  #
     geometry="squared",
 )
 SLRG_obj = SignedLaplacianAnalysis(  #
-    system=theLattice,
+    sg=theLattice,
     initCond="all_1",  # f'ground_state_{eigenmode}'
     pflip=0.15,
     t_steps=10,

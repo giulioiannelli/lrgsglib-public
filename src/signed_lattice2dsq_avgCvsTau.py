@@ -35,7 +35,7 @@ for iL, iN, iA in zip(lsL, lsN, lsA):
         for nr in tqdm(range(iA), desc=f"replicas for L={iL:3d}, p={pflip:6.3g}"):
             while True:
                 SLRG_obj = SignedLaplacianAnalysis(#
-                    system = lattice,
+                    sg = lattice,
                     pflip = pflip,
                     t2 = TAUSTOPEXP,
                     steps = STEPS
