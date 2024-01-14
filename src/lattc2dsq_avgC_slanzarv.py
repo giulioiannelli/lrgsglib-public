@@ -5,7 +5,7 @@ import sys
 L = int(sys.argv[1])
 do_print = sys.argv[2]
 slanzarv_OPT = sys.argv[3]
-p_l = np.linspace(0, 1, 2)
+p_l = np.linspace(0, 1, 50)
 # p_l = np.concatenate(
 #     [
 #         np.linspace(0.075, 0.095, 3),
