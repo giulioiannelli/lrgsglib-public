@@ -5,6 +5,7 @@ import sys
 L = int(sys.argv[1])
 do_print = sys.argv[2]
 slanzarv_OPT = sys.argv[3]
+slanzarv_MEMMB = sys.argv[4]
 p_l = np.linspace(0, 1, 50)
 # p_l = np.concatenate(
 #     [
@@ -15,7 +16,7 @@ p_l = np.linspace(0, 1, 50)
 # )
 for p in p_l:
     slanzarv_STR = (
-        f'slanzarv -m 2400 --nomail --jobname "lattc2dsq_avgC_{L}_{p:.3g}"'
+        f'slanzarv -m {slanzarv_MEMMB} --nomail --jobname "lattc2dsq_avgC_{L}_{p:.3g}"'
         if slanzarv_OPT == "--slanzarv"
         else ""
     )
