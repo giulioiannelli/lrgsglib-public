@@ -26,5 +26,5 @@ while _ < args.number_of_averages:
         _ += 1
 #     print(f'\r{_}', end="")
 # print('\n')
-file_path = f"{sqlatt.lrgsgpath}avgC_{args.number_of_averages}_{args.out_suffix}.npz"
+file_path = f"{sqlatt.lrgsgpath}avgC_{args.number_of_averages}_p={sqlatt.pflip:.3g}_{args.out_suffix}.npz"
 np.savez_compressed(file_path, *lst)
