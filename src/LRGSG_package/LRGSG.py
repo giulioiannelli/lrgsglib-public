@@ -30,6 +30,7 @@ from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.interpolate import make_interp_spline
 from scipy.linalg import expm, fractional_matrix_power
+from scipy.ndimage import gaussian_filter1d
 from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema, medfilt
 from scipy.sparse import csr_array
@@ -81,40 +82,37 @@ class SignedLaplacianAnalysis:
     def __init__(
         self,
         sg: SignedGraph,
-        is_signed: bool = True,
-        steps: int = DEFAULT_ENTROPY_STEPS,
-        t1: float = -2,
-        t2: float = 5,
+        taustep: int = DEFAULT_ENTROPY_STEPS,
+        taulex: float = -2,
+        tauhex: float = 5,
         maxThresh: float = DEFAULT_MAX_THRESHOLD,
         nreplica: int = 0,
         initCond: str = "gauss_1",
         t_steps=10,
         no_obs=1,
+        initspect: bool = True
     ) -> None:
-        self.system = sg
-        self.is_signed = is_signed
-        #
+        self.sg = sg
+        self.initspect = initspect
         self.nreplica = nreplica
-        self.steps = steps
-        self.t1 = t1
-        self.t2 = t2
+        self.taustep = taustep
+        self.taulex = taulex
+        self.tauhex = tauhex
+        self.tTsS = np.logspace(self.taulex, self.tauhex, self.taustep)
+        self.tTsC = .5 * (self.tTsS[1:] + self.tTsS[:-1])
         self.maxThresh = maxThresh
         self.initCond = initCond
         #
         self.t_steps = t_steps
         self.no_obs = no_obs
-        self.init_computation()
-
+        if  self.sg.slspectrum is None and self.initspect:
+            self.__initSpectrum__()
     #
-    def init_computation(self):
-        if self.system.slspectrum is None:
-            self.system.compute_laplacian_spectrum()
-        self.tTsS = np.logspace(self.t1, self.t2, self.steps)
-        self.tTsC = 0.5 * (self.tTsS[1:] + self.tTsS[:-1])
-
+    def __initSpectrum__(self):
+        self.sg.compute_laplacian_spectrum()
     #
-    def compute_entropy(self) -> None:
-        w = self.system.slspectrum
+    def computeS(self) -> None:
+        w =  self.sg.slspectrum
         S = np.zeros(len(self.tTsS))
         VarL = np.zeros(len(self.tTsS))
         for i, tau in enumerate(self.tTsS):
@@ -123,22 +121,25 @@ class SignedLaplacianAnalysis:
             rho = np.divide(rhoTr, Tr)
             avgrho = np.nansum(np.multiply(w, rhoTr)) / Tr
             av2rho = np.nansum(np.multiply(np.multiply(w, w), rhoTr)) / Tr
-            S[i] = -np.nansum(rho * np.log(rho)) / np.log(self.system.N)
+            S[i] = -np.nansum(rho * np.log(rho)) / np.log(self.sg.N)
             VarL[i] = av2rho - avgrho**2
         self.Sm1 = 1 - S
         self.VarL = VarL
-
     #
-    def compute_Cspe(self) -> None:
+    def computeC(self) -> None:
         if self.Sm1 is None:
-            self.compute_entropy()
-        self.Cspe = np.log(self.system.N) * dv(self.Sm1, np.log(self.tTsS))
+            self.computeS()
+        self.Cspe = np.log( self.sg.N) * dv(self.Sm1, np.log(self.tTsS))
 
     #
-    def compute_taumax_array(self) -> None:
+    def compute_taumax_array(self, filter_gauss1d: int = 3) -> None:
         if self.Cspe is None:
-            self.compute_Cspe()
-        maxIdx = argrelextrema(self.Cspe, np.greater)[0]
+            self.computeC()
+        if filter_gauss1d:
+            Cspe = gaussian_filter1d(self.Cspe, sigma=filter_gauss1d) # if you dont do this sometimes the function is not enough sensible to detect the maxima
+        else:
+            Cspe = self.Cspe
+        maxIdx = argrelextrema(Cspe, np.greater)[0]
         maxIdxCondition = self.Cspe[maxIdx] > self.maxThresh
         self.taumax = self.tTsC[maxIdx[maxIdxCondition]]
         self.taumax0 = self.tTsC[maxIdx[maxIdxCondition][0]]
@@ -152,7 +153,7 @@ class SignedLaplacianAnalysis:
         window_shift_y=0,
         win_val=1,
     ):
-        N = self.system.N
+        N =  self.sg.N
         #
         self.Deltat = 1.0 / self.t_steps
         self.simulationTime = N * t_stepsMultiplier
@@ -161,11 +162,11 @@ class SignedLaplacianAnalysis:
         )
         #
         if not "ground_state" in self.initCond:
-            self.system.compute_k_eigvV()
+            self.sg.compute_k_eigvV()
         if self.initCond.startswith("ground_state"):
             self.eigenModeInit = int(self.initCond.split("_")[-1])
-            self.system.compute_k_eigvV(howmany=self.eigenModeInit + 1)
-            self.field = self.system.eigV.T[self.eigenModeInit]
+            self.sg.compute_k_eigvV(howmany=self.eigenModeInit + 1)
+            self.field =  self.sg.eigV.T[self.eigenModeInit]
         elif self.initCond == "uniform_1":
             self.field = np.random.uniform(-1, 1, N)
         elif self.initCond == "delta_1":
@@ -177,7 +178,7 @@ class SignedLaplacianAnalysis:
             self.initVal = float(self.initCond.split("_")[-1])
             self.field = self.initVal * np.ones(N)
         elif self.initCond.startswith("window"):
-            s22 = self.system.side2 // 2
+            s22 =  self.sg.side2 // 2
             wndwS = s22 - 1 if window_size > (s22 - 1) else window_size
             hS, hE = s22 - wndwS - 1, s22 + wndwS + 1
             initStatus = np.zeros(N)
@@ -186,7 +187,7 @@ class SignedLaplacianAnalysis:
                 self.nsquares = int(self.initCond.split("_")[-1])
                 wndwSa = np.array([wndwS, -wndwS])
                 sqTmp = np.random.randint(
-                    wndwS, self.system.side1 - wndwS, size=(self.nsquares, 2)
+                    wndwS,  self.sg.side1 - wndwS, size=(self.nsquares, 2)
                 )
                 result = np.column_stack((sqTmp, sqTmp + wndwS))
                 result[:, [1, 2]] = result[:, [2, 1]]
@@ -196,7 +197,7 @@ class SignedLaplacianAnalysis:
                         np.concatenate(
                             [
                                 [
-                                    j + i * self.system.side1
+                                    j + i *  self.sg.side1
                                     for j in range(*iSq[0])
                                 ]
                                 for i in range(*iSq[1])
@@ -216,7 +217,7 @@ class SignedLaplacianAnalysis:
                 shiftsY = [hS + window_shift_y, hE + window_shift_y]
                 sqIdx = np.concatenate(
                     [
-                        [j + i * self.system.side1 for j in range(*shiftsX)]
+                        [j + i *  self.sg.side1 for j in range(*shiftsX)]
                         for i in range(*shiftsY)
                     ]
                 )
@@ -228,7 +229,7 @@ class SignedLaplacianAnalysis:
                     initStatus[sqIdx] = np.random.normal(-1, 1, len(sqIdx))
                 elif self.initCond.startswith("window_ground_state"):
                     self.eigenModeInit = int(self.initCond.split("_")[-1])
-                    self.system.compute_k_eigvV(howmany=self.eigenModeInit + 1)
+                    self.sg.compute_k_eigvV(howmany=self.eigenModeInit + 1)
                     initStatus = self.eigV.T[self.eigenModeInit]
                     outIdx = np.setxor1d(np.arange(N), sqIdx)
                     initStatus[outIdx] = np.random.uniform(
@@ -238,7 +239,7 @@ class SignedLaplacianAnalysis:
                     print("Error, no mode for init laplacian dynamic chosen.")
             self.field = initStatus
         #
-        if self.system.pbc is False:
+        if  self.sg.pbc is False:
             L = int(np.sqrt(N))
             self.fixed_border_idxs = np.array(
                 sorted(
@@ -248,7 +249,7 @@ class SignedLaplacianAnalysis:
                     + [(i + 1) * L - 1 for i in range(1, L - 1)]
                 )
             )
-            self.field[self.fixed_border_idxs] = self.system.fbc_val
+            self.field[self.fixed_border_idxs] =  self.sg.fbc_val
 
     #
     def run_laplacian_dynamics(self, rescaled=False, saveFrames=False):
@@ -258,7 +259,7 @@ class SignedLaplacianAnalysis:
 
         #
         def stop_conditions_lapdyn(self, x_tm1, xx):
-            ERRTOL = self.ACCERR_LAPL_DYN * np.ones(self.system.N)
+            ERRTOL = self.ACCERR_LAPL_DYN * np.ones( self.sg.N)
             C1 = (np.abs(x_tm1 / x_tm1.max() - xx / xx.max()) < ERRTOL).all()
             C2 = np.abs(np.log10(np.max(np.abs(xx)))) > self.MAXVAL_LAPL_DYN
             return C1, C2
@@ -267,15 +268,15 @@ class SignedLaplacianAnalysis:
         if rescaled:
             if rescaled == "dynamic":
                 lap = (
-                    lambda t: np.exp(-self.system.eigv[0] * t) * self.system.sLp
+                    lambda t: np.exp(- self.sg.eigv[0] * t) *  self.sg.sLp
                 )
             else:
-                self.system.rescaled_signed_laplacian(rescaled)
-                lap = lambda _: self.system.resLp
+                self.sg.rescaled_signed_laplacian(rescaled)
+                lap = lambda _:  self.sg.resLp
         else:
-            lap = lambda _: self.system.sLp
+            lap = lambda _:  self.sg.sLp
         #
-        if not self.system.pbc:
+        if not  self.sg.pbc:
 
             def set_bc(self):
                 x[self.fixed_border_idxs] = self.fbc_val
@@ -316,7 +317,7 @@ class SignedLaplacianAnalysis:
 
     #
     def rescaled_field_regularization(self):
-        status = self.field.reshape(self.system.side1, self.system.side2)
+        status = self.field.reshape( self.sg.side1,  self.sg.side2)
         restatus = np.log10(np.max(status) - status)
         nnans = restatus[(restatus != np.inf) & (restatus != -np.inf)]
         self.restatus = np.nan_to_num(
@@ -330,7 +331,7 @@ class SignedLaplacianAnalysis:
         #
         fig, ax = plt.subplots()
         #
-        animate = self.system.make_animation(fig, ax, self.frames_dynsys)
+        animate =  self.sg.make_animation(fig, ax, self.frames_dynsys)
         ani = animation.FuncAnimation(fig, animate, frames=no_frames)
         #
         fig.tight_layout()

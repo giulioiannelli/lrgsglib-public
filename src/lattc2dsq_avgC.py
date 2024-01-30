@@ -19,7 +19,7 @@ while _ < args.number_of_averages:
     #
     sqlatt.flip_random_fract_edges()
     sla = SignedLaplacianAnalysis(sqlatt)
-    sla.compute_Cspe()
+    sla.computeC()
     avgCval = medfilt(sla.Cspe)
     if all(avgCval[np.where(np.abs(np.diff(avgCval)) == avgCval[:-1])] < thresh):
         lst.append(avgCval)

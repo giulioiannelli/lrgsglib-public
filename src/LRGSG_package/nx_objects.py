@@ -29,7 +29,7 @@ class SignedGraph:
         import_on: bool = False,
         pflip: float = 0.0,
         lsp_mode: str = "intervals",
-        expathc: str = ""
+        expathc: str = "",
     ):
         self.__init_paths__()
         self.pflip = pflip
@@ -54,16 +54,18 @@ class SignedGraph:
     #
     def __init_graph_fromfile__(self):
         return pickle.load(open(f"{self.graphfname}.pickle", "rb"))
+
     #
     def __init_paths__(self):
-        self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.lambdaPath}"
+        self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.sgpath}"
         self.pltPath = (
-            f"{DEFAULT_DATA_OUTDIR}{DEFAULT_PLOT_OUTDIR}{self.lambdaPath}"
+            f"{DEFAULT_DATA_OUTDIR}{DEFAULT_PLOT_OUTDIR}{self.sgpath}"
         )
         self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
         self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
         self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
         self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
+
     #
     def __make_dirs__(self):
         os.makedirs(self.expath, exist_ok=True)
@@ -367,9 +369,9 @@ class FullyConnected(SignedGraph):
         self.upd_graph_matrices()
 
     def init_paths(self):
-        self.lambdaPath = f"fc/"
-        self.pltPath = f"data/plot/{self.lambdaPath}"
-        self.datPath = f"data/{self.lambdaPath}"
+        self.sgpath = f"fc/"
+        self.pltPath = f"data/plot/{self.sgpath}"
+        self.datPath = f"data/{self.sgpath}"
 
     #
     def make_animation(
@@ -405,8 +407,6 @@ class FullyConnected(SignedGraph):
             cbar.mappable.set_clim(vmin, vmax)
 
         return animate
-
-
 #
 class Lattice2D(SignedGraph):
     #
@@ -418,6 +418,7 @@ class Lattice2D(SignedGraph):
         pbc: bool = True,
         fbc_val: float = 1.0,
         stdFnameSFFX: str = "",
+        sgpath: str = "",
         **kwargs,
     ) -> None:
         try:
@@ -444,18 +445,24 @@ class Lattice2D(SignedGraph):
         self.pbc = pbc
         self.fbc_val = fbc_val
         self.G = self.lattice_selection()
-        self.lambdaPath = f"{DEFAULT_LATTICE2D_PATHABBRV}{self.geometry}/"
+        self.sgpath = (
+            f"{DEFAULT_LATTICE2D_PATHABBRV}{self.geometry}/"
+            if not sgpath
+            else sgpath
+        )
         self.init_stdFname(stdFnameSFFX)
         super(Lattice2D, self).__init__(self.G, **kwargs)
         self.init_graph()
         self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
         self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH) // 2]: -1}
+
     #
     def init_graph(self):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
             self.posG = dict(zip(self.G, self.G))
             nx.set_node_attributes(self.G, values=self.posG, name="pos")
         self.upd_graph_matrices()
+
     #
     def init_stdFname(self, SFFX):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
@@ -511,3 +518,19 @@ class Lattice2D(SignedGraph):
             # it updates itself when the mappable it watches (im) changes
 
         return animate
+
+class ErdosRenyi(SignedGraph):
+    def __init__(self, n, p, sgpath: str = "", stdFname: str = "", **kwargs):
+        self.G = nx.erdos_renyi_graph(n, p)
+        self.sgpath = DEFAULT_ERGRAPH_SGPATH if not sgpath else sgpath
+        self.syshapePTH = n
+        self.stdFname = DEFAULT_ERGRAPH_ABBRV if not stdFname else stdFname
+        super(ErdosRenyi, self).__init__(self.G, **kwargs)
+        self.init_graph()
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_H = self.DEFAULT_NEG_WEIGHTS_DICT_G
+
+    def init_graph(self):
+        self.H = self.G
+        self.upd_graph_matrices()
+

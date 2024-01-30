@@ -16,5 +16,6 @@
         "lrgsg_vm.h": "c",
         "inttypes.h": "c"
     },
-    "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT"
+    "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT",
+    "CodeGPT.apiKey": "CodeGPT Plus Beta"
 }

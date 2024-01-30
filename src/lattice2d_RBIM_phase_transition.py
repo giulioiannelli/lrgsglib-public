@@ -80,8 +80,8 @@ for pflip in lattice.lsp:
         SLRG_obj = SignedLaplacianAnalysis(#
             sg = lattice,
             pflip = pflip,
-            t1 = args.lowert_exponent,
-            t2 = args.highert_exponent,
+            taumex = args.lowert_exponent,
+            tauMex = args.highert_exponent,
             steps = STEPS
         )
         SLRG_obj.upd_graph_matrices()

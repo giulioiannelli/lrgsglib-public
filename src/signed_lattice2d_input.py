@@ -93,14 +93,14 @@ for nr in range(nA):
         SLRG_obj = SignedLaplacianAnalysis(#
             sg = lattice,
             pflip = pflip,
-            t1 = args.lowert_exponent,
-            t2 = args.highert_exponent,
+            taumex = args.lowert_exponent,
+            tauMex = args.highert_exponent,
             steps = STEPS
         )
         SLRG_obj.upd_graph_matrices()
         SLRG_obj.init_weights()
         SLRG_obj.flip_random_fract_edges()
-        SLRG_obj.compute_Cspe()
+        SLRG_obj.computeC()
         index = np.where(np.diff(SLRG_obj.Cspe) > DEFAULT_SPIKE_THRESHOLD)
         if not index[0].size:
             break

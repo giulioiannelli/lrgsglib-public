@@ -37,11 +37,11 @@ for iL, iN, iA in zip(lsL, lsN, lsA):
                 SLRG_obj = SignedLaplacianAnalysis(#
                     sg = lattice,
                     pflip = pflip,
-                    t2 = TAUSTOPEXP,
+                    tauMex = TAUSTOPEXP,
                     steps = STEPS
                 )
                 SLRG_obj.flip_random_fract_edges()
-                SLRG_obj.compute_entropy()
+                SLRG_obj.computeS()
                 index = np.where(np.diff(SLRG_obj.Cspe) > SPIKE_THRESHOLD)
                 if not index[0].size:
                     break
