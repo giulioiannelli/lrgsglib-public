@@ -6,6 +6,9 @@ from matplotlib.axes import Axes
 from matplotlib.cm import ScalarMappable, hsv
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap, Normalize
 
+from matplotlib import gridspec
+
+
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
 
@@ -343,20 +346,38 @@ def plot_square_lattice(
     for i in range(size):
         for j in range(size):
             kwargs_lines["color"] = np.random.choice([pec, cpec])
-            if i < size - 1:
-                ax.plot(
-                    [x[i, j], x[i + 1, j]],
-                    [y[i, j], y[i + 1, j]],
-                    zorder=1,
-                    **kwargs_lines,
-                )  # Vertical
-            if j < size - 1:
-                ax.plot(
-                    [x[i, j], x[i, j + 1]],
-                    [y[i, j], y[i, j + 1]],
-                    zorder=1,
-                    **kwargs_lines,
-                )  # Horizontal
+            import matplotlib as mpl
+            if kwargs_lines["color"] == pec:
+                if i < size - 1:
+                    ax.plot(
+                        [x[i, j], x[i + 1, j]],
+                        [y[i, j], y[i + 1, j]],
+                        zorder=1,
+                        **kwargs_lines,
+                    )  # Vertical
+                if j < size - 1:
+                    ax.plot(
+                        [x[i, j], x[i, j + 1]],
+                        [y[i, j], y[i, j + 1]],
+                        zorder=1,
+                        **kwargs_lines,
+                    )  # Horizontal
+            else:
+                with mpl.rc_context({'path.sketch': (5, 15, 1)}):
+                    if i < size - 1:
+                        ax.plot(
+                            [x[i, j], x[i + 1, j]],
+                            [y[i, j], y[i + 1, j]],
+                            zorder=1,
+                            **kwargs_lines,
+                        )  # Vertical
+                    if j < size - 1:
+                        ax.plot(
+                            [x[i, j], x[i, j + 1]],
+                            [y[i, j], y[i, j + 1]],
+                            zorder=1,
+                            **kwargs_lines,
+                        )  # Horizontal
             ax.plot(x[i, j], y[i, j], zorder=2, **kwargs_nodes)  # Nodes
 
     # Adding dashed lines on the boundaries

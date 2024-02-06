@@ -7,10 +7,10 @@ import networkx as nx
 import numpy as np
 import scipy.sparse as scsp
 
-from .LRGSG_const import *
-from .LRGSG_errwar import *
-from .LRGSG_plots import imshow_colorbar_caxdivider
-from .LRGSG_utils import round_sigfig_n
+from .config.LRGSG_const import *
+from .config.LRGSG_errwar import *
+from .config.LRGSG_plots import imshow_colorbar_caxdivider
+from .config.LRGSG_utils import round_sigfig_n, sum_tuples
 from matplotlib.colors import Colormap
 from networkx.classes.graph import Graph
 from .nx_patches import signed_spectral_layout
@@ -22,6 +22,8 @@ class SignedGraph:
     p_c = None
     lsp = None
     slspectrum = None
+    pflmin = DEFAULT_MIN_PFLIPVAL
+    pflmax = DEFAULT_MAX_PFLIPVAL
 
     def __init__(
         self,
@@ -32,7 +34,10 @@ class SignedGraph:
         expathc: str = "",
     ):
         self.__init_paths__()
-        self.pflip = pflip
+        if not self.pflmin <= pflip <= self.pflmax:
+            raise ValueError(f"pflip must be between {self.pflmin} and {self.pflmax}, inclusive. Received: {pflip}")
+        else:
+            self.pflip = pflip
         self.lsp_mode = lsp_mode
         self.import_on = import_on
         self.expath = (
@@ -105,7 +110,6 @@ class SignedGraph:
         self.Ne = self.G.number_of_edges()
 
     def init_sgraph(self):
-        self.esetG = list(self.G.edges())
         self.init_n_nodes_edges()
         if self.import_on:
             self.upd_H_graph()
@@ -120,6 +124,7 @@ class SignedGraph:
             self.randsample = random.sample(range(self.Ne), self.nflip)
             self.init_weights()
             self.upd_H_graph()
+        self.upd_G_graph()
 
     #
     def adjacency_matrix(self, weight: str = "weight"):
@@ -227,12 +232,11 @@ class SignedGraph:
             self.slspectrum = nx.laplacian_spectrum(self.system.G)
         elif MODE_lapspec == "numpy":
             self.slspectrum = np.linalg.eigvalsh(self.sLp.toarray())
-
     #
-    def compute_k_eigvV(self, MODE_dynspec: str = "scipy", howmany: int = 1):
+    def compute_k_eigvV(self, MODE_dynspec: str = "scipy", howmany: int = 1, which: str = "SM"):
         if MODE_dynspec == "scipy":
             self.eigv, self.eigV = scsp.linalg.eigsh(
-                self.sLp.astype(np.float64), k=howmany, which="SM"
+                self.sLp.astype(np.float64), k=howmany, which=which
             )
             self.eigV = self.eigV.T
 
@@ -320,7 +324,31 @@ class SignedGraph:
             },
         )
         return d
-
+    #
+    def dfs_list(self, node, visited, sign):
+        if visited[node] or sign[node] <= 0:
+            return 0
+        visited[node] = True
+        size = 1
+        for neighbor in self.H[node]:
+            if not visited[neighbor]:
+                size += self.dfs_list(neighbor, visited, sign)
+        return size
+    #
+    def cluster_distribution_list(self, sv = None):
+        visited = [False] * len(self.H)
+        distribution = {}
+        if sv is None:
+            try:
+                sv = self.eigV[0]
+            except AttributeError:
+                self.compute_k_eigvV()
+                sv = self.eigV[0]
+        for node in range(len(self.H)):
+            if not visited[node] and sv[node] > 0:
+                size = self.dfs_list(node, visited, sv)
+                distribution[size] = distribution.get(size, 0) + 1
+        return distribution
     #
     def export_graph(self, MODE: str = "pickle"):
         if MODE == "pickle":
@@ -453,8 +481,7 @@ class Lattice2D(SignedGraph):
         self.init_stdFname(stdFnameSFFX)
         super(Lattice2D, self).__init__(self.G, **kwargs)
         self.init_graph()
-        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.esetG[len(self.esetG) // 2]: -1}
-        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.esetH[len(self.esetH) // 2]: -1}
+
 
     #
     def init_graph(self):
@@ -462,6 +489,35 @@ class Lattice2D(SignedGraph):
             self.posG = dict(zip(self.G, self.G))
             nx.set_node_attributes(self.G, values=self.posG, name="pos")
         self.upd_graph_matrices()
+        self.midway = self.N // 2 + self.side1 //2
+        self.H_cent_edge = (self.midway, self.midway+1)
+        self.midway_e = self.Ne // 2
+        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
+        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.invedge_map[self.H_cent_edge]: -1}
+        self.NEG_WEIGHTS_DICT_H_CROSS = {
+                    (self.midway, self.midway+1): -1,
+                    (self.midway-1, self.midway): -1,
+                    (self.midway, self.midway + self.side1): -1,
+                    (self.midway-self.side1, self.midway): -1
+        }
+        self.crossflip_selection = np.random.choice(self.N, int(self.pflip * self.N))
+        self.NEG_WEIGHTS_DICT_H_PCROSS = {}
+        for i in self.crossflip_selection:
+            self.NEG_WEIGHTS_DICT_H_PCROSS[(i, i+1)] = -1
+            self.NEG_WEIGHTS_DICT_H_PCROSS[(i-1, i)] = -1
+            self.NEG_WEIGHTS_DICT_H_PCROSS[(i, i + self.side1)] = -1
+            self.NEG_WEIGHTS_DICT_H_PCROSS[(i-self.side1, i)] = -1
+        self.NEG_WEIGHTS_DICT_H_SQUARE = {
+                    (self.midway, self.midway+1): -1,
+                    (self.midway, self.midway + self.side1): -1,
+                    (self.midway + 1, self.midway +self.side1 + 1): -1,
+                    (self.midway + self.side1, self.midway + self.side1 + 1): -1,
+                    (self.midway, self.midway+1): -1
+        }
+        self.NEG_WEIGHTS_DICT_H_2ADJ = {self.esetH[self.midway_e]: -1, 
+                                        self.esetH[self.midway_e+4]: -1}
+        self.NEG_WEIGHTS_DICT_H_2CONT = {self.esetH[self.midway_e]: -1, 
+                                        self.esetH[self.midway_e+2]: -1}
 
     #
     def init_stdFname(self, SFFX):
@@ -473,7 +529,7 @@ class Lattice2D(SignedGraph):
             self.stdFname = DEFLIST_LATTICE2D_GEOABBRV[2]
         self.stdFname = self.stdFname + SFFX
 
-    def lattice_selection(self, pbc=None) -> Graph:
+    def lattice_selection(self, pbc = None) -> Graph:
         if pbc is None:
             pbc = self.pbc
         else:

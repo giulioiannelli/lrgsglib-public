@@ -544,3 +544,29 @@ def binder_cumulant(data):
     m4 = np.mean(data**4)
     U4 = 1 - m4 / (3 * m2**2)
     return U4
+
+def sum_tuples(tuple1: tuple, tuple2: tuple) -> tuple:
+    """
+    Sum two tuples element-wise.
+
+    If the tuples are of different lengths, the function sums elements up to the
+    length of the shorter tuple, ignoring extra elements in the longer tuple.
+
+    Parameters:
+    -----------
+    tuple1 : tuple
+        The first tuple to be summed.
+    tuple2 : tuple
+        The second tuple to be summed.
+
+    Returns:
+    --------
+    tuple
+        A new tuple containing the element-wise sums of `tuple1` and `tuple2`.
+
+    Example:
+    --------
+    >>> sum_tuples((1, 2, 3), (4, 5, 6))
+    (5, 7, 9)
+    """
+    return tuple(a + b for a, b in zip(tuple1, tuple2))

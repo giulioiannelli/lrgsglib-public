@@ -1,5 +1,4 @@
 from LRGSG_package.LRGSG import *
-from LRGSG_package.LRGSG_const import *
 #
 description = """
     Compute average magnetization of a square lattice with prescribed adjacency 

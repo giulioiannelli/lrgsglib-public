@@ -1,9 +1,9 @@
 from LRGSG_package.LRGSG import *
-from LRGSG_package.LRGSG_plots import (
+from LRGSG_package.config.LRGSG_plots import (
     imshow_colorbar_caxdivider,
     generate_maxpercdiff_colormap,
 )
-from LRGSG_package.LRGSG_utils import move_to_rootf, width_interval, dv
+from LRGSG_package.config.LRGSG_utils import move_to_rootf, width_interval, dv
 from LRGSG_package.nx_patches import (
     signed_spectral_layout,
     get_kth_order_neighbours,

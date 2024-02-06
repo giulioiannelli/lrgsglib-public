@@ -8,6 +8,7 @@ import warnings
 #
 import networkx as nx
 import numpy as np
+import pickle as pk
 import random as rd
 #
 import matplotlib.animation as animation
@@ -18,6 +19,7 @@ import matplotlib.pyplot as plt
 import scipy.special
 import scipy.sparse as scsp
 #
+from collections import Counter
 from itertools import product
 from matplotlib.patches import Circle, Rectangle
 from matplotlib.ticker import ScalarFormatter
@@ -43,13 +45,13 @@ from tqdm import tqdm
 #
 from .nx_patches import *
 from .nx_objects import *
-from .LRGSG_dyns import *
-from .LRGSG_const import *
-from .LRGSG_errwar import *
-from .LRGSG_plots import *
-from .LRGSG_utils import *
+from .config.LRGSG_dyns import *
+from .config.LRGSG_const import *
+from .config.LRGSG_errwar import *
+from .config.LRGSG_plots import *
+from .config.LRGSG_utils import *
 #
-sys.setrecursionlimit(20000)
+sys.setrecursionlimit(DEFAULT_RECURSION_LIMIT)
 warnings.simplefilter(action="ignore", category=FutureWarning)
 #
 # __all__ = [
@@ -136,7 +138,8 @@ class SignedLaplacianAnalysis:
         if self.Cspe is None:
             self.computeC()
         if filter_gauss1d:
-            Cspe = gaussian_filter1d(self.Cspe, sigma=filter_gauss1d) # if you dont do this sometimes the function is not enough sensible to detect the maxima
+            # if you dont do this sometimes the function is not enough sensible to detect the maxima
+            Cspe = gaussian_filter1d(self.Cspe, sigma=filter_gauss1d) 
         else:
             Cspe = self.Cspe
         maxIdx = argrelextrema(Cspe, np.greater)[0]
@@ -255,15 +258,17 @@ class SignedLaplacianAnalysis:
     def run_laplacian_dynamics(self, rescaled=False, saveFrames=False):
         self.frames_dynsys = []
         #
-        x = self.field
-
+        try:
+            x = self.field
+        except AttributeError:
+            self.laplacian_dynamics_init()
+            x = self.field
         #
         def stop_conditions_lapdyn(self, x_tm1, xx):
             ERRTOL = self.ACCERR_LAPL_DYN * np.ones( self.sg.N)
             C1 = (np.abs(x_tm1 / x_tm1.max() - xx / xx.max()) < ERRTOL).all()
             C2 = np.abs(np.log10(np.max(np.abs(xx)))) > self.MAXVAL_LAPL_DYN
             return C1, C2
-
         #
         if rescaled:
             if rescaled == "dynamic":
@@ -276,28 +281,20 @@ class SignedLaplacianAnalysis:
         else:
             lap = lambda _:  self.sg.sLp
         #
-        if not  self.sg.pbc:
-
-            def set_bc(self):
-                x[self.fixed_border_idxs] = self.fbc_val
-
+        if not self.sg.pbc:
+            def set_bc():
+                x[self.fixed_border_idxs] = self.sg.fbc_val
         else:
-
             def set_bc():
                 pass
-
         #
         if saveFrames:
-
             def save_frames(self, x, t):
                 if t in self.sampling:
                     self.frames_dynsys.append(x)
-
         else:
-
             def save_frames(*_):
                 pass
-
         #
         print("Beginning Laplacian dynamics.")
         #
