@@ -8,12 +8,113 @@ from networkx.classes.graph import Graph
 from networkx.drawing.layout import _process_params, rescale_layout
 from scipy.sparse import csr_array
 #
-def get_kth_order_neighbours(G, node, order=1):
-    # Get the kth-order neighbors
+def get_kth_order_neighbours(G: nx.Graph, node: int, order: int = 1) -> list:
+    """
+    Returns the kth-order neighbors of a given node in a networkx graph.
+
+    Parameters
+    ----------
+    G : Graph
+        A NetworkX graph.
+    node : int
+        The node for which kth-order neighbors are to be found.
+    order : int, optional
+        The order of neighbors to be considered (default is 1).
+
+    Returns
+    -------
+    kth_order_neighbors : list
+        A list of kth-order neighbors of the given node.
+
+    Notes
+    -----
+    - The graph G should be connected.
+    - The function uses the single_source_shortest_path_length function of networkx to compute the shortest path lengths from the given node to all other nodes in the graph.
+    - The kth-order neighbors are selected based on the condition d == order.
+
+    Example
+    -------
+    >>> import networkx as nx
+    >>> G = nx.Graph()
+    >>> G.add_edges_from([(1, 2), (1, 3), (2, 4), (3, 4), (4, 5)])
+    >>> get_kth_order_neighbours(G, 1, 2)
+    [4]
+    """
     neighbor_dict = nx.single_source_shortest_path_length(G, node, cutoff=order)
-    # Extract the nodes at the kth order
     kth_order_neighbors = [n for n, d in neighbor_dict.items() if d == order]
     return kth_order_neighbors
+#
+def get_neighbors_at_distance(G: nx.Graph, node: int, distance: int) -> list:
+    """
+    Returns the neighbors of a given node at a specific distance in a networkx graph.
+
+    Parameters
+    ----------
+    G : Graph
+        A NetworkX graph.
+    node : int
+        The node for which neighbors are to be found.
+    distance : int
+        The specific distance from the node.
+
+    Returns
+    -------
+    neighbors : list
+        A list of neighbors at the given distance from the given node.
+
+    Notes
+    -----
+    - The graph G should be connected.
+    - The function uses the single_source_shortest_path_length function of networkx to compute the shortest path lengths from the given node to all other nodes in the graph.
+    - The neighbors are selected based on the condition d == distance.
+
+    Example
+    -------
+    >>> import networkx as nx
+    >>> G = nx.Graph()
+    >>> G.add_edges_from([(1, 2), (1, 3), (2, 4), (3, 4), (4, 5)])
+    >>> get_neighbors_at_distance(G, 1, 2)
+    [4]
+    """
+    neighbor_dict = nx.single_source_shortest_path_length(G, node)
+    neighbors_at_distance = [n for n, d in neighbor_dict.items() if d == distance]
+    return neighbors_at_distance
+#
+def get_neighbors_within_distance(G: nx.Graph, node: int, distance: int) -> list:
+    """
+    Returns the neighbors of a given node within a specific distance in a networkx graph.
+
+    Parameters
+    ----------
+    G : Graph
+        A NetworkX graph.
+    node : int
+        The node for which neighbors are to be found.
+    distance : int
+        The maximum distance from the node.
+
+    Returns
+    -------
+    neighbors : list
+        A list of neighbors within the given distance from the given node.
+
+    Notes
+    -----
+    - The graph G should be connected.
+    - The function uses the single_source_shortest_path_length function of networkx to compute the shortest path lengths from the given node to all other nodes in the graph.
+    - The neighbors are selected based on the condition d <= distance.
+
+    Example
+    -------
+    >>> import networkx as nx
+    >>> G = nx.Graph()
+    >>> G.add_edges_from([(1, 2), (1, 3), (2, 4), (3, 4), (4, 5)])
+    >>> get_neighbors_within_distance(G, 1, 2)
+    [2, 3, 4]
+    """
+    neighbor_dict = nx.single_source_shortest_path_length(G, node)
+    neighbors_within_distance = [n for n, d in neighbor_dict.items() if d <= distance]
+    return neighbors_within_distance
 #
 def slaplacian_matrix_fromA(G: Graph, nodelist: list = None, weight: str = "weight"
                       ) -> csr_array:

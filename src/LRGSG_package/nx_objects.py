@@ -13,7 +13,7 @@ from .config.LRGSG_plots import imshow_colorbar_caxdivider
 from .config.LRGSG_utils import round_sigfig_n, sum_tuples
 from matplotlib.colors import Colormap
 from networkx.classes.graph import Graph
-from .nx_patches import signed_spectral_layout
+from .nx_patches import signed_spectral_layout, get_neighbors_within_distance
 from scipy.sparse import csr_array
 from typing import Union
 
@@ -185,14 +185,14 @@ class SignedGraph:
         #
         if on_graph == "G":
             if neg_weights_dict is None:
-                neg_weights_dict = self.DEFAULT_NEG_WEIGHTS_DICT_G
+                neg_weights_dict = self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_G
             nx.set_edge_attributes(
                 self.G, values=neg_weights_dict, name="weight"
             )
             self.upd_H_graph()
         elif on_graph == "H":
             if neg_weights_dict is None:
-                neg_weights_dict = self.DEFAULT_NEG_WEIGHTS_DICT_H
+                neg_weights_dict = self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_H
             nx.set_edge_attributes(
                 self.H, values=neg_weights_dict, name="weight"
             )
@@ -481,44 +481,65 @@ class Lattice2D(SignedGraph):
         self.init_stdFname(stdFnameSFFX)
         super(Lattice2D, self).__init__(self.G, **kwargs)
         self.init_graph()
-
-
     #
     def init_graph(self):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
             self.posG = dict(zip(self.G, self.G))
             nx.set_node_attributes(self.G, values=self.posG, name="pos")
         self.upd_graph_matrices()
-        self.midway = self.N // 2 + self.side1 //2
-        self.H_cent_edge = (self.midway, self.midway+1)
-        self.midway_e = self.Ne // 2
-        self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
-        self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.invedge_map[self.H_cent_edge]: -1}
-        self.NEG_WEIGHTS_DICT_H_CROSS = {
-                    (self.midway, self.midway+1): -1,
-                    (self.midway-1, self.midway): -1,
-                    (self.midway, self.midway + self.side1): -1,
-                    (self.midway-self.side1, self.midway): -1
-        }
-        self.crossflip_selection = np.random.choice(self.N, int(self.pflip * self.N))
-        self.NEG_WEIGHTS_DICT_H_PCROSS = {}
-        for i in self.crossflip_selection:
-            self.NEG_WEIGHTS_DICT_H_PCROSS[(i, i+1)] = -1
-            self.NEG_WEIGHTS_DICT_H_PCROSS[(i-1, i)] = -1
-            self.NEG_WEIGHTS_DICT_H_PCROSS[(i, i + self.side1)] = -1
-            self.NEG_WEIGHTS_DICT_H_PCROSS[(i-self.side1, i)] = -1
-        self.NEG_WEIGHTS_DICT_H_SQUARE = {
-                    (self.midway, self.midway+1): -1,
-                    (self.midway, self.midway + self.side1): -1,
-                    (self.midway + 1, self.midway +self.side1 + 1): -1,
-                    (self.midway + self.side1, self.midway + self.side1 + 1): -1,
-                    (self.midway, self.midway+1): -1
-        }
-        self.NEG_WEIGHTS_DICT_H_2ADJ = {self.esetH[self.midway_e]: -1, 
-                                        self.esetH[self.midway_e+4]: -1}
-        self.NEG_WEIGHTS_DICT_H_2CONT = {self.esetH[self.midway_e]: -1, 
-                                        self.esetH[self.midway_e+2]: -1}
+        self.neg_weights_dict = self.neg_weights_dicts_container(self)
+    #
+    class neg_weights_dicts_container:
+        def __init__(self, lattice: SignedGraph):
+            self.lattice = lattice
+            self.midway_e = lattice.Ne // 2
+            self.midway_H = lattice.N // 2 + lattice.side1 //2
+            self.H_cent_edge = (self.midway_H, self.midway_H+1)
+            #
+            self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
+            self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
+            #
+            self.NEG_WEIGHTS_DICT_H_2ADJ = {lattice.esetH[self.midway_e]: -1, 
+                                            lattice.esetH[self.midway_e+4]: -1}
+            self.NEG_WEIGHTS_DICT_H_2CONT = {lattice.esetH[self.midway_e]: -1, 
+                                            lattice.esetH[self.midway_e+2]: -1}
+            #
+            self.NEG_WEIGHTS_DICT_H_CROSS = self.get_neg_weights_dict_h_cross(self.midway_H)
+            self.NEG_WEIGHTS_DICT_H_SQUARE = self.get_neg_weights_dict_h_square(self.midway_H)
+            #
+            self.flip_selection = np.random.choice(lattice.N, int(lattice.pflip * lattice.N))
+            self.NEG_WEIGHTS_DICT_H_PCROSS = self.get_neg_weights_dict_h_psquare()
+            # self.NEG_WEIGHTS_DICT_H_PSQUARE = {self.get_neg_weights_dict_h_square(i) for i in self.flip_selection}
+            # self.NEG_WEIGHTS_DICT_H_PSQUARE = {self.get_neg_weights_dict_h_square(i) for i in self.flip_selection}
+            # _ = [graph[node][neighbor].update({'weight': -1}) for node in neighs_to_flip for neighbor in graph.neighbors(node)]
 
+        #
+        def get_neg_weights_dict_h_square(self, node: int):
+            dictH = {
+                (node, node+1): -1,
+                (node, node+self.lattice.side1): -1,
+                (node + 1, node+self.lattice.side1 + 1): -1,
+                (node + self.lattice.side1, node+self.lattice.side1 + 1): -1,
+            }
+            return dictH
+        def get_neg_weights_dict_h_psquare(self):
+            merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_cross(i).items()]
+            return dict(merged_list)
+
+        #
+        def get_neg_weights_dict_h_cross(self, node: int):
+            dictH = {
+                (node-self.lattice.side1, node): -1,
+                (node-1, node): -1,
+                (node, node+1): -1,
+                (node, node + self.lattice.side1): -1
+            }
+            return dictH
+        #
+        def get_neg_weights_dict_h_rball(self, R: int = 5):
+            neighs_to_flip = get_neighbors_within_distance(self.lattice.H, self.midway_H, R)
+            dictH = {(node, neighbor): -1 for node in neighs_to_flip for neighbor in self.lattice.H.neighbors(node)}
+            return dictH
     #
     def init_stdFname(self, SFFX):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
@@ -537,15 +558,18 @@ class Lattice2D(SignedGraph):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
             nxfunc = nx.triangular_lattice_graph
             self.p_c = 0.146
+            self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
             kwdict = {"with_positions": True}
         elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
             nxfunc = nx.grid_2d_graph
             self.p_c = 0.103
+            self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
             kwdict = {}
             self.syshape = (self.side1, self.side2)
         elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[2]:
             nxfunc = nx.hexagonal_lattice_graph
             self.p_c = 0.065
+            self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
             kwdict = {"with_positions": True}
         self.syshapePTH = (
             f"N={self.side1**2}/"
