@@ -8,20 +8,13 @@ import warnings
 #
 import networkx as nx
 import numpy as np
+import pandas as pd
 import pickle as pk
-import random as rd
 #
-import matplotlib.animation as animation
-import matplotlib.cm as cm
-import matplotlib.colors as mplc
-import matplotlib.gridspec as gs
-import matplotlib.pyplot as plt
-import scipy.special
 import scipy.sparse as scsp
 #
 from collections import Counter
 from itertools import product
-from matplotlib.patches import Circle, Rectangle
 from matplotlib.ticker import ScalarFormatter
 from networkx.classes.graph import Graph
 from numpy import inf, ndarray
@@ -32,16 +25,16 @@ from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.interpolate import make_interp_spline
 from scipy.linalg import expm, fractional_matrix_power
-from scipy.ndimage import gaussian_filter1d
+from scipy.ndimage import gaussian_filter1d, gaussian_filter
 from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema, medfilt
 from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
 from subprocess import call
+from tqdm import tqdm
 from typing import Any, Optional, Union
 #
-from tqdm import tqdm
 #
 from .nx_patches import *
 from .nx_objects import *

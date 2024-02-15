@@ -1,17 +1,23 @@
-import matplotlib.pyplot as plt
-
+import random
 #
 import numpy as np
-from matplotlib.axes import Axes
-from matplotlib.cm import ScalarMappable, hsv
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap, Normalize
+import matplotlib.animation as animation
+import matplotlib.cm as cm
+import matplotlib.colors as mplc
+import matplotlib.gridspec as gs
+import matplotlib.pyplot as plt
+#
 
 from matplotlib import gridspec
-
-
+from matplotlib.axes import Axes
+from matplotlib.cm import hsv
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap, Normalize
+from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
+from matplotlib.path import Path
+from matplotlib.text import Text
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
-
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from typing import Any, Optional, Union
 
 
@@ -176,7 +182,7 @@ def generate_maxpercdiff_colormap(
 
 def imshow_colorbar_caxdivider(
     mappable, ax, position="right", size="5%", pad=0.05
-) -> [AxesDivider, Axes, Any]:
+) -> Union[AxesDivider, Axes, Any]:
     """
     Display colorbar in a specified position relative to a given axis.
 
@@ -345,7 +351,7 @@ def plot_square_lattice(
     # Plot each point in the lattice
     for i in range(size):
         for j in range(size):
-            kwargs_lines["color"] = np.random.choice([pec, cpec])
+            kwargs_lines["color"] = random.choice([pec, cpec])
             import matplotlib as mpl
             if kwargs_lines["color"] == pec:
                 if i < size - 1:
@@ -382,7 +388,7 @@ def plot_square_lattice(
 
     # Adding dashed lines on the boundaries
     for i in range(size):
-        kwargs_extl["color"] = np.random.choice([pec, cpec])
+        kwargs_extl["color"] = random.choice([pec, cpec])
         # Left and right boundaries
         ax.plot(
             [x[i, 0], x[i, 0] - etxl_len],
@@ -413,3 +419,132 @@ def plot_square_lattice(
 
     # Remove axes
     ax.axis("off")
+
+
+def pos_evolving_grid_rw(n_steps: int, p: float, init: str = 'random'):
+    pos_state = np.zeros((n_steps, 3))  # Now also includes state in the last dimension]
+    if init == 'random':
+        pos_state[0, 2] = np.random.choice([-1, +1])  # Initial state
+    elif init == 'fixed':
+        pos_state[0, 2] = +1
+    global edge_signs 
+    edge_signs = {}
+
+    # Function to update position and state
+    def update_position_state(current_pos_state, direction, p):
+        x, y, state = current_pos_state
+        key = (x, y, direction)
+        if key not in edge_signs:
+            edge_signs[key] = -1 if np.random.rand() < p else 1
+        sign = edge_signs[key]
+
+        # Update position based on direction
+        if direction == 0:  # Move up
+            y += 1
+        elif direction == 1:  # Move down
+            y -= 1
+        elif direction == 2:  # Move left
+            x -= 1
+        elif direction == 3:  # Move right
+            x += 1
+        
+        # Flip state if necessary
+        if sign == -1:
+            state *= -1
+
+        return np.array([x, y, state])
+
+    # Generate the walk
+    for i in range(1, n_steps):
+        direction = np.random.randint(0, 4)  # Choose direction
+        pos_state[i] = update_position_state(pos_state[i-1], direction, p)
+    return pos_state
+
+def average_evolving_rw(replica: int = 10**2, n_steps: int = 10**4, p=0.3, init: str = 'random'):
+    cumulative_walk = {}
+    for _ in range(replica):
+        walk = pos_evolving_grid_rw(n_steps, p,  init = 'fixed')
+        for x, y, value in walk:
+            key = (int(x), int(y))
+            if key in cumulative_walk:
+                cumulative_walk[key] += value
+            else:
+                cumulative_walk[key] = value
+
+    # Find extents for the 2D array
+    min_x = min(key[0] for key in cumulative_walk)
+    max_x = max(key[0] for key in cumulative_walk)
+    min_y = min(key[1] for key in cumulative_walk)
+    max_y = max(key[1] for key in cumulative_walk)
+
+    # Create and fill the array
+    array_shape = (int(max_y - min_y + 1), int(max_x - min_x + 1))
+    walk_array = np.zeros(array_shape)
+    for (x, y), value in cumulative_walk.items():
+        walk_array[y - min_y, x - min_x] = value / replica  # Average the states
+
+    return walk_array
+
+def plot_evolving_grid_rw(n_steps: int = 10**4, p: float = 0.103, ax: Axes = plt.Axes, col1: Any = 'red', col2: Any = 'blue', seed: int = 0, init: str = 'random'):
+    # Initialize a 3D array: (n_steps, 2 positions, 1 state)
+    colors = {1: col1, -1: col2}
+    if seed:
+        np.random.seed(seed)
+    pos_state = pos_evolving_grid_rw(n_steps, p, init = init)
+    # Plot the steps with appropriate color based on the state
+    for i in range(1, n_steps):
+        ax.plot(pos_state[i-1:i+1, 0], pos_state[i-1:i+1, 1], color=colors[pos_state[i, 2]], linewidth=2)
+
+
+
+
+def perform_random_walks(G, steps, N):
+    """
+    Perform N random walks on graph G, each with a given number of steps,
+    and update node states based on edge weights.
+    """
+    node_states = {node: 0 for node in G.nodes()}  # Initial node states
+    
+    for _ in range(N):
+        current_state = np.random.choice([-1, 1])
+        current_node = list(G.nodes())[np.random.randint(len(G))]  # Start at the origin for each walk
+        node_states[current_node] += current_state
+        for _ in range(steps):
+            neighbors = list(G.neighbors(current_node))
+            next_node = neighbors[np.random.randint(len(neighbors))]
+            edge_weight = G.edges[current_node, next_node]['weight']
+            # Update the state of the next node based on edge weight
+            current_state = current_state*edge_weight
+            node_states[next_node] += current_state
+            current_node = next_node
+            
+    return node_states
+
+def visualize_node_states(node_states, n, m, ax: Axes = plt.Axes):
+    """
+    Visualize the final states of nodes as a heatmap.
+    """
+    # Convert node states to a 2D array
+    state_array = np.zeros((n, m))
+    for (x, y), state in node_states.items():
+        state_array[x, y] = state
+    
+    ax.imshow(state_array)
+    ax.axis('off')  # Hide the axes
+
+
+def set_ax_ratio_1_withlim(ax):
+    # Calculate the ranges and centers
+    x_min, x_max = ax.get_xlim()
+    y_min, y_max = ax.get_ylim()
+    x_center = (x_max + x_min) / 2
+    y_center = (y_max + y_min) / 2
+    x_range = x_max - x_min
+    y_range = y_max - y_min
+
+    # Determine the largest range
+    max_range = max(x_range, y_range) / 2
+
+    # Set the new limits to ensure the plot is square and centered
+    ax.set_xlim(x_center - max_range, x_center + max_range)
+    ax.set_ylim(y_center - max_range, y_center + max_range)

@@ -189,14 +189,13 @@ class SignedGraph:
             nx.set_edge_attributes(
                 self.G, values=neg_weights_dict, name="weight"
             )
-            self.upd_H_graph()
         elif on_graph == "H":
             if neg_weights_dict is None:
                 neg_weights_dict = self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_H
             nx.set_edge_attributes(
                 self.H, values=neg_weights_dict, name="weight"
             )
-            self.upd_G_graph()
+        self.upd_graph(on_graph=on_graph)
         self.upd_graph_matrices()
 
     #
@@ -207,7 +206,22 @@ class SignedGraph:
                              number of edges is < 1, then no edges would be
                              flipped. Skipping the analysis for this value."""
             )
-
+    #
+    def upd_graph(self, on_graph: str = "G"):
+        if on_graph == "G":
+            self.upd_H_graph()
+        elif on_graph == "H":
+            self.upd_G_graph()
+    #
+    def unflip_all(self, on_graph="H"):
+        if on_graph == "G":
+            eset = self.esetG
+        elif on_graph == "H":
+            eset = self.esetH
+        self.WEIGHTS_DICT_H_PFLIP = {e: 1 for i, e in enumerate(eset)}
+        self.flip_sel_edges(neg_weights_dict=self.WEIGHTS_DICT_H_PFLIP, on_graph=on_graph)
+        self.upd_graph(on_graph=on_graph)
+        self.upd_graph_matrices()
     #
     def flip_random_fract_edges(self, on_graph="H"):
         """Flips a fraction p of edges (+1 to -1) of a graph G."""
@@ -221,10 +235,11 @@ class SignedGraph:
             eset = self.esetG
         elif on_graph == "H":
             eset = self.esetH
-        neg_weights = {
+        self.NEG_WEIGHTS_DICT_H_PFLIP = {
             e: -1 for i, e in enumerate(eset) if i in self.randsample
         }
-        self.flip_sel_edges(neg_weights_dict=neg_weights, on_graph=on_graph)
+        self.flip_sel_edges(neg_weights_dict=self.NEG_WEIGHTS_DICT_H_PFLIP, on_graph=on_graph)
+        self.upd_graph(on_graph=on_graph)
 
     #
     def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
@@ -508,9 +523,8 @@ class Lattice2D(SignedGraph):
             self.NEG_WEIGHTS_DICT_H_SQUARE = self.get_neg_weights_dict_h_square(self.midway_H)
             #
             self.flip_selection = np.random.choice(lattice.N, int(lattice.pflip * lattice.N))
-            self.NEG_WEIGHTS_DICT_H_PCROSS = self.get_neg_weights_dict_h_psquare()
-            # self.NEG_WEIGHTS_DICT_H_PSQUARE = {self.get_neg_weights_dict_h_square(i) for i in self.flip_selection}
-            # self.NEG_WEIGHTS_DICT_H_PSQUARE = {self.get_neg_weights_dict_h_square(i) for i in self.flip_selection}
+            self.NEG_WEIGHTS_DICT_H_PCROSS = self.get_neg_weights_dict_h_pattern('cross')
+            self.NEG_WEIGHTS_DICT_H_PSQUARE = self.get_neg_weights_dict_h_pattern('square')
             # _ = [graph[node][neighbor].update({'weight': -1}) for node in neighs_to_flip for neighbor in graph.neighbors(node)]
 
         #
@@ -522,9 +536,6 @@ class Lattice2D(SignedGraph):
                 (node + self.lattice.side1, node+self.lattice.side1 + 1): -1,
             }
             return dictH
-        def get_neg_weights_dict_h_psquare(self):
-            merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_cross(i).items()]
-            return dict(merged_list)
 
         #
         def get_neg_weights_dict_h_cross(self, node: int):
@@ -535,6 +546,13 @@ class Lattice2D(SignedGraph):
                 (node, node + self.lattice.side1): -1
             }
             return dictH
+        #
+        def get_neg_weights_dict_h_pattern(self, mode: str):
+            if mode == "cross":
+                merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_cross(i).items()]
+            elif mode == "square":
+                merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_square(i).items()]
+            return dict(merged_list)
         #
         def get_neg_weights_dict_h_rball(self, R: int = 5):
             neighs_to_flip = get_neighbors_within_distance(self.lattice.H, self.midway_H, R)

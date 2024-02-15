@@ -511,8 +511,8 @@ xtick.minor.width:   0.8     # minor tick width in points
 #ytick.labelright:    False   # draw tick labels on the right side
 ytick.major.size:    10.5     # major tick size in points
 ytick.minor.size:    5       # minor tick size in points
-#ytick.major.width:   0.8     # major tick width in points
-#ytick.minor.width:   0.6     # minor tick width in points
+ytick.major.width:   2     # major tick width in points
+ytick.minor.width:   0.8     # minor tick width in points
 #ytick.major.pad:     3.5     # distance to major tick label in points
 #ytick.minor.pad:     3.4     # distance to the minor tick label in points
 #ytick.color:         black   # color of the ticks
