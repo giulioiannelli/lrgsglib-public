@@ -220,8 +220,7 @@ class SignedGraph:
             eset = self.esetH
         self.WEIGHTS_DICT_H_PFLIP = {e: 1 for i, e in enumerate(eset)}
         self.flip_sel_edges(neg_weights_dict=self.WEIGHTS_DICT_H_PFLIP, on_graph=on_graph)
-        self.upd_graph(on_graph=on_graph)
-        self.upd_graph_matrices()
+
     #
     def flip_random_fract_edges(self, on_graph="H"):
         """Flips a fraction p of edges (+1 to -1) of a graph G."""
@@ -239,7 +238,6 @@ class SignedGraph:
             e: -1 for i, e in enumerate(eset) if i in self.randsample
         }
         self.flip_sel_edges(neg_weights_dict=self.NEG_WEIGHTS_DICT_H_PFLIP, on_graph=on_graph)
-        self.upd_graph(on_graph=on_graph)
 
     #
     def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
@@ -509,13 +507,16 @@ class Lattice2D(SignedGraph):
             self.lattice = lattice
             self.midway_e = lattice.Ne // 2
             self.midway_H = lattice.N // 2 + lattice.side1 //2
-            self.H_cent_edge = (self.midway_H, self.midway_H+1)
+            self.H_cent_edge = self.lattice.esetH[self.midway_e +1]
             #
             self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
-            self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
+            try:
+                self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
+            except KeyError:
+                print('KeyError')
             #
-            self.NEG_WEIGHTS_DICT_H_2ADJ = {lattice.esetH[self.midway_e]: -1, 
-                                            lattice.esetH[self.midway_e+4]: -1}
+            # self.NEG_WEIGHTS_DICT_H_2ADJ = {lattice.esetH[self.midway_e]: -1, 
+            #                                 lattice.esetH[self.midway_e+4]: -1}
             self.NEG_WEIGHTS_DICT_H_2CONT = {lattice.esetH[self.midway_e]: -1, 
                                             lattice.esetH[self.midway_e+2]: -1}
             #
@@ -526,7 +527,12 @@ class Lattice2D(SignedGraph):
             self.NEG_WEIGHTS_DICT_H_PCROSS = self.get_neg_weights_dict_h_pattern('cross')
             self.NEG_WEIGHTS_DICT_H_PSQUARE = self.get_neg_weights_dict_h_pattern('square')
             # _ = [graph[node][neighbor].update({'weight': -1}) for node in neighs_to_flip for neighbor in graph.neighbors(node)]
-
+        #
+        def get_neg_weights_dict_h_right(self, node: int):
+            dictH = {
+                (node, node+1): -1,
+            }
+            return dictH
         #
         def get_neg_weights_dict_h_square(self, node: int):
             dictH = {
@@ -536,7 +542,13 @@ class Lattice2D(SignedGraph):
                 (node + self.lattice.side1, node+self.lattice.side1 + 1): -1,
             }
             return dictH
-
+        #
+        def get_neg_weights_dict_h_rann(self, node: int):
+            random_neighbor = random.choice(list(self.lattice.H.neighbors(node)))
+            dictH = {
+                (node, random_neighbor): -1
+            }
+            return dictH
         #
         def get_neg_weights_dict_h_cross(self, node: int):
             dictH = {
@@ -557,6 +569,28 @@ class Lattice2D(SignedGraph):
         def get_neg_weights_dict_h_rball(self, R: int = 5):
             neighs_to_flip = get_neighbors_within_distance(self.lattice.H, self.midway_H, R)
             dictH = {(node, neighbor): -1 for node in neighs_to_flip for neighbor in self.lattice.H.neighbors(node)}
+            return dictH
+        #
+        def get_neg_weights_dict_h_rball_EXT(self, R: int = 5):
+            neighs_to_flip = get_neighbors_within_distance(self.lattice.H, self.midway_H, R)
+
+            # Get the boundary nodes
+            boundary_nodes = set()
+            for node in neighs_to_flip:
+                for neighbor in self.lattice.H.neighbors(node):
+                    if neighbor not in neighs_to_flip:
+                        boundary_nodes.add(node)
+                        break
+
+            # Create the dictionary with modified outer links
+            dictH = {}
+            for node in boundary_nodes:
+                for neighbor in self.lattice.H.neighbors(node):
+                    if neighbor not in neighs_to_flip:
+                        dictH[(node, neighbor)] = -1
+                    else:
+                        dictH[(node, neighbor)] = 0
+
             return dictH
     #
     def init_stdFname(self, SFFX):
