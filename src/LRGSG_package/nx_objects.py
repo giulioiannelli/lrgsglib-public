@@ -46,6 +46,7 @@ class SignedGraph:
         self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePTH}"
         self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePTH}"
         self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePTH}"
+        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePTH}"
         self.__make_dirs__()
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
         if import_on:
@@ -70,13 +71,13 @@ class SignedGraph:
         self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
         self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
         self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
+        self.DEFAULT_PHTRADIR = self.datPath + DEFAULT_PHTRA_OUTDIR
 
     #
     def __make_dirs__(self):
-        os.makedirs(self.expath, exist_ok=True)
-        os.makedirs(self.isingpath, exist_ok=True)
-        os.makedirs(self.voterpath, exist_ok=True)
-        os.makedirs(self.lrgsgpath, exist_ok=True)
+        for _ in [self.expath, self.isingpath, self.voterpath, self.lrgsgpath, 
+                  self.phtrapath]:
+            os.makedirs(_, exist_ok=True)
 
     #
     def init_weights(self):
@@ -247,6 +248,9 @@ class SignedGraph:
             self.slspectrum = np.linalg.eigvalsh(self.sLp.toarray())
     #
     def compute_k_eigvV(self, MODE_dynspec: str = "scipy", howmany: int = 1, which: str = "SM"):
+        if MODE_dynspec == "numpy" or howmany == self.N:
+            self.eigv, self.eigV = np.linalg.eigh(self.sLp.astype(np.float64).todense())
+            self.eigV = self.eigV.T
         if MODE_dynspec == "scipy":
             self.eigv, self.eigV = scsp.linalg.eigsh(
                 self.sLp.astype(np.float64), k=howmany, which=which
@@ -254,20 +258,41 @@ class SignedGraph:
             self.eigV = self.eigV.T
 
     #
-    def bin_eigV(self, which=0):
+    def bin_eigV(self, which: int = 0):
         try:
-            eigVbin = np.sign(self.eigV[which])
-            eigVbin[eigVbin == 0] = +1
+            eigVbin = np.sign(np.where(self.eigV[which] == 0, +1, self.eigV[which]))
         except (AttributeError, IndexError):
-            self.compute_k_eigvV(howmany=which + 1)
-        eigVbin = np.sign(self.eigV[which])
-        eigVbin[eigVbin == 0] = +1
+            self.compute_k_eigvV(howmany = which + 1)
+            eigVbin = np.sign(np.where(self.eigV[which] == 0, +1, self.eigV[which]))
+
         return eigVbin
 
     def bin_eigV_all(self):
-        eigVbin = np.sign(self.eigV)
-        eigVbin[eigVbin == 0] = +1
+        try:
+            eigVbin = np.sign(np.where(self.eigV == 0, +1, self.eigV))
+        except (AttributeError, IndexError):
+            self.compute_k_eigvV()
+            eigVbin = np.sign(np.where(self.eigV == 0, +1, self.eigV))
         return eigVbin
+    
+    def calc_fluct_Pinf(self, which: int = 0):
+        eigV = self.bin_eigV(which)
+        eV_p = np.count_nonzero(eigV >= 0)
+        eV_n = self.N - eV_p
+
+        self.eigV_fluct = abs(eV_p - eV_n) / self.N
+        self.Pinf = np.min([eV_p, eV_n]) / self.N
+
+        if hasattr(self, 'eigV_fluct_dict'):
+            self.eigV_fluct_dict[which] = self.eigV_fluct
+        else:
+            self.eigV_fluct_dict = {which: self.Pinf}
+
+        if hasattr(self, 'Pinf_dict'):
+            self.Pinf_dict[which] = self.Pinf
+        else:
+            self.Pinf_dict = {which: self.Pinf}
+
 
     #
     def rescaled_signed_laplacian(self, MODE: str = "field"):
