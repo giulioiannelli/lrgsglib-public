@@ -524,6 +524,10 @@ class Lattice2D(SignedGraph):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
             self.posG = dict(zip(self.G, self.G))
             nx.set_node_attributes(self.G, values=self.posG, name="pos")
+        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
+            self.posG = dict((node, (node[0] + 0.5 * (node[1] % 2), -node[1] * np.sqrt(3) / 2)) for node in self.G.nodes())
+            nx.set_node_attributes(self.G, values=self.posG, name="pos")
+
         self.upd_graph_matrices()
         self.neg_weights_dict = self.neg_weights_dicts_container(self)
     #
@@ -551,6 +555,7 @@ class Lattice2D(SignedGraph):
             self.flip_selection = np.random.choice(lattice.N, int(lattice.pflip * lattice.N))
             self.NEG_WEIGHTS_DICT_H_PCROSS = self.get_neg_weights_dict_h_pattern('cross')
             self.NEG_WEIGHTS_DICT_H_PSQUARE = self.get_neg_weights_dict_h_pattern('square')
+            self.NEG_WEIGHTS_DICT_H_PTRIA = self.get_neg_weights_dict_h_pattern('triangle')
             # _ = [graph[node][neighbor].update({'weight': -1}) for node in neighs_to_flip for neighbor in graph.neighbors(node)]
         #
         def get_neg_weights_dict_h_right(self, node: int):
@@ -583,12 +588,26 @@ class Lattice2D(SignedGraph):
                 (node, node + self.lattice.side1): -1
             }
             return dictH
+        def get_neg_weights_dict_h_triangle(self, node: int):
+            node1 = node
+            node2 = random.sample(list(self.lattice.H.neighbors(node1)), 1)[0]
+            common_neighbors = list(nx.common_neighbors(self.lattice.H, node1, node2))
+            node3 = random.sample(common_neighbors, 1)[0]
+
+            dictH = {
+                (node1, node2): -1,
+                (node2, node3): -1,
+                (node1, node3): -1
+            }
+            return dictH
         #
         def get_neg_weights_dict_h_pattern(self, mode: str):
             if mode == "cross":
                 merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_cross(i).items()]
             elif mode == "square":
                 merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_square(i).items()]
+            elif mode == "triangle":
+                merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_triangle(i).items()]
             return dict(merged_list)
         #
         def get_neg_weights_dict_h_rball(self, R: int = 5):
