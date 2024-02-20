@@ -37,7 +37,7 @@ from typing import Any, Optional, Union
 #
 #
 from .nx_patches import *
-from .nx_objects import *
+from .config.nx_objects import *
 from .config.LRGSG_dyns import *
 from .config.LRGSG_const import *
 from .config.LRGSG_errwar import *
