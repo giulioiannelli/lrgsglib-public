@@ -485,11 +485,9 @@ def average_evolving_rw(replica: int = 10**2, n_steps: int = 10**4, p=0.3, init:
 
     return walk_array
 
-def plot_evolving_grid_rw(n_steps: int = 10**4, p: float = 0.103, ax: Axes = plt.Axes, col1: Any = 'red', col2: Any = 'blue', seed: int = 0, init: str = 'random'):
+def plot_evolving_grid_rw(n_steps: int = 10**4, p: float = 0.103, ax: Axes = plt.Axes, col1: Any = 'red', col2: Any = 'blue', init: str = 'random'):
     # Initialize a 3D array: (n_steps, 2 positions, 1 state)
     colors = {1: col1, -1: col2}
-    if seed:
-        np.random.seed(seed)
     pos_state = pos_evolving_grid_rw(n_steps, p, init = init)
     # Plot the steps with appropriate color based on the state
     for i in range(1, n_steps):
