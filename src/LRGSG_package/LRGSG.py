@@ -16,7 +16,6 @@ import scipy.sparse as scsp
 from collections import Counter
 from itertools import product
 from matplotlib.ticker import ScalarFormatter
-from networkx.classes.graph import Graph
 from numpy import inf, ndarray
 from numpy.linalg import eigvals, eigvalsh
 from numpy.typing import NDArray
@@ -28,15 +27,13 @@ from scipy.linalg import expm, fractional_matrix_power
 from scipy.ndimage import gaussian_filter1d, gaussian_filter
 from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema, medfilt
-from scipy.sparse import csr_array
 from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
 from subprocess import call
 from tqdm import tqdm
-from typing import Any, Optional, Union
 #
 #
-from .nx_patches import *
+from .config.nx_patches import *
 from .config.nx_objects import *
 from .config.LRGSG_dyns import *
 from .config.LRGSG_const import *

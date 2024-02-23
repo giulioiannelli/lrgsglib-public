@@ -4,7 +4,7 @@ from LRGSG_package.config.LRGSG_plots import (
     generate_maxpercdiff_colormap,
 )
 from LRGSG_package.config.LRGSG_utils import move_to_rootf, width_interval, dv
-from LRGSG_package.nx_patches import (
+from LRGSG_package.config.nx_patches import (
     signed_spectral_layout,
     get_kth_order_neighbours,
 )

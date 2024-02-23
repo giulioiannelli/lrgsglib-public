@@ -7,18 +7,19 @@ import matplotlib.colors as mplc
 import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 #
-
+from cycler import cycler
 from matplotlib import gridspec
 from matplotlib.axes import Axes
 from matplotlib.cm import hsv
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap, Normalize
+from matplotlib.colors import Colormap, ListedColormap, LinearSegmentedColormap, Normalize
 from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
 from matplotlib.path import Path
 from matplotlib.text import Text
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from typing import Any, Optional, Union
+#
+from .LRGSG_const import *
 
 
 def set_alpha_torgb(rgbacol, alpha=0.5):

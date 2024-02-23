@@ -1,5 +1,3 @@
-
-
 from .nx_objects import *
 
 class SignedGraph:
