@@ -114,11 +114,13 @@ class Lattice2D(SignedGraph):
             self.midway_H = lattice.N//2 + lattice.side2//2
             self.H_cent_edge = self.get_central_edge_H()
             #
-            self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
             try: 
+                self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
                 self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
             except KeyError:
-                print("keyError")
+                self.H_cent_edge = (self.H_cent_edge[0]-1, self.H_cent_edge[1]-1)
+                self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
+                self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
                 pass
             #
             # self.NEG_WEIGHTS_DICT_H_2ADJ = {lattice.esetH[self.midway_e]: -1, 
