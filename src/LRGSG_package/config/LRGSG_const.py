@@ -2,7 +2,7 @@ from typing import Any, Optional, Union
 from scipy.sparse import csr_array
 from networkx.classes.graph import Graph
 # default values
-DEFAULT_RECURSION_LIMIT = 500000
+DEFAULT_RECURSION_LIMIT = 1024**2
 DEFAULT_ENTROPY_STEPS = 1000
 DEFAULT_ENTROPY_LEXPONENT = -3
 DEFAULT_ENTROPY_HEXPONENT = 6
