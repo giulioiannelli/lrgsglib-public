@@ -64,7 +64,7 @@ class Lattice2D(SignedGraph):
                          if (i, j) in self.G}    
 
         self.upd_graph_matrices()
-        self.neg_weights_dict = self.neg_weights_dicts_container(self)
+        
 
     #
     def init_stdFname(self, SFFX):
@@ -108,11 +108,15 @@ class Lattice2D(SignedGraph):
 
     #
     class neg_weights_dicts_container:
+        NEG_WEIGHTS_DICT_H_PFLIP = {}
+        NEG_WEIGHTS_DICT_G_PFLIP = {}
         def __init__(self, lattice: SignedGraph):
             self.lattice = lattice
             self.midway_e = lattice.Ne//2
             self.midway_H = lattice.N//2 + lattice.side2//2
             self.H_cent_edge = self.get_central_edge_H()
+            self.NEG_WEIGHTS_DICT_H_PFLIP = {e: -1 for e in random.sample(self.lattice.esetH, self.lattice.nflip)}
+            self.WEIGHTS_DICT_H_PFLIP = {e: 1 for e in self.lattice.esetH}
             #
             try: 
                 self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
@@ -131,14 +135,14 @@ class Lattice2D(SignedGraph):
             self.NEG_WEIGHTS_DICT_H_CROSS = self.get_neg_weights_dict_h_cross(self.H_cent_edge[0])
             self.NEG_WEIGHTS_DICT_H_SQUARE = self.get_neg_weights_dict_h_square(self.H_cent_edge[0])
             #
-            self.flip_selection = np.random.choice(lattice.N, int(lattice.pflip * lattice.N))
+            self.node_flip_selection = np.random.choice(lattice.N, int(lattice.pflip * lattice.N))
+            self.NEG_WEIGHTS_DICT_H_PCROSS = self.get_neg_weights_dict_h_pattern('cross')
             if lattice.geometry == 'squared':
-                self.NEG_WEIGHTS_DICT_H_PCROSS = self.get_neg_weights_dict_h_pattern('cross')
                 self.NEG_WEIGHTS_DICT_H_PSQUARE = self.get_neg_weights_dict_h_pattern('square')
             elif lattice.geometry == 'triangular':
                 self.NEG_WEIGHTS_DICT_H_PTRIA = self.get_neg_weights_dict_h_pattern('triangle')
-            # elif lattice.geometry == 'hexagonal':
-                # self.NEG_WEIGHTS_DICT_H_PHEXA = self.get_neg_weights_dict_h_pattern('hexagon')
+            elif lattice.geometry == 'hexagonal':
+                self.NEG_WEIGHTS_DICT_H_PHEXA = self.get_neg_weights_dict_h_pattern('hexagon')
                 
 
         #
@@ -155,8 +159,11 @@ class Lattice2D(SignedGraph):
                 return self.lattice.edge_map[edge_with_change]
         #
         def get_neg_weights_dict_h_right(self, node: int):
+            edge = (node, node+1)
+            if edge not in self.lattice.esetH:
+                edge = (node-1, node)
             dictH = {
-                (node, node+1): -1,
+                edge: -1,
             }
             return dictH
         #
@@ -180,6 +187,7 @@ class Lattice2D(SignedGraph):
             dictH = {(node, nn): -1 
                      for nn in list(self.lattice.H.neighbors(node))}
             return dictH
+
         def get_neg_weights_dict_h_triangle(self, node: int):
             node1 = node
             node2 = random.sample(list(self.lattice.H.neighbors(node1)), 1)[0]
@@ -232,13 +240,13 @@ class Lattice2D(SignedGraph):
         #
         def get_neg_weights_dict_h_pattern(self, mode: str):
             if mode == "cross":
-                merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_cross(i).items()]
+                merged_list = [item for i in self.node_flip_selection for item in self.get_neg_weights_dict_h_cross(i).items()]
             elif mode == "square":
-                merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_square(i).items()]
+                merged_list = [item for i in self.node_flip_selection for item in self.get_neg_weights_dict_h_square(i).items()]
             elif mode == "triangle":
-                merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_triangle(i).items()]
+                merged_list = [item for i in self.node_flip_selection for item in self.get_neg_weights_dict_h_triangle(i).items()]
             elif mode == "hexagon":
-                merged_list = [item for i in self.flip_selection for item in self.get_neg_weights_dict_h_hexagon(i).items()]
+                merged_list = [item for i in self.node_flip_selection for item in self.get_neg_weights_dict_h_hexagon(i).items()]
             return dict(merged_list)
         #
         def get_neg_weights_dict_h_rball(self, R: int = 5):

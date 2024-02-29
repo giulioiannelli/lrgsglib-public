@@ -14,6 +14,7 @@ class SignedGraph:
         pflip: float = 0.0,
         lsp_mode: str = "intervals",
         expathc: str = "",
+        init_weight_dict: bool = True
     ):
         self.__init_paths__()
         if not self.pflmin <= pflip <= self.pflmax:
@@ -38,6 +39,8 @@ class SignedGraph:
             self.G = G
             self.graphfname = self.expath + self.stdFname
         self.init_sgraph()
+        if init_weight_dict:
+            self.neg_weights_dict = self.neg_weights_dicts_container(self)
 
     #
     def __init_graph_fromfile__(self):
@@ -201,13 +204,11 @@ class SignedGraph:
             eset = self.esetG
         elif on_graph == "H":
             eset = self.esetH
-        self.WEIGHTS_DICT_H_PFLIP = {e: 1 for i, e in enumerate(eset)}
-        self.flip_sel_edges(neg_weights_dict=self.WEIGHTS_DICT_H_PFLIP, on_graph=on_graph)
+        self.flip_sel_edges(neg_weights_dict={e: 1 for e in eset}, on_graph=on_graph)
 
     #
     def flip_random_fract_edges(self, on_graph="H"):
         """Flips a fraction p of edges (+1 to -1) of a graph G."""
-
         #
         try:
             self.check_pflip()
@@ -217,10 +218,7 @@ class SignedGraph:
             eset = self.esetG
         elif on_graph == "H":
             eset = self.esetH
-        self.NEG_WEIGHTS_DICT_H_PFLIP = {
-            e: -1 for i, e in enumerate(eset) if i in self.randsample
-        }
-        self.flip_sel_edges(neg_weights_dict=self.NEG_WEIGHTS_DICT_H_PFLIP, on_graph=on_graph)
+        self.flip_sel_edges(neg_weights_dict={e: -1 for e in random.sample(eset, self.nflip)}, on_graph=on_graph)
 
     #
     def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
