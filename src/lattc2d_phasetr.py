@@ -20,11 +20,17 @@ Pinf2=np.zeros(args.number_of_averages)
 Fluct=np.zeros(args.number_of_averages)
 Fluct2=np.zeros(args.number_of_averages)
 
+lattice = Lattice2D(args.L, pflip=args.p, geometry=args.geometry)
+file1 = f'{lattice.phtrapath}p_{lattice.pflip}_{args.cell_type}_{args.number_of_averages-1}'
+
+if os.path.exists(file1):
+    os.exit(0)
+
 for cont, avg in enumerate(range(args.number_of_averages)):
     lattice = Lattice2D(args.L, pflip=args.p, geometry=args.geometry)
     lattice.flip_sel_edges(geometry_func(lattice))
 
-    file1 = f'{lattice.phtrapath}p_{lattice.pflip}_{args.number_of_averages}'
+    file1 = f'{lattice.phtrapath}p_{lattice.pflip}_{args.cell_type}_{avg}'
 
     lattice.compute_k_eigvV()
     eigV = lattice.eigV[0]

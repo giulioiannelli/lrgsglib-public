@@ -204,7 +204,7 @@ class SignedGraph:
             eset = self.esetG
         elif on_graph == "H":
             eset = self.esetH
-        self.flip_sel_edges(neg_weights_dict={e: 1 for e in eset}, on_graph=on_graph)
+        self.flip_sel_edges(neg_weights_dict=1, on_graph=on_graph)
 
     #
     def flip_random_fract_edges(self, on_graph="H"):
@@ -354,14 +354,14 @@ class SignedGraph:
         return size
     #
     def cluster_distribution_list(self, sv = None):
-        visited = [False] * len(self.H)
+        visited = [False] * self.N
         distribution = {}
         if sv is None:
             try:
                 sv = self.eigV[0]
             except AttributeError:
                 self.compute_k_eigvV()
-                sv = self.eigV[0]
+                sv = flip_to_positive_majority(self.eigV[0])
         for node in range(len(self.H)):
             if not visited[node] and sv[node] > 0:
                 size = self.dfs_list(node, visited, sv)

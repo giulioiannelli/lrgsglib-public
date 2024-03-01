@@ -21,4 +21,4 @@ for avg in range(args.number_of_averages):
         pass
     filename = f'{lattice.lrgsgpath}p={args.p:.3g}_na={avg}_{args.out_suffix}.pickle'
     with open(filename, 'wb') as file:
-        pickle.dump(list(merged_dict.values()), file)
+        pickle.dump(merged_dict, file)

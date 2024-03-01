@@ -570,3 +570,38 @@ def sum_tuples(tuple1: tuple, tuple2: tuple) -> tuple:
     (5, 7, 9)
     """
     return tuple(a + b for a, b in zip(tuple1, tuple2))
+#
+def flip_to_positive_majority(arr):
+    """ Flips the elements of an array to ensure a majority of positive components.
+
+        Given a numerical array, this function checks if the majority of its components are negative. If so, it multiplies every element by -1, effectively flipping the signs of all components to ensure a majority of positive values. This operation is intended for arrays where elements can be distinctly categorized as positive or negative (including zero as a non-negative value).
+
+        Parameters:
+        -----------
+        arr : array_like
+            The input array containing numerical data. This array can be a list, tuple, or any array-like object convertible to a NumPy array. The function is optimized for NumPy arrays for performance reasons.
+
+        Returns:
+        --------
+        numpy.ndarray
+            An array of the same shape and type as the input, with elements flipped if the original array had a majority of negative components. If the input array already had a majority of positive components, it is returned unchanged.
+
+        Notes:
+        ------
+        The function utilizes NumPy for efficient computation, especially for large arrays. The determination of "majority" is based purely on the count of positive vs. negative elements, without weighting by magnitude.
+
+        Examples:
+        ---------
+        >>> import numpy as np
+        >>> arr = np.array([1, -2, -3, 4, -5])
+        >>> flip_to_positive_majority(arr)
+        array([ 1,  2,  3,  4,  5])
+
+        >>> arr = np.array([-1, 2, 3])
+        >>> flip_to_positive_majority(arr)
+        array([-1,  2,  3])
+        """
+    if np.sum(arr < 0) > len(arr) / 2:
+        # Flip all elements by multiplying by -1
+        arr = arr * -1
+    return arr
