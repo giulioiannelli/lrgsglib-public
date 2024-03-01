@@ -3,6 +3,12 @@ from lattc2dsq_percClusters_Parser import *
 args = parser.parse_args()
 #
 merged_dict = Counter()
+
+lattice = Lattice2D(args.L, pflip=args.p)
+filename = f'{lattice.lrgsgpath}p={args.p:.3g}_na={args.number_of_averages-1}_{args.out_suffix}.pickle'
+if os.path.exists(filename):
+    os.exit(0)
+
 for avg in range(args.number_of_averages):
     lattice = Lattice2D(args.L, pflip=args.p)
     lattice.flip_random_fract_edges()
