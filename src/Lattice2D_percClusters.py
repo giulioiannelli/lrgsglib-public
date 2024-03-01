@@ -1,4 +1,7 @@
 from Lattice2D_percClusters_Parser import *
+import faulthandler
+
+faulthandler.enable()
 #
 args = parser.parse_args()
 #
@@ -17,6 +20,7 @@ if os.path.exists(filename):
 for avg in range(args.number_of_averages):
     lattice = Lattice2D(args.L, pflip=args.p, geometry=args.geometry)
     lattice.flip_random_fract_edges()
+    print(f"error (distdict), {avg}")
     dist_dict = lattice.cluster_distribution_list()
     merged_dict += Counter(dist_dict)
     try:
