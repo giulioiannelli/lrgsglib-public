@@ -353,7 +353,7 @@ class SignedGraph:
                 size += self.dfs_list(neighbor, visited, sign)
         return size
     #
-    def cluster_distribution_list(self, sv = None):
+    def cluster_distribution_list_OLD(self, sv = None):
         visited = [False] * self.N
         distribution = {}
         if sv is None:
@@ -367,6 +367,30 @@ class SignedGraph:
                 size = self.dfs_list(node, visited, sv)
                 distribution[size] = distribution.get(size, 0) + 1
         return distribution
+    #
+    def cluster_distribution_list(self, which: int = 0):
+        node_values = flip_to_positive_majority(self.bin_eigV(which = which))
+
+        for i, v in enumerate(node_values):
+            self.G.nodes[i][f'eigV{which}'] = v
+
+        # Create subgraphs for +1 and -1 values
+        G_pos = self.G.copy()
+        G_neg = self.G.copy()
+
+        for node in self.G.nodes(data=True):
+            if node[1]['value'] == 1:
+                G_neg.remove_node(node[0])
+            else:
+                G_pos.remove_node(node[0])
+        # Find connected components and calculate cluster sizes
+        clusters_pos = [len(c) for c in nx.connected_components(G_pos)]
+        # clusters_neg = [len(c) for c in nx.connected_components(G_neg)]
+
+        # Calculate distribution of cluster sizes
+        distribution_pos = {size: clusters_pos.count(size) for size in set(clusters_pos)}
+        # distribution_neg = {size: clusters_neg.count(size) for size in set(clusters_neg)}
+        return distribution_pos
     #
     def export_graph(self, MODE: str = "pickle"):
         if MODE == "pickle":
