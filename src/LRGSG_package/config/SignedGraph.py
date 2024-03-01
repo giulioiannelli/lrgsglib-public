@@ -372,13 +372,13 @@ class SignedGraph:
         node_values = flip_to_positive_majority(self.bin_eigV(which = which))
 
         for i, v in enumerate(node_values):
-            self.G.nodes[i][f'eigV{which}'] = v
+            self.H.nodes[i][f'eigV{which}'] = v
 
         # Create subgraphs for +1 and -1 values
-        G_pos = self.G.copy()
-        G_neg = self.G.copy()
+        G_pos = self.H.copy()
+        G_neg = self.H.copy()
 
-        for node in self.G.nodes(data=True):
+        for node in self.H.nodes(data=True):
             if node[1]['value'] == 1:
                 G_neg.remove_node(node[0])
             else:
