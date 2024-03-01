@@ -16,6 +16,12 @@
         "lrgsg_vm.h": "c",
         "inttypes.h": "c"
     },
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--line-length",
+        "79",
+        "--experimental-string-processing"
+        ],        
     "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT",
     "CodeGPT.apiKey": "OpenAI"
 }
