@@ -379,7 +379,7 @@ class SignedGraph:
         G_neg = self.H.copy()
 
         for node in self.H.nodes(data=True):
-            if node[1]['value'] == 1:
+            if node[1][f'eigV{which}'] == 1:
                 G_neg.remove_node(node[0])
             else:
                 G_pos.remove_node(node[0])
