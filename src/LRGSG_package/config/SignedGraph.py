@@ -13,31 +13,28 @@ class SignedGraph:
         import_on: bool = False,
         pflip: float = 0.0,
         lsp_mode: str = "intervals",
-        expathc: str = "",
+        expOutdir: str = "",
+        dataOutdir: str = "",
+        plotOutdir: str = "",
         init_weight_dict: bool = True
     ):
-        self.__init_paths__()
+        self.__init_paths__(dataOutdir=dataOutdir, 
+                            plotOutdir=plotOutdir,
+                            expOutdir=expOutdir)
         if not self.pflmin <= pflip <= self.pflmax:
             raise ValueError(f"pflip must be between {self.pflmin} and {self.pflmax}, inclusive. Received: {pflip}")
         else:
             self.pflip = pflip
         self.lsp_mode = lsp_mode
         self.import_on = import_on
-        self.expath = (
-            expathc if expathc else f"{self.DEFAULT_GRAPHDIR}{self.syshapePTH}"
-        )
-        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePTH}"
-        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePTH}"
-        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePTH}"
-        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePTH}"
         self.__make_dirs__()
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
         if import_on:
-            self.graphfname = self.expath + self.stdFname
+            self.graphfname = self.expOutdir + self.stdFname
             self.G = self.__init_graph_fromfile__()
         else:
             self.G = G
-            self.graphfname = self.expath + self.stdFname
+            self.graphfname = self.expOutdir + self.stdFname
         self.init_sgraph()
         if init_weight_dict:
             self.neg_weights_dict = self.neg_weights_dicts_container(self)
@@ -47,20 +44,33 @@ class SignedGraph:
         return pickle.load(open(f"{self.graphfname}.pickle", "rb"))
 
     #
-    def __init_paths__(self):
-        self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.sgpath}"
-        self.pltPath = (
-            f"{DEFAULT_DATA_OUTDIR}{DEFAULT_PLOT_OUTDIR}{self.sgpath}"
-        )
+    def __init_paths__(self, dataOutdir: str = "", 
+                       plotOutdir: str = "", 
+                       expOutdir: str = ""):
+        self.dataOutdir = dataOutdir if dataOutdir else DEFAULT_DATA_OUTDIR
+        self.plotOutdir = plotOutdir if plotOutdir else DEFAULT_PLOT_OUTDIR
+        #
+        self.datPath = f"{dataOutdir}{self.sgpath}"
+        self.pltPath = f"{dataOutdir}{plotOutdir}{self.sgpath}"
+        #
         self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
         self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
         self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
         self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
         self.DEFAULT_PHTRADIR = self.datPath + DEFAULT_PHTRA_OUTDIR
+        #
+        self.expOutdir = (
+            expOutdir if expOutdir else f"{self.DEFAULT_GRAPHDIR}{self.syshapePTH}"
+        )
+        #
+        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePTH}"
+        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePTH}"
+        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePTH}"
+        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePTH}"
 
     #
     def __make_dirs__(self):
-        for _ in [self.expath, self.isingpath, self.voterpath, self.lrgsgpath, 
+        for _ in [self.expOutdir, self.isingpath, self.voterpath, self.lrgsgpath, 
                   self.phtrapath]:
             os.makedirs(_, exist_ok=True)
 
@@ -405,7 +415,7 @@ class SignedGraph:
     #
     def export_adj_bin(self, print_msg: bool = False) -> None:
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
-        exname = f"{self.expath}adj_{self.stdFname}.bin"
+        exname = f"{self.expOutdir}adj_{self.stdFname}.bin"
         if print_msg:
             print(f"exporting {exname}\n")
         with open(exname, "wb") as f:
@@ -470,11 +480,11 @@ class SignedGraph_DEV(Graph):
         self,
         import_on: bool = False,
         pflip: float = 0.0,
-        expathc: str = "",
+        expOutdir: str = "",
     ):
         super().__init__()
         self.import_on = import_on
-        self.__init_paths__(expathc)
+        self.__init_paths__(expOutdir)
         self.__make_dirs__()
         if not self.pflmin <= pflip <= self.pflmax:
             raise ValueError(f"pflip must be between {self.pflmin} and {self.pflmax}, inclusive. Received: {pflip}")
@@ -486,18 +496,18 @@ class SignedGraph_DEV(Graph):
             self.__init_graph_fromfile__()
         self.__init_weights__()
     #
-    def __init_paths__(self, expathc: str = ""):
+    def __init_paths__(self, expOutdir: str = ""):
         self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.sgpath}"
         self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
         self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
         self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
         self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
         self.DEFAULT_PHTRADIR = self.datPath + DEFAULT_PHTRA_OUTDIR
-        self.graphpath = f"{self.DEFAULT_GRAPHDIR}{self.syshapepth}{expathc}"
-        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapepth}{expathc}"
-        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapepth}{expathc}"
-        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapepth}{expathc}"
-        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapepth}{expathc}"
+        self.graphpath = f"{self.DEFAULT_GRAPHDIR}{self.syshapepth}{expOutdir}"
+        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapepth}{expOutdir}"
+        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapepth}{expOutdir}"
+        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapepth}{expOutdir}"
+        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapepth}{expOutdir}"
     #
     def __make_dirs__(self):
         for _ in [self.graphpath, self.isingpath, self.voterpath, self.lrgsgpath, 
