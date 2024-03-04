@@ -9,48 +9,64 @@ plist = np.concatenate((np.logspace(-3, np.log10(0.05), num=5),
 geometry_cell_dict = {'squared': ['single', 'square', 'cross'],
                       'triangular': ['single', 'triangle', 'cross'],
                       'hexagonal': ['single', 'hexagon', 'cross']}
-noavg = 1000
 
 programName = "Lattice2D_phasetr"
-
 do_print = False
+flag_mmemb = False
 if "--print" in sys.argv:
     do_print = True
 slanzarv_OPT = False
 if "--slanzarv" in sys.argv:
     slanzarv_OPT = True
+    index = sys.argv.index("--slanzarv")
     try:
-        index = sys.argv.index("--slanzarv")
-        slanzarv_MEMMB = sys.argv[index+1]
+        slanzarv_mEMMB = int(sys.argv[index+1])
     except IndexError:
-        slanzarv_MEMMB = 1024
+        slanzarv_mEMMB = 1024
+    try:
+        slanzarv_MEMMB = int(sys.argv[index+2])
+    except IndexError:
+        slanzarv_MEMMB = 10240
+        flag_mmemb =True
+    if flag_mmemb:
+        def memoryfunc(x):
+            return slanzarv_mEMMB
+    else:
+        def linear_map(x, x1=min(List), x2=max(List), y1=slanzarv_mEMMB, 
+                    y2=slanzarv_MEMMB):
+            a = (y2 - y1) / (x2 - x1)
+            b = y1 - a * x1
+            return a * x + b
+        def memoryfunc(x):
+            return int(linear_map(x))
+    def slanzarv_STR(L, p):
+        return (
+                    f'slanzarv -m {memoryfunc(L)} --nomail --jobname '
+                    + f'"{programName}_{L}_{p:.3g}"'
+                    if slanzarv_OPT 
+                    else ""
+                )
+else:
+    def slanzarv_STR(*args):
+        return ""
 if "-n" in sys.argv:
     index = sys.argv.index("-n")
     noAvg = sys.argv[index+1]
 else:
     noAvg = 1000
-if "-g" in sys.argv:
-    index = sys.argv.index("-g")
-    geometry = sys.argv[index+1]
-else:
-    geometry = 'squared'
+
+
 
 for L in List:
     for p in plist:
         for geo, cellst in geometry_cell_dict.items():
             for c in cellst:
-                slanzarv_STR = (
-                    f'slanzarv -m {slanzarv_MEMMB} --nomail --jobname "{programName}_{L}_{p:.3g}"'
-                    if slanzarv_OPT == "--slanzarv"
-                    else ""
-                )
+                slanzstr = slanzarv_STR(L, p)
                 the_string = (
-                    slanzarv_STR
+                    slanzstr
                     + f" python src/{programName}.py "
-                    + f"{L} {p:.3g} -g {geo} -c {c} -nA {noavg} "
+                    + f"{L} {p:.3g} -g {geo} -c {c} -nA {noAvg} "
                 )
-                if do_print:
-                    print(the_string)
-                else:
-                    print(the_string)
+                print(the_string)
+                if not do_print:
                     os.system(the_string)
