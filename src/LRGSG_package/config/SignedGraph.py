@@ -48,10 +48,11 @@ class SignedGraph:
                        plotOutdir: str = "", 
                        expOutdir: str = ""):
         self.dataOutdir = dataOutdir if dataOutdir else DEFAULT_DATA_OUTDIR
+        
         self.plotOutdir = plotOutdir if plotOutdir else DEFAULT_PLOT_OUTDIR
         #
-        self.datPath = f"{dataOutdir}{self.sgpath}"
-        self.pltPath = f"{dataOutdir}{plotOutdir}{self.sgpath}"
+        self.datPath = f"{self.dataOutdir}{self.sgpath}"
+        self.pltPath = f"{self.dataOutdir}{self.plotOutdir}{self.sgpath}"
         #
         self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
         self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR

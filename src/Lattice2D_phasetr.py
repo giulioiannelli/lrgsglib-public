@@ -1,4 +1,4 @@
-from lattc2d_phasetr_Parser import *
+from Lattice2D_phasetr_Parser import *
 #
 args = parser.parse_args()
 if args.cell_type == 'square':
@@ -22,6 +22,7 @@ Fluct2=np.zeros(args.number_of_averages)
 
 lattice = Lattice2D(args.L, pflip=args.p, geometry=args.geometry)
 file1 = f'{lattice.phtrapath}p_{lattice.pflip}_{args.cell_type}_{args.number_of_averages-1}'
+print(file1)
 
 if os.path.exists(file1):
     os.exit(0)
