@@ -19,7 +19,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 #
-from .LRGSG_const import *
+from .const import *
 
 
 

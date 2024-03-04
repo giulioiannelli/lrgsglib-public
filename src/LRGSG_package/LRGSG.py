@@ -35,11 +35,11 @@ from tqdm import tqdm
 #
 from .config.nx_patches import *
 from .config.nx_objects import *
-from .config.LRGSG_dyns import *
-from .config.LRGSG_const import *
-from .config.LRGSG_errwar import *
-from .config.LRGSG_plots import *
-from .config.LRGSG_utils import *
+from .config.dyns import *
+from .config.const import *
+from .config.errwar import *
+from .config.plotlib import *
+from .config.utils import *
 #
 sys.setrecursionlimit(DEFAULT_RECURSION_LIMIT)
 warnings.simplefilter(action="ignore", category=FutureWarning)

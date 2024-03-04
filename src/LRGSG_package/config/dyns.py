@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 from .nx_patches import *
 from .nx_objects import *
-from .LRGSG_utils import *
+from .utils import *
 
 
 class BinDynSys:

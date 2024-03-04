@@ -1,8 +1,8 @@
 import string
 import numpy as np
 #
-from .LRGSG_const import *
-from .LRGSG_errwar import *
+from .const import *
+from .errwar import *
 #
 from numpy import ndarray
 from os import chdir, getcwd

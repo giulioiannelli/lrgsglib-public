@@ -41,7 +41,7 @@ class SignedGraph:
 
     #
     def __init_graph_fromfile__(self):
-        return pickle.load(open(f"{self.graphfname}.pickle", "rb"))
+        return pickle.load(open(f"{self.graphfname}.pkl", "rb"))
 
     #
     def __init_paths__(self, dataOutdir: str = "", 
@@ -407,7 +407,7 @@ class SignedGraph:
         if MODE == "pickle":
             pickle.dump(
                 self.G,
-                open(f"{self.graphfname}.pickle", "wb"),
+                open(f"{self.graphfname}.pkl", "wb"),
                 pickle.HIGHEST_PROTOCOL,
             )
         elif MODE == "gml":
@@ -517,12 +517,12 @@ class SignedGraph_DEV(Graph):
     #
     def __init_graph_fromfile__(self):
         try:
-            with open(f"{self.graphfname}.pickle", "rb") as file:
+            with open(f"{self.graphfname}.pkl", "rb") as file:
                 loaded_obj = pickle.load(file)
                 for attr_name in loaded_obj.__dict__:
                     setattr(self, attr_name, getattr(loaded_obj, attr_name))
         except FileNotFoundError:
-            print(f"Error: Pickle file '{self.graphfname}.pickle' not found.")
+            print(f"Error: Pickle file '{self.graphfname}.pkl' not found.")
 
 
     #
@@ -836,7 +836,7 @@ class SignedGraph_DEV(Graph):
     #     if MODE == "pickle":
     #         pickle.dump(
     #             self.G,
-    #             open(f"{self.graphfname}.pickle", "wb"),
+    #             open(f"{self.graphfname}.pkl", "wb"),
     #             pickle.HIGHEST_PROTOCOL,
     #         )
     #     elif MODE == "gml":

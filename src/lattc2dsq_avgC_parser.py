@@ -1,5 +1,5 @@
 from LRGSG_package.LRGSG import *
-from LRGSG_package.config.LRGSG_const import *
+from LRGSG_package.config.const import *
 import warnings
 
 # Your code here...

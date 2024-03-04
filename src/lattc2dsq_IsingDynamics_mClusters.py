@@ -8,7 +8,7 @@ args = parser.parse_args()
 import_on = False
 if not args.only_graphs:
     grphNdir = f"{DEFAULT_GRAPH_OUTDIR}N={args.L**2:d}/"
-    grphpth = f"{grphNdir}{args.graph_filename}_p={args.p:.3g}.pickle"
+    grphpth = f"{grphNdir}{args.graph_filename}_p={args.p:.3g}.pkl"
     if os.path.exists(grphpth):
         import_on = True
 #

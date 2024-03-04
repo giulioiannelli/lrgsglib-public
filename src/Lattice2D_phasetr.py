@@ -21,17 +21,26 @@ Fluct=np.zeros(args.number_of_averages)
 Fluct2=np.zeros(args.number_of_averages)
 
 lattice = Lattice2D(args.L, pflip=args.p, geometry=args.geometry)
-file1 = f'{lattice.phtrapath}p_{lattice.pflip}_{args.cell_type}_{args.number_of_averages-1}'
-print(file1)
+def file_path_maker(mpath = lattice.phtrapath, ppath= args.p, 
+                    napath = args.number_of_averages, 
+                    spath = args.out_suffix,
+                    ctpath = args.cell_type):
+    return f'{mpath}p={ppath:.3g}_{ctpath}_na={napath}_{spath}.txt'
 
-if os.path.exists(file1):
+
+if os.path.exists(file_path_maker()):
     os.exit(0)
+
 
 for cont, avg in enumerate(range(args.number_of_averages)):
     lattice = Lattice2D(args.L, pflip=args.p, geometry=args.geometry)
+    try:
+        filenameold = file_path_maker(napath=avg)
+        os.remove(filenameold)
+    except OSError:
+        pass
     lattice.flip_sel_edges(geometry_func(lattice))
 
-    file1 = f'{lattice.phtrapath}p_{lattice.pflip}_{args.cell_type}_{avg}'
 
     lattice.compute_k_eigvV()
     eigV = lattice.eigV[0]
@@ -43,5 +52,9 @@ for cont, avg in enumerate(range(args.number_of_averages)):
     Pinf[cont]=lattice.Pinf
     Pinf2[cont]=lattice.Pinf**2
         
-    x=[np.sum(Pinf)/(1+avg),np.sum(Fluct)/(1+avg), np.sum(Fluct2)/(1+avg), np.var(Fluct[Fluct!=0]), np.sum(Pinf2)/(1+avg),lattice.pflip,int(avg+1)]
-    np.savetxt(file1, np.atleast_2d(x), fmt='%.7g', delimiter=',')
+    x=[np.sum(Pinf)/(1+avg),np.sum(Fluct)/(1+avg), np.sum(Fluct2)/(1+avg), 
+       np.var(Fluct[Fluct!=0]), np.sum(Pinf2)/(1+avg),lattice.pflip,int(avg+1)]
+    
+    filename = file_path_maker(napath=avg+1)
+    with open(filename, 'wb') as file:
+        np.savetxt(file, np.atleast_2d(x), fmt='%.7g', delimiter=',')

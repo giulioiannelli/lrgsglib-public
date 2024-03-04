@@ -7,10 +7,10 @@ import networkx as nx
 import numpy as np
 import scipy.sparse as scsp
 
-from .LRGSG_const import *
-from .LRGSG_errwar import *
-from .LRGSG_plots import *
-from .LRGSG_utils import *
+from .const import *
+from .errwar import *
+from .plotlib import *
+from .utils import *
 from .nx_patches import signed_spectral_layout, get_neighbors_within_distance
 from .SignedGraph import SignedGraph
 from .Lattice2D import Lattice2D
