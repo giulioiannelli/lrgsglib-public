@@ -22,6 +22,11 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from .LRGSG_const import *
 
 
+
+
+
+
+
 def set_alpha_torgb(rgbacol, alpha=0.5):
     """
     Sets the alpha (transparency) channel of an RGBA color tuple and returns a new RGBA color tuple.
@@ -47,7 +52,7 @@ def set_alpha_torgb(rgbacol, alpha=0.5):
     return (rgbacol[0], rgbacol[1], rgbacol[2], alpha)
 
 
-def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
+def create_custom_colormap(c1="#0000ff", c2="#fc0303", nc: int = 0):
     """
     Create a custom colormap transitioning between two specified colors.
 
@@ -78,7 +83,9 @@ def create_custom_colormap(c1="#0000ff", c2="#fc0303"):
 
     """
     colors = [c1, c2]  # Red to black
-    cmap = LinearSegmentedColormap.from_list("custom_colormap", colors)
+    nocol = dict(N=nc) if nc else dict()
+        
+    cmap = LinearSegmentedColormap.from_list("custom_colormap", colors, **nocol)
     return cmap
 
 
