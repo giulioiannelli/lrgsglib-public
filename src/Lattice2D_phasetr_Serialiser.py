@@ -2,9 +2,9 @@ import numpy as np
 import os
 import sys
 #
-List = [256, 512, 1024]
+List = [256, 512]
 plist = np.concatenate((np.logspace(-3, np.log10(0.05), num=5),
-                        np.linspace(0.05, 0.2, num=15),
+                        np.linspace(0.05, 0.2, num=10),
                         np.linspace(0.2, 0.5, num=5)))
 geometry_cell_dict = {'squared': ['single', 'square', 'cross'],
                       'triangular': ['single', 'triangle', 'cross'],
