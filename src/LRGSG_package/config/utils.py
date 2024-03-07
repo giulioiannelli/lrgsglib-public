@@ -1,5 +1,6 @@
 import string
 import numpy as np
+import networkx as nx
 #
 from .const import *
 from .errwar import *

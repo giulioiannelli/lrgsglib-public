@@ -1,5 +1,3 @@
-import networkx as nx
-import numpy as np
 import scipy as sp
 #
 import scipy.sparse as scsp
@@ -7,6 +5,8 @@ import scipy.sparse as scsp
 from networkx.classes.graph import Graph
 from networkx.drawing.layout import _process_params, rescale_layout
 from scipy.sparse import csr_array
+from .const import *
+from .utils import *
 #
 def get_kth_order_neighbours(G: nx.Graph, node: int, order: int = 1) -> list:
     """
@@ -340,3 +340,169 @@ def signedlaplacian_spectrum(G, weight="weight"):
     laplacian_matrix
     """
     return sp.linalg.eigvalsh(slaplacian_matrix(G, weight=weight).todense())
+
+
+def triangular_lattice_graph_modified(
+    m, n, periodic=False, with_positions=True, create_using=None
+):
+    """
+    Generates a triangular lattice graph with optional periodic boundary conditions (PBC). 
+    This function creates a graph representing a triangular lattice with `m` rows and `n` columns.
+    Nodes in the lattice are connected in a manner that forms a pattern of equilateral triangles.
+    When periodic boundary conditions are enabled, the lattice simulates a toroidal surface
+    where edges wrap around the opposite side, creating a continuous pattern.
+
+    Parameters
+    ----------
+    m : int
+        The number of rows in the lattice.
+    n : int
+        The number of columns in the lattice.
+    periodic : bool, optional (default=False)
+        If True, applies periodic boundary conditions, simulating a toroidal topology.
+        Requires `m >= 3` and `n >= 5`.
+    with_positions : bool, optional (default=True)
+        If True, calculates and stores the positions of each node in the node attribute 'pos',
+        arranging nodes in equilateral triangles.
+
+    Returns
+    -------
+    NetworkX graph
+        A graph object representing the m by n triangular lattice, optionally with PBC.
+
+    Raises
+    ------
+    NetworkXError
+        If periodic is True and m < 3 or n < 5.
+    """
+
+
+
+
+    from networkx import empty_graph, NetworkXError, set_node_attributes
+    H = empty_graph(0, create_using)
+    if n == 0 or m == 0:
+        return H
+    if periodic:
+        if n < 5 or m < 3:
+            msg = f"m > 2 and n > 4 required for periodic. m={m}, n={n}"
+            raise NetworkXError(msg)
+
+    rows = range(m)
+    cols = range(n)
+
+    # identify boundary nodes if periodic
+    if periodic:
+        for i in range(n+1):
+            for j in range(m+1):
+                H.add_node((i % n, j % m))  # Add node with PBC
+                # Add horizontal edges within the grid, with PBC for the last column
+                if i < n or j % 2 == 0:  # For even rows, wrap horizontally
+                    H.add_edge((i % n, j % m), ((i + 1) % n, j % m))
+                # Add vertical and diagonal edges, with PBC for the last row
+                if j < m:
+                    H.add_edge((i % n, j % m), (i % n, (j + 1) % m))
+                    if j % 2:  # Diagonal for even rows
+                        H.add_edge((i % n, j % m), ((i + 1) % n, (j + 1) % m))
+                    else:  # Diagonal for odd rows, wrapping if at the edge
+                        H.add_edge((i % n, j % m), ((i - 1) % n, (j + 1) % m))
+    else:
+        # Make grid
+        H.add_edges_from(((i, j), (i + 1, j)) for j in rows for i in cols[:n-1])
+        H.add_edges_from(((i, j), (i, j + 1)) for j in rows[:m-1] for i in cols)
+        # # add diagonals
+        H.add_edges_from(((i, j), (i + 1, j + 1)) for j in rows[1:m-1:2] for i in cols[:n-1])
+        H.add_edges_from(((i + 1, j), (i, j + 1)) for j in rows[:m-1:2] for i in cols[:n-1])
+
+    # Add position node attributes
+    if with_positions:
+        ii = (i for i in cols for j in rows)
+        jj = (j for i in cols for j in rows)
+        xx = (0.5 * (j % 2) + i for i in cols for j in rows)
+        h = np.sqrt(3) / 2
+        if periodic:
+            yy = (h * j + 0.01 * i * i for i in cols for j in rows)
+        else:
+            yy = (h * j for i in cols for j in rows)
+        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in H}
+        set_node_attributes(H, pos, "pos")
+    return H
+
+
+def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None) -> nx.Graph:
+    """
+    Generates a triangular lattice graph with optional periodic boundary conditions (PBC). 
+    This function creates a graph representing a triangular lattice with `m` rows and `n` columns.
+    Nodes in the lattice are connected in a manner that forms a pattern of equilateral triangles.
+    When periodic boundary conditions are enabled, the lattice simulates a toroidal surface
+    where edges wrap around the opposite side, creating a continuous pattern.
+    
+    Parameters
+    ----------
+    m : int
+        The number of rows in the lattice.
+    n : int
+        The number of columns in the lattice.
+    periodic : bool, optional (default=False)
+        If True, applies periodic boundary conditions, simulating a toroidal topology.
+        Requires `m >= 3` and `n >= 5`.
+    with_positions : bool, optional (default=True)
+        If True, calculates and stores the positions of each node in the node attribute 'pos',
+        arranging nodes in equilateral triangles.
+
+    Returns
+    -------
+    NetworkX graph
+        A graph object representing the m by n triangular lattice, optionally with PBC.
+
+    Raises
+    ------
+    NetworkXError
+        If periodic is True and m < 3 or n < 5.
+    """
+    from networkx import empty_graph, NetworkXError, set_node_attributes
+    H = empty_graph(0, create_using)
+    if n == 0 or m == 0:
+        return H
+    if periodic:
+        if n < 5 or m < 3:
+            msg = f"m > 2 and n > 4 required for periodic. m={m}, n={n}"
+            raise NetworkXError(msg)
+    rows = range(m)
+    cols = range(n)
+    # identify boundary nodes if periodic
+    if periodic:
+        for i in range(n+1):
+            for j in range(m+1):
+                H.add_node((i % n, j % m))  # Add node with PBC
+                # Add horizontal edges within the grid, with PBC for the last column
+                if i < n or j % 2 == 0:  # For even rows, wrap horizontally
+                    H.add_edge((i % n, j % m), ((i + 1) % n, j % m))
+                # Add vertical and diagonal edges, with PBC for the last row
+                if j < m:
+                    H.add_edge((i % n, j % m), (i % n, (j + 1) % m))
+                    if j % 2:  # Diagonal for even rows
+                        H.add_edge((i % n, j % m), ((i + 1) % n, (j + 1) % m))
+                    else:  # Diagonal for odd rows, wrapping if at the edge
+                        H.add_edge((i % n, j % m), ((i - 1) % n, (j + 1) % m))
+    else:
+        # Make grid
+        H.add_edges_from(((i, j), (i + 1, j)) for j in rows for i in cols[:n-1])
+        H.add_edges_from(((i, j), (i, j + 1)) for j in rows[:m-1] for i in cols)
+        # add diagonals
+        H.add_edges_from(((i, j), (i + 1, j + 1)) for j in rows[1:m-1:2] for i in cols[:n-1])
+        H.add_edges_from(((i + 1, j), (i, j + 1)) for j in rows[:m-1:2] for i in cols[:n-1])
+
+    # Add position node attributes
+    if with_positions:
+        ii = (i for i in cols for j in rows)
+        jj = (j for i in cols for j in rows)
+        xx = (0.5 * (j % 2) + i for i in cols for j in rows)
+        h = np.sqrt(3) / 2
+        if periodic:
+            yy = (h * j + 0.01 * i * i for i in cols for j in rows)
+        else:
+            yy = (h * j for i in cols for j in rows)
+        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in H}
+        set_node_attributes(H, pos, "pos")
+    return H
