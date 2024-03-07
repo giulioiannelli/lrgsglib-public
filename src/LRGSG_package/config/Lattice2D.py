@@ -99,11 +99,12 @@ class Lattice2D(SignedGraph):
             self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
             kwdict = {"with_positions": True}
         if self.side1 == self.side2:
-            self.syshapePTH = f"N={self.side1**2}/"
+            self.syshapeStr = f"N={self.side1**2}"
         elif self.side1 > self.side2:
-            self.syshapePTH = f"L1={self.side1}_L2={self.side2}/"
+            self.syshapeStr = f"L1={self.side1}_L2={self.side2}"
         elif self.side2 > self.side1:
-            self.syshapePTH = f"L1={self.side2}_L2={self.side1}/"
+            self.syshapeStr = f"L1={self.side2}_L2={self.side1}"
+        self.syshapePth = f"{self.syshapeStr}/"
         return nxfunc(self.side1, self.side2, periodic=pbc, **kwdict)
 
     #

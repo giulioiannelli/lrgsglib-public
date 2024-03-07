@@ -62,7 +62,7 @@ class VoterModel(BinDynSys):
 
     def __init__(self, sg: SignedGraph = Lattice2D, **kwargs) -> None:
         self.sg = sg
-        self.dynpath = f"{self.sg.DEFAULT_VOTERDIR}{self.sg.syshapePTH}"
+        self.dynpath = f"{self.sg.DEFAULT_VOTERDIR}{self.sg.syshapePth}"
         super(VoterModel, self).__init__(self.sg, **kwargs)
 
     def ds1step(self, nd: int):
@@ -92,7 +92,7 @@ class VoterModel(BinDynSys):
         if out_suffix == "":
             out_suffix = '\'\''
         self.cprogram = [
-            f"{DEFAULT_PACKG_DIR}{self.dyn_UVclass}",
+            f"{DIR_SRC_DEFAULT}{DIR_PCK_DEFAULT}{self.dyn_UVclass}",
             f"{self.sg.N}",
             f"{self.sg.pflip}",
             f"{self.eqSTEP_def}",
@@ -134,7 +134,7 @@ class IsingDynamics_DEV(BinDynSys):
     ) -> None:
         self.T = T
         self.sg = sg
-        self.dynpath = f"{self.sg.DEFAULT_ISINGDIR}{self.sg.syshapePTH}"
+        self.dynpath = f"{self.sg.DEFAULT_ISINGDIR}{self.sg.syshapePth}"
         super(IsingDynamics_DEV, self).__init__(self.sg, **kwargs)
         self.nstepsIsing = nstepsIsing
         self.save_magnetization = save_magnetization

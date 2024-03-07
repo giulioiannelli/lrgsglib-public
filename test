@@ -1,1 +1,0 @@
-slanzarv -m 1000 --nomail --jobname "lattc2dsq_perClusters_100_0.1" python src/lattc2dsq_percClusters.py  100 0.1 -nA 1000 -o mar_test

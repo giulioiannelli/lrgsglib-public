@@ -47,27 +47,27 @@ class SignedGraph:
     def __init_paths__(self, dataOutdir: str = "", 
                        plotOutdir: str = "", 
                        expOutdir: str = ""):
-        self.dataOutdir = dataOutdir if dataOutdir else DEFAULT_DATA_OUTDIR
+        self.dataOutdir = dataOutdir if dataOutdir else DIR_DAT_DEFAULT
         
-        self.plotOutdir = plotOutdir if plotOutdir else DEFAULT_PLOT_OUTDIR
+        self.plotOutdir = plotOutdir if plotOutdir else DIR_PLT_DEFAULT
         #
         self.datPath = f"{self.dataOutdir}{self.sgpath}"
         self.pltPath = f"{self.dataOutdir}{self.plotOutdir}{self.sgpath}"
         #
-        self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
+        self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH_DEFAULT
         self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
         self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
         self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
         self.DEFAULT_PHTRADIR = self.datPath + DEFAULT_PHTRA_OUTDIR
         #
         self.expOutdir = (
-            expOutdir if expOutdir else f"{self.DEFAULT_GRAPHDIR}{self.syshapePTH}"
+            expOutdir if expOutdir else f"{self.DEFAULT_GRAPHDIR}{self.syshapePth}"
         )
         #
-        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePTH}"
-        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePTH}"
-        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePTH}"
-        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePTH}"
+        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePth}"
+        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePth}"
+        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePth}"
+        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePth}"
 
     #
     def __make_dirs__(self):
@@ -471,7 +471,7 @@ class SignedGraph_DEV(Graph):
     p_c = None
     lsp = None
     sgpath = ""
-    syshapepth = ""
+    syshapePth = ""
     stdFname = ""
     slspectrum = None
     pflmin = DEFAULT_MIN_PFLIPVAL
@@ -498,17 +498,17 @@ class SignedGraph_DEV(Graph):
         self.__init_weights__()
     #
     def __init_paths__(self, expOutdir: str = ""):
-        self.datPath = f"{DEFAULT_DATA_OUTDIR}{self.sgpath}"
-        self.DEFAULT_GRAPHDIR = self.datPath + DEFAULT_GRAPH_OUTDIR
+        self.datPath = f"{DIR_DAT_DEFAULT}{self.sgpath}"
+        self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH_DEFAULT
         self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
         self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
         self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
         self.DEFAULT_PHTRADIR = self.datPath + DEFAULT_PHTRA_OUTDIR
-        self.graphpath = f"{self.DEFAULT_GRAPHDIR}{self.syshapepth}{expOutdir}"
-        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapepth}{expOutdir}"
-        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapepth}{expOutdir}"
-        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapepth}{expOutdir}"
-        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapepth}{expOutdir}"
+        self.graphpath = f"{self.DEFAULT_GRAPHDIR}{self.syshapePth}{expOutdir}"
+        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePth}{expOutdir}"
+        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePth}{expOutdir}"
+        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePth}{expOutdir}"
+        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePth}{expOutdir}"
     #
     def __make_dirs__(self):
         for _ in [self.graphpath, self.isingpath, self.voterpath, self.lrgsgpath, 

@@ -11,11 +11,23 @@ geometry_cell_dict = {'squared': ['single', 'square', 'cross'],
                       'hexagonal': ['single', 'hexagon', 'cross']}
 
 programName = "Lattice2D_phasetr"
-do_print = False
+launchstr = f"python src/{programName}.py"
+do_print = True
 flag_mmemb = False
-if "--print" in sys.argv:
-    do_print = True
 slanzarv_OPT = False
+default_noAvg = 1000
+#
+if any(pmsg in sys.argv for pmsg in ["--execute", "-e"]):
+    do_print = False
+if any(pmsg in sys.argv for pmsg in ["--verbose", "-v", "--print"]):
+    do_print = True
+#
+if "-n" in sys.argv:
+    index = sys.argv.index("-n")
+    noAvg = sys.argv[index+1]
+else:
+    noAvg = default_noAvg
+#
 if "--slanzarv" in sys.argv:
     slanzarv_OPT = True
     index = sys.argv.index("--slanzarv")
@@ -40,33 +52,22 @@ if "--slanzarv" in sys.argv:
         def memoryfunc(x):
             return int(linear_map(x))
     def slanzarv_STR(L, p):
-        return (
-                    f'slanzarv -m {memoryfunc(L)} --nomail --jobname '
-                    + f'"{programName}_{L}_{p:.3g}"'
-                    if slanzarv_OPT 
-                    else ""
-                )
+        slanzarvstr = f'slanzarv -m {memoryfunc(L)} --nomail --jobname'
+        argstr = f'"{programName}_{L}_{p:.3g}"'
+        return slanzarvstr + argstr if slanzarv_OPT else ""
+            
 else:
     def slanzarv_STR(*args):
         return ""
-if "-n" in sys.argv:
-    index = sys.argv.index("-n")
-    noAvg = sys.argv[index+1]
-else:
-    noAvg = 1000
-
-
-
+#
+#
+#
 for L in List:
     for p in plist:
         for geo, cellst in geometry_cell_dict.items():
             for c in cellst:
-                slanzstr = slanzarv_STR(L, p)
-                the_string = (
-                    slanzstr
-                    + f" python src/{programName}.py "
-                    + f"{L} {p:.3g} -g {geo} -c {c} -nA {noAvg} "
-                )
+                argstr = f"{L} {p:.3g} -g {geo} -c {c} -nA {noAvg}"
+                the_string = f"{slanzarv_STR(L, p)} {launchstr} {argstr}"
                 print(the_string)
                 if not do_print:
                     os.system(the_string)

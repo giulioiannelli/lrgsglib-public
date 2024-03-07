@@ -76,7 +76,7 @@ class ErdosRenyi(SignedGraph):
     def __init__(self, n, p, sgpath: str = "", stdFname: str = "", **kwargs):
         self.G = nx.erdos_renyi_graph(n, p)
         self.sgpath = DEFAULT_ERGRAPH_SGPATH if not sgpath else sgpath
-        self.syshapePTH = n
+        self.syshapePth = n
         self.stdFname = DEFAULT_ERGRAPH_ABBRV if not stdFname else stdFname
         super(ErdosRenyi, self).__init__(self.G, **kwargs)
         self.init_graph()

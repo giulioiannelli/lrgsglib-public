@@ -6,8 +6,8 @@ build-backend = "hatchling.build"
 name = "LRGSG_package"
 version = "0.0.1"
 authors = [
-  { name="Pablo Villegas", email="pablo.villegas@cref.it" },
   { name="Giulio Iannelli", email="giulio.iannelli@cref.it" },
+  { name="Pablo Villegas", email="pablo.villegas@cref.it" },
 ]
 description = "A package containing useful classes and functions for stting up the theoretical apparatus of the Laplacian Renormalizazion Group for Signed Graph"
 readme = "README.md"
