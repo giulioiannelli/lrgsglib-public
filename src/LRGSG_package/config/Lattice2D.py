@@ -35,15 +35,22 @@ class Lattice2D(SignedGraph):
                 self.side2 = self.side1
         self.pbc = pbc
         self.fbc_val = fbc_val
+
         self.G = self.lattice_selection()
+        
+
         self.sgpath = (
             f"{DEFAULT_LATTICE2D_PATHABBRV}{self.geometry}/"
             if not sgpath
             else sgpath
         )
         self.init_stdFname(stdFnameSFFX)
+
+        
         super(Lattice2D, self).__init__(self.G, **kwargs)
+
         self.init_graph()
+
     #
     def init_graph(self):
         if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
@@ -85,7 +92,7 @@ class Lattice2D(SignedGraph):
             nxfunc = nx.triangular_lattice_graph
             self.p_c = 0.146
             self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
-            kwdict = {"with_positions": True}
+            kwdict = {"with_positions": False}
             self.syshape = (self.side1, (self.side2+1)//2)
         elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
             nxfunc = nx.grid_2d_graph
@@ -142,6 +149,9 @@ class Lattice2D(SignedGraph):
                 self.NEG_WEIGHTS_DICT_H_PSQUARE = self.get_neg_weights_dict_h_pattern('square')
             elif lattice.geometry == 'triangular':
                 self.NEG_WEIGHTS_DICT_H_PTRIA = self.get_neg_weights_dict_h_pattern('triangle')
+                self.G_cent_edge = ((lattice.side1//2-1,lattice.side1//2-1), (lattice.side1//2, lattice.side1//2-1))
+                self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.G_cent_edge: -1}
+                self.DEFAULT_NEG_WEIGHTS_DICT_H = {lattice.edge_map[self.G_cent_edge]: -1}
             elif lattice.geometry == 'hexagonal':
                 self.NEG_WEIGHTS_DICT_H_PHEXA = self.get_neg_weights_dict_h_pattern('hexagon')
                 
