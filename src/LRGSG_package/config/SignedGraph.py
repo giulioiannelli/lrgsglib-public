@@ -1,5 +1,6 @@
 from .nx_objects import *
 
+
 class SignedGraph:
     p_c = None
     lsp = None
@@ -16,13 +17,18 @@ class SignedGraph:
         expOutdir: str = "",
         dataOutdir: str = "",
         plotOutdir: str = "",
-        init_weight_dict: bool = True
+        init_weight_dict: bool = True,
     ):
-        self.__init_paths__(dataOutdir=dataOutdir, 
-                            plotOutdir=plotOutdir,
-                            expOutdir=expOutdir)
+        self.__init_paths__(
+            dataOutdir=dataOutdir, plotOutdir=plotOutdir, expOutdir=expOutdir
+        )
         if not self.pflmin <= pflip <= self.pflmax:
-            raise ValueError(f"pflip must be between {self.pflmin} and {self.pflmax}, inclusive. Received: {pflip}")
+            raise ValueError(
+                f"""
+                    pflip must be between {self.pflmin} and {self.pflmax}, 
+                    inclusive. Received: {pflip}
+                """
+            )
         else:
             self.pflip = pflip
         self.lsp_mode = lsp_mode
@@ -44,11 +50,11 @@ class SignedGraph:
         return pickle.load(open(f"{self.graphfname}.pkl", "rb"))
 
     #
-    def __init_paths__(self, dataOutdir: str = "", 
-                       plotOutdir: str = "", 
-                       expOutdir: str = ""):
+    def __init_paths__(
+        self, dataOutdir: str = "", plotOutdir: str = "", expOutdir: str = ""
+    ):
         self.dataOutdir = dataOutdir if dataOutdir else DIR_DAT_DEFAULT
-        
+
         self.plotOutdir = plotOutdir if plotOutdir else DIR_PLT_DEFAULT
         #
         self.datPath = f"{self.dataOutdir}{self.sgpath}"
@@ -61,7 +67,9 @@ class SignedGraph:
         self.DEFAULT_PHTRADIR = self.datPath + DEFAULT_PHTRA_OUTDIR
         #
         self.expOutdir = (
-            expOutdir if expOutdir else f"{self.DEFAULT_GRAPHDIR}{self.syshapePth}"
+            expOutdir
+            if expOutdir
+            else f"{self.DEFAULT_GRAPHDIR}{self.syshapePth}"
         )
         #
         self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePth}"
@@ -71,8 +79,13 @@ class SignedGraph:
 
     #
     def __make_dirs__(self):
-        for _ in [self.expOutdir, self.isingpath, self.voterpath, self.lrgsgpath, 
-                  self.phtrapath]:
+        for _ in [
+            self.expOutdir,
+            self.isingpath,
+            self.voterpath,
+            self.lrgsgpath,
+            self.phtrapath,
+        ]:
             os.makedirs(_, exist_ok=True)
 
     #
@@ -182,13 +195,17 @@ class SignedGraph:
         #
         if on_graph == "G":
             if neg_weights_dict is None:
-                neg_weights_dict = self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_G
+                neg_weights_dict = (
+                    self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_G
+                )
             nx.set_edge_attributes(
                 self.G, values=neg_weights_dict, name="weight"
             )
         elif on_graph == "H":
             if neg_weights_dict is None:
-                neg_weights_dict = self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_H
+                neg_weights_dict = (
+                    self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_H
+                )
             nx.set_edge_attributes(
                 self.H, values=neg_weights_dict, name="weight"
             )
@@ -203,12 +220,14 @@ class SignedGraph:
                              number of edges is < 1, then no edges would be
                              flipped. Skipping the analysis for this value."""
             )
+
     #
     def upd_graph(self, on_graph: str = "G"):
         if on_graph == "G":
             self.upd_H_graph()
         elif on_graph == "H":
             self.upd_G_graph()
+
     #
     def unflip_all(self, on_graph="H"):
         if on_graph == "G":
@@ -229,7 +248,10 @@ class SignedGraph:
             eset = self.esetG
         elif on_graph == "H":
             eset = self.esetH
-        self.flip_sel_edges(neg_weights_dict={e: -1 for e in random.sample(eset, self.nflip)}, on_graph=on_graph)
+        self.flip_sel_edges(
+            neg_weights_dict={e: -1 for e in random.sample(eset, self.nflip)},
+            on_graph=on_graph,
+        )
 
     #
     def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
@@ -237,10 +259,15 @@ class SignedGraph:
             self.slspectrum = nx.laplacian_spectrum(self.system.G)
         elif MODE_lapspec == "numpy":
             self.slspectrum = np.linalg.eigvalsh(self.sLp.toarray())
+
     #
-    def compute_k_eigvV(self, MODE_dynspec: str = "scipy", howmany: int = 1, which: str = "SM"):
+    def compute_k_eigvV(
+        self, MODE_dynspec: str = "scipy", howmany: int = 1, which: str = "SM"
+    ):
         if MODE_dynspec == "numpy" or howmany == self.N:
-            self.eigv, self.eigV = np.linalg.eigh(self.sLp.astype(np.float64).todense())
+            self.eigv, self.eigV = np.linalg.eigh(
+                self.sLp.astype(np.float64).todense()
+            )
             self.eigV = self.eigV.T
         if MODE_dynspec == "scipy":
             self.eigv, self.eigV = scsp.linalg.eigsh(
@@ -251,10 +278,14 @@ class SignedGraph:
     #
     def bin_eigV(self, which: int = 0):
         try:
-            eigVbin = np.sign(np.where(self.eigV[which] == 0, +1, self.eigV[which]))
+            eigVbin = np.sign(
+                np.where(self.eigV[which] == 0, +1, self.eigV[which])
+            )
         except (AttributeError, IndexError):
-            self.compute_k_eigvV(howmany = which + 1)
-            eigVbin = np.sign(np.where(self.eigV[which] == 0, +1, self.eigV[which]))
+            self.compute_k_eigvV(howmany=which + 1)
+            eigVbin = np.sign(
+                np.where(self.eigV[which] == 0, +1, self.eigV[which])
+            )
 
         return eigVbin
 
@@ -265,7 +296,7 @@ class SignedGraph:
             self.compute_k_eigvV()
             eigVbin = np.sign(np.where(self.eigV == 0, +1, self.eigV))
         return eigVbin
-    
+
     def calc_fluct_Pinf(self, which: int = 0):
         eigV = self.bin_eigV(which)
         eV_p = np.count_nonzero(eigV >= 0)
@@ -274,16 +305,15 @@ class SignedGraph:
         self.eigV_fluct = abs(eV_p - eV_n) / self.N
         self.Pinf = np.min([eV_p, eV_n]) / self.N
 
-        if hasattr(self, 'eigV_fluct_dict'):
+        if hasattr(self, "eigV_fluct_dict"):
             self.eigV_fluct_dict[which] = self.eigV_fluct
         else:
             self.eigV_fluct_dict = {which: self.Pinf}
 
-        if hasattr(self, 'Pinf_dict'):
+        if hasattr(self, "Pinf_dict"):
             self.Pinf_dict[which] = self.Pinf
         else:
             self.Pinf_dict = {which: self.Pinf}
-
 
     #
     def rescaled_signed_laplacian(self, MODE: str = "field"):
@@ -291,6 +321,7 @@ class SignedGraph:
             self.resLp = self.sLp - self.eigv[0] * scsp.identity(self.N)
         elif MODE == "double":
             from scipy.linalg import eigvalsh
+
             self.resLp = self.sLp - np.array([self.eigv[0]])
             new_eigv0 = eigvalsh(
                 self.resLp.astype(np.float64), subset_by_index=[0, 0]
@@ -354,55 +385,58 @@ class SignedGraph:
             },
         )
         return d
+
     #
-    def dfs_list(self, node, visited, sign):
-        if visited[node] or sign[node] <= 0:
-            return 0
-        visited[node] = True
-        size = 1
-        for neighbor in self.H[node]:
-            if not visited[neighbor]:
-                size += self.dfs_list(neighbor, visited, sign)
-        return size
-    #
-    def cluster_distribution_list_OLD(self, sv = None):
-        visited = [False] * self.N
-        distribution = {}
-        if sv is None:
-            try:
-                sv = self.eigV[0]
-            except AttributeError:
-                self.compute_k_eigvV()
-                sv = flip_to_positive_majority(self.eigV[0])
-        for node in range(len(self.H)):
-            if not visited[node] and sv[node] > 0:
-                size = self.dfs_list(node, visited, sv)
-                distribution[size] = distribution.get(size, 0) + 1
-        return distribution
+    # def dfs_list(self, node, visited, sign):
+    #     if visited[node] or sign[node] <= 0:
+    #         return 0
+    #     visited[node] = True
+    #     size = 1
+    #     for neighbor in self.H[node]:
+    #         if not visited[neighbor]:
+    #             size += self.dfs_list(neighbor, visited, sign)
+    #     return size
+    # #
+    # def cluster_distribution_list_OLD(self, sv = None):
+    #     visited = [False] * self.N
+    #     distribution = {}
+    #     if sv is None:
+    #         try:
+    #             sv = self.eigV[0]
+    #         except AttributeError:
+    #             self.compute_k_eigvV()
+    #             sv = flip_to_positive_majority(self.eigV[0])
+    #     for node in range(len(self.H)):
+    #         if not visited[node] and sv[node] > 0:
+    #             size = self.dfs_list(node, visited, sv)
+    #             distribution[size] = distribution.get(size, 0) + 1
+    #     return distribution
     #
     def cluster_distribution_list(self, which: int = 0):
-        node_values = flip_to_positive_majority(self.bin_eigV(which = which))
+        node_values = flip_to_positive_majority(self.bin_eigV(which=which))
 
         for i, v in enumerate(node_values):
-            self.H.nodes[i][f'eigV{which}'] = v
+            self.H.nodes[i][f"eigV{which}"] = v
 
         # Create subgraphs for +1 and -1 values
         G_pos = self.H.copy()
         G_neg = self.H.copy()
 
         for node in self.H.nodes(data=True):
-            if node[1][f'eigV{which}'] == 1:
+            if node[1][f"eigV{which}"] == -1:
                 G_neg.remove_node(node[0])
             else:
                 G_pos.remove_node(node[0])
         # Find connected components and calculate cluster sizes
         clusters_pos = [len(c) for c in nx.connected_components(G_pos)]
         # clusters_neg = [len(c) for c in nx.connected_components(G_neg)]
-
         # Calculate distribution of cluster sizes
-        distribution_pos = {size: clusters_pos.count(size) for size in set(clusters_pos)}
+        distribution_pos = {
+            size: clusters_pos.count(size) for size in set(clusters_pos)
+        }
         # distribution_neg = {size: clusters_neg.count(size) for size in set(clusters_neg)}
         return distribution_pos
+
     #
     def export_graph(self, MODE: str = "pickle"):
         if MODE == "pickle":
@@ -489,7 +523,9 @@ class SignedGraph_DEV(Graph):
         self.__init_paths__(expOutdir)
         self.__make_dirs__()
         if not self.pflmin <= pflip <= self.pflmax:
-            raise ValueError(f"pflip must be between {self.pflmin} and {self.pflmax}, inclusive. Received: {pflip}")
+            raise ValueError(
+                f"pflip must be between {self.pflmin} and {self.pflmax}, inclusive. Received: {pflip}"
+            )
         else:
             self.pflip = pflip
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
@@ -497,6 +533,7 @@ class SignedGraph_DEV(Graph):
         if import_on:
             self.__init_graph_fromfile__()
         self.__init_weights__()
+
     #
     def __init_paths__(self, expOutdir: str = ""):
         self.datPath = f"{DIR_DAT_DEFAULT}{self.sgpath}"
@@ -510,11 +547,18 @@ class SignedGraph_DEV(Graph):
         self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePth}{expOutdir}"
         self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePth}{expOutdir}"
         self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePth}{expOutdir}"
+
     #
     def __make_dirs__(self):
-        for _ in [self.graphpath, self.isingpath, self.voterpath, self.lrgsgpath, 
-                  self.phtrapath]:
+        for _ in [
+            self.graphpath,
+            self.isingpath,
+            self.voterpath,
+            self.lrgsgpath,
+            self.phtrapath,
+        ]:
             os.makedirs(_, exist_ok=True)
+
     #
     def __init_graph_fromfile__(self):
         try:
@@ -525,7 +569,6 @@ class SignedGraph_DEV(Graph):
         except FileNotFoundError:
             print(f"Error: Pickle file '{self.graphfname}.pkl' not found.")
 
-
     #
     def __init_weights__(self):
         nx.set_edge_attributes(self, values=1, name="weight")
@@ -534,13 +577,17 @@ class SignedGraph_DEV(Graph):
     def nlinks_count(self):
         weights = list(nx.get_edge_attributes(self, "weight").values())
         return (np.array(weights) < 0).sum()
+
     #
     def assign_attributes_from_nx_graph(self, nx_graph):
         for attr_name in nx_graph.graph:
             setattr(self, attr_name, nx_graph.graph[attr_name])
+
     #
     def relabel_nodes_to_integers(self):
-        self.mapping_to_integers = {node: idx for idx, node in enumerate(self.nodes())}
+        self.mapping_to_integers = {
+            node: idx for idx, node in enumerate(self.nodes())
+        }
         self.graph = nx.relabel_nodes(self.graph, self.mapping_to_integers)
 
     # #
@@ -648,7 +695,7 @@ class SignedGraph_DEV(Graph):
     # def check_pflip(self):
     #     if self.nflip < 1:
     #         raise NflipError(
-    #             """The probability of flipping an edge times the 
+    #             """The probability of flipping an edge times the
     #                          number of edges is < 1, then no edges would be
     #                          flipped. Skipping the analysis for this value."""
     #         )
@@ -719,7 +766,7 @@ class SignedGraph_DEV(Graph):
     #         self.compute_k_eigvV()
     #         eigVbin = np.sign(np.where(self.eigV == 0, +1, self.eigV))
     #     return eigVbin
-    
+
     # def calc_fluct_Pinf(self, which: int = 0):
     #     eigV = self.bin_eigV(which)
     #     eV_p = np.count_nonzero(eigV >= 0)
@@ -737,7 +784,6 @@ class SignedGraph_DEV(Graph):
     #         self.Pinf_dict[which] = self.Pinf
     #     else:
     #         self.Pinf_dict = {which: self.Pinf}
-
 
     # #
     # def rescaled_signed_laplacian(self, MODE: str = "field"):

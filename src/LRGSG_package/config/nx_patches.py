@@ -498,3 +498,61 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
         pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in H}
         set_node_attributes(H, pos, "pos")
     return H
+
+
+
+def hexagonal_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None) -> nx.Graph:
+    """
+    Generate a hexagonal lattice graph with optional periodic boundary conditions.
+    
+    Parameters:
+    m : int
+        Number of rows of hexagons.
+    n : int
+        Number of columns of hexagons.
+    periodic : bool, optional
+        If True, applies periodic boundary conditions to create a toroidal topology.
+    with_positions : bool, optional
+        If True, calculates and assigns positions to nodes to represent a hexagonal lattice.
+
+    Returns:
+    nx.Graph
+        A hexagonal lattice graph.
+    """
+    from networkx import set_node_attributes, empty_graph, NetworkXError
+    G = empty_graph(0, create_using)
+    if m == 0 or n == 0:
+        return G
+    # if periodic and (n % 2 == 1 or m < 2 or n < 2):
+    #     msg = "periodic hexagonal lattice needs m > 1, n > 1 and even n"
+    #     raise NetworkXError(msg)
+    rows = range(m)
+    cols = range(n)
+    # Adjusted for clarity: In a hexagonal lattice, 'm' rows and 'n' columns describe a different layout.
+    col_edges = (((i, j), (i, j + 1)) for i in cols for j in rows[:m-1])
+    row_edges = (((i, j), (i + 1, j)) for i in cols[:n-1] for j in rows if i % 2 == j % 2)
+    G.add_edges_from(col_edges)
+    G.add_edges_from(row_edges)
+    if periodic:
+        more_row_edges = (((cols[0], j), (cols[n-1], j)) for j in rows if j % 2)
+        more_col_edges = (((i, rows[0]), (i, rows[m-1])) for i in cols if i+1 % 2)
+        G.add_edges_from(more_row_edges)
+        G.add_edges_from(more_col_edges)
+        
+    # Optionally assign positions for visualization
+    if with_positions:
+
+        # calc position in embedded space
+        ii = (i for i in cols for j in rows)
+        jj = (j for i in cols for j in rows)
+        xx = (0.5 + i + i // 2 + (j % 2) * ((i % 2) - 0.5) for i in cols for j in rows)
+        h = np.sqrt(3) / 2
+        if periodic:
+            yy = (h * j + 0.01 * i * i for i in cols for j in rows)
+        else:
+            yy = (h * j for i in cols for j in rows)
+        # exclude nodes not in G
+        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in G}
+        set_node_attributes(G, pos, "pos")
+
+    return G

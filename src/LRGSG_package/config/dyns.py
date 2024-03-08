@@ -92,7 +92,8 @@ class VoterModel(BinDynSys):
         if out_suffix == "":
             out_suffix = '\'\''
         self.cprogram = [
-            f"{DIR_SRC_DEFAULT}{DIR_PCK_DEFAULT}{self.dyn_UVclass}",
+            pthjoin(DIR_SRC_DEFAULT, DIR_PCK_DEFAULT, self.dyn_UVclass),
+            # f"{DIR_SRC_DEFAULT}{DIR_PCK_DEFAULT}{self.dyn_UVclass}",
             f"{self.sg.N}",
             f"{self.sg.pflip}",
             f"{self.eqSTEP_def}",

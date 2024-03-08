@@ -22,9 +22,13 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from .const import *
 
 
-
-
-
+twilight_lim_low = 0.2
+twilight_lim_high = 0.8
+twilight_lim_blu = 0.65
+cred = plt.cm.twilight(twilight_lim_low)
+cblu = plt.cm.twilight(twilight_lim_blu)
+restr_twilight_vals = plt.cm.twilight(np.linspace(twilight_lim_low, twilight_lim_high))
+restr_twilight = LinearSegmentedColormap.from_list("restr_twilight", restr_twilight_vals)
 
 
 def set_alpha_torgb(rgbacol, alpha=0.5):

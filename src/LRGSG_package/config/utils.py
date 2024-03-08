@@ -8,11 +8,37 @@ from .errwar import *
 #
 from numpy import ndarray
 from os import chdir, getcwd
+from os.path import join as pthjoin
 #
 from collections.abc import Iterable
 from scipy.interpolate import pchip
 from scipy.ndimage import shift
 
+
+def find_matching_files(search_dir: str, pattern_str: str) -> List[str]:
+    """
+    Searches all files in the specified directory that match a given pattern.
+
+    Parameters
+    ----------
+    search_dir : str
+        The directory in which to search for files.
+    pattern_str : str
+        The string pattern to search for within the file names. This pattern
+        will be compiled into a regular expression.
+
+    Returns
+    -------
+    List[str]
+        A list of file names within the search directory that match the given 
+        pattern.
+    """
+    from os import listdir
+    from re import compile
+    pattern = compile(f'.*{pattern_str}.*')
+    all_files = listdir(search_dir)
+    matching_files = [fname for fname in all_files if pattern.match(fname)]
+    return matching_files
 
 def flatten(xs):
     """

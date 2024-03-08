@@ -2,15 +2,20 @@ import numpy as np
 import os
 import sys
 #
-List = [256, 512]
-plist = np.concatenate((np.logspace(-3, np.log10(0.05), num=5),
-                        np.linspace(0.05, 0.2, num=10),
-                        np.linspace(0.2, 0.5, num=5)))
+List = [16, 32, 64, 128, 256, 512, 1024]
+plist = {L: np.concatenate(
+            (
+                np.linspace(1./L**1.5, 0.2, num=25),
+                np.linspace(0.2, 0.5, num=10),
+                np.linspace(0.5, 1, num=5)
+            )
+        ) for L in List}
 geometry_cell_dict = {'squared': ['single', 'square', 'cross'],
                       'triangular': ['single', 'triangle', 'cross'],
                       'hexagonal': ['single', 'hexagon', 'cross']}
 
 programName = "Lattice2D_phasetr"
+programNamesht = "L2D_pt"
 launchstr = f"python src/{programName}.py"
 do_print = True
 flag_mmemb = False
@@ -51,9 +56,9 @@ if "--slanzarv" in sys.argv:
             return a * x + b
         def memoryfunc(x):
             return int(linear_map(x))
-    def slanzarv_STR(L, p):
-        slanzarvstr = f'slanzarv -m {memoryfunc(L)} --nomail --jobname'
-        argstr = f'"{programName}_{L}_{p:.3g}"'
+    def slanzarv_STR(L, p, geo, c):
+        slanzarvstr = f'slanzarv -m {memoryfunc(L)} --nomail --jobname '
+        argstr = f'"{programNamesht}_{L}_{p:.3g}_{geo}_{c}"'
         return slanzarvstr + argstr if slanzarv_OPT else ""
             
 else:
@@ -62,12 +67,15 @@ else:
 #
 #
 #
+count = 0
 for L in List:
-    for p in plist:
+    for p in plist[L]:
         for geo, cellst in geometry_cell_dict.items():
             for c in cellst:
-                argstr = f"{L} {p:.3g} -g {geo} -c {c} -nA {noAvg}"
-                the_string = f"{slanzarv_STR(L, p)} {launchstr} {argstr}"
+                argstr = f"{L} {p:.3g} -g {geo} -c {c} -nA {noAvg} "
+                the_string = f"{slanzarv_STR(L, p, geo, c)} {launchstr} {argstr}"
                 print(the_string)
                 if not do_print:
                     os.system(the_string)
+                count += 1
+print("submitted jobs: ", count)

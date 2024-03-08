@@ -55,7 +55,7 @@ class Lattice2D(SignedGraph):
             nxfunc = nx.grid_2d_graph
             self.syshape = (self.side1, self.side2)
         elif self.geo == DEFLattice2D_geodictabb['hex']:
-            nxfunc = nx.hexagonal_lattice_graph
+            nxfunc = hexagonal_lattice_graph_FastPatch
         #
         if self.side1 == self.side2:
             self.syshapeStr = f"N={self.side1**2}"
@@ -122,11 +122,15 @@ class Lattice2D(SignedGraph):
             elif self.lattice.geo == 'triangular':
                 return (self.midway_H-1, self.midway_H)
             elif self.lattice.geo == 'hexagonal':
-                target_node = (self.lattice.side2//2, self.lattice.side1)
-                edge_with_change = [edge for edge in self.lattice.esetG if target_node in edge and
-                                    any(other_node[0] == target_node[0] + 1 or other_node[0] == target_node[0] - 1
-                                        for other_node in edge if other_node != target_node)][0]
-                return self.lattice.edge_map[edge_with_change]
+                hex_c = (self.lattice.side1//2, self.lattice.side2//2)
+                neigh = list(self.lattice.G.neighbors(hex_c))[0]
+                try:
+                    centedgeG = (hex_c, neigh)
+                    centedgeH = self.lattice.edge_map[centedgeG]
+                except  KeyError:
+                    centedgeG = (neigh, hex_c)
+                    centedgeH = self.lattice.edge_map[centedgeG]
+                return centedgeH
         #
         def get_neg_weights_dict_h_right(self, node: int):
             edge = (node, node+1)

@@ -52,9 +52,9 @@ for cont, avg in enumerate(range(args.number_of_averages)):
     Pinf[cont]=lattice.Pinf
     Pinf2[cont]=lattice.Pinf**2
         
-    x=[np.sum(Pinf)/(1+avg),np.sum(Fluct)/(1+avg), np.sum(Fluct2)/(1+avg), 
-       np.var(Fluct[Fluct!=0]), np.sum(Pinf2)/(1+avg),lattice.pflip,int(avg+1)]
+    x=[lattice.pflip, np.sum(Pinf)/(1+avg), np.sum(Pinf2)/(1+avg), np.sum(Fluct)/(1+avg), np.sum(Fluct2)/(1+avg), 
+       np.var(Fluct[Fluct!=0]),int(avg+1)]
     
     filename = file_path_maker(napath=avg+1)
     with open(filename, 'wb') as file:
-        np.savetxt(file, np.atleast_2d(x), fmt='%.7g', delimiter=',')
+        np.savetxt(file, np.atleast_2d(x), fmt='%.7g')

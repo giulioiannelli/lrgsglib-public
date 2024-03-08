@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, List
 from scipy.sparse import csr_array
 from networkx.classes.graph import Graph
 # extensions
