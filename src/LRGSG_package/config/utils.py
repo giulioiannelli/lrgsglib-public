@@ -1,4 +1,5 @@
 import string
+import pickle
 import numpy as np
 import networkx as nx
 #
@@ -10,6 +11,8 @@ from os import chdir, getcwd
 #
 from collections.abc import Iterable
 from scipy.interpolate import pchip
+from scipy.ndimage import shift
+
 
 def flatten(xs):
     """
@@ -606,3 +609,33 @@ def flip_to_positive_majority(arr):
         # Flip all elements by multiplying by -1
         arr = arr * -1
     return arr
+
+
+def shift_with_wrap(image, shift_right, shift_down):
+    """
+    Shift an image with wrap-around at the edges.
+    
+    Parameters:
+    - image: 2D numpy array to shift.
+    - shift_right: Number of pixels to shift to the right.
+    - shift_down: Number of pixels to shift down.
+    
+    Returns:
+    - Shifted image with wrap-around.
+    """
+    # Ensure shifts are within the bounds of the image dimensions
+    shift_right %= image.shape[1]
+    shift_down %= image.shape[0]
+    
+    # Perform the shift
+    shifted_image = np.roll(image, shift=shift_down, axis=0)  # Shift down
+    shifted_image = np.roll(shifted_image, shift=shift_right, axis=1)  # Then shift right
+    
+    return shifted_image
+
+
+def unravel_1d_to_2d_nodemap(arr1d, imap):
+    arr_2d = np.empty(tuple(int(np.sqrt(len(arr1d))) for i in range(2)), dtype=arr1d.dtype)
+    for idx_1d, (row, col) in imap.items():
+        arr_2d[col, row] = arr1d[idx_1d]
+    return arr_2d

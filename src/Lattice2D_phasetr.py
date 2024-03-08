@@ -20,7 +20,7 @@ Pinf2=np.zeros(args.number_of_averages)
 Fluct=np.zeros(args.number_of_averages)
 Fluct2=np.zeros(args.number_of_averages)
 
-lattice = Lattice2D(args.L, pflip=args.p, geometry=args.geometry)
+lattice = Lattice2D(args.L, pflip=args.p, geo=args.geometry)
 def file_path_maker(mpath = lattice.phtrapath, ppath= args.p, 
                     napath = args.number_of_averages, 
                     spath = args.out_suffix,
@@ -33,7 +33,7 @@ if os.path.exists(file_path_maker()):
 
 
 for cont, avg in enumerate(range(args.number_of_averages)):
-    lattice = Lattice2D(args.L, pflip=args.p, geometry=args.geometry)
+    lattice = Lattice2D(args.L, pflip=args.p, geo=args.geometry)
     try:
         filenameold = file_path_maker(napath=avg)
         os.remove(filenameold)

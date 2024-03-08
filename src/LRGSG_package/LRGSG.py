@@ -4,7 +4,6 @@ import random
 import re
 import os
 import sys
-import warnings
 #
 import networkx as nx
 import numpy as np

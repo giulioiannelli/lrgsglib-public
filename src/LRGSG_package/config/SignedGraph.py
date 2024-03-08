@@ -112,7 +112,6 @@ class SignedGraph:
             self.upd_H_graph()
             self.nflip = self.Ne_n
             self.pflip = self.nflip / self.Ne
-            self.upd_graph_matrices()
             self.randsample = np.where(
                 np.array(self.Adj.todense()).flatten() < 0
             )
@@ -122,6 +121,7 @@ class SignedGraph:
             self.init_weights()
             self.upd_H_graph()
         self.upd_G_graph()
+        self.upd_graph_matrices()
 
     #
     def adjacency_matrix(self, weight: str = "weight"):
@@ -290,8 +290,9 @@ class SignedGraph:
         if MODE == "field":
             self.resLp = self.sLp - self.eigv[0] * scsp.identity(self.N)
         elif MODE == "double":
+            from scipy.linalg import eigvalsh
             self.resLp = self.sLp - np.array([self.eigv[0]])
-            new_eigv0 = scipy.linalg.eigvalsh(
+            new_eigv0 = eigvalsh(
                 self.resLp.astype(np.float64), subset_by_index=[0, 0]
             )
             self.resLp = self.resLp - new_eigv0 * np.identity(self.N)

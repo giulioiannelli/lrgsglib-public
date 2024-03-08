@@ -1,12 +1,8 @@
-import scipy as sp
-#
 import scipy.sparse as scsp
 #
-from networkx.classes.graph import Graph
-from networkx.drawing.layout import _process_params, rescale_layout
-from scipy.sparse import csr_array
 from .const import *
 from .utils import *
+from networkx.drawing.layout import _process_params, rescale_layout
 #
 def get_kth_order_neighbours(G: nx.Graph, node: int, order: int = 1) -> list:
     """
@@ -146,7 +142,7 @@ def slaplacian_matrix_fromA(G: Graph, nodelist: list = None, weight: str = "weig
         nodelist = list(G)
     A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight,
                                  format="csr")
-    D = scsp.csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape,
+    D = csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape,
                                     format="csr"))
     return D - A
 #
@@ -180,7 +176,7 @@ def slaplacian_matrix(G: Graph, nodelist: list = None, weight: str = "weight"
         nodelist = list(G)
     A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight,
                                  format="csr")
-    D = scsp.csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape,
+    D = csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape,
                                     format="csr"))
     return D - A
 
@@ -289,11 +285,6 @@ def _sparse_spectral_signed(A, dim=2):
     # Input adjacency matrix A
     # Uses sparse eigenvalue solver from scipy
     # Could use multilevel methods here, see Koren "On spectral graph drawing"
-    import numpy as np
-    import scipy as sp
-    import scipy.sparse  # call as sp.sparse
-    import scipy.sparse.linalg  # call as sp.sparse.linalg
-
     try:
         nnodes, _ = A.shape
     except AttributeError as err:
@@ -302,14 +293,14 @@ def _sparse_spectral_signed(A, dim=2):
 
     # form Laplacian matrix
     # TODO: Rm csr_array wrapper in favor of spdiags array constructor when available
-    D = sp.sparse.csr_array(sp.sparse.spdiags(np.abs(A).sum(axis=1), 0, nnodes, nnodes))
+    D = csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, nnodes, nnodes))
     L = D - A
 
     k = dim + 1
     # number of Lanczos vectors for ARPACK solver.What is the right scaling?
     ncv = max(2 * k + 1, int(np.sqrt(nnodes)))
     # return smallest k eigenvalues and eigenvectors
-    eigenvalues, eigenvectors = sp.sparse.linalg.eigsh(L, k, which="SM", ncv=ncv)
+    eigenvalues, eigenvectors = scsp.linalg.eigsh(L, k, which="SM", ncv=ncv)
     index = np.argsort(eigenvalues)[1:k]  # 0 index is zero eigenvalue
     return np.real(eigenvectors[:, index])
 
@@ -339,7 +330,8 @@ def signedlaplacian_spectrum(G, weight="weight"):
     --------
     laplacian_matrix
     """
-    return sp.linalg.eigvalsh(slaplacian_matrix(G, weight=weight).todense())
+    from scipy.linalg import eigvalsh
+    return eigvalsh(slaplacian_matrix(G, weight=weight).todense())
 
 
 def triangular_lattice_graph_modified(

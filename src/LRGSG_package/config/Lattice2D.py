@@ -4,107 +4,59 @@ class Lattice2D(SignedGraph):
     #
     def __init__(
         self,
-        side1: int = DEFAULT_LATTICE2D_SIDE1,
-        side2: int = DEFAULT_LATTICE2D_SIDE2,
-        geometry: str = DEFAULT_LATTICE2D_GEOMETRY,
-        pbc: bool = True,
-        fbc_val: float = 1.0,
-        stdFnameSFFX: str = "",
-        sgpath: str = "",
+        side1: int = DEFLattice2D_side1,
+        side2: int = DEFLattice2D_side2,
+        geo: str = DEFLattice2D_geo,
+        pbc: bool = DEFLattice2D_pbc,
+        fbc_val: float = DEFLattice2D_fbcv,
+        stdFnameSFFX: str = DEFLattice2D_stdFn,
+        sgpath: str = DEFLattice2D_sgpath,
         **kwargs,
     ) -> None:
-        try:
-            self.geometry = geometry
-            if geometry not in DEFLIST_LATTICE2D_GEOMETRIES:
-                raise Lattice2DError(
-                    """The selected geometry of the 2D lattice
-                                     is not available. Setting it to 'squared' 
-                                     for a 2d regular grid."""
-                )
-        except:
-            self.geometry = DEFAULT_LATTICE2D_GEOMETRY
+        #
         self.side1 = side1
-        if side2:
-            self.side2 = side2
-        else:
-            if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
-                self.side2 = 2*self.side1
-            elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
-                self.side2 = self.side1
-            elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[2]:
-                self.side2 = self.side1
+        self.side2 = side2 if side2 else side1
+        #
+        self.__init_geo__(geo)
+        #
         self.pbc = pbc
         self.fbc_val = fbc_val
-
-        self.G = self.lattice_selection()
-        
-
-        self.sgpath = (
-            f"{DEFAULT_LATTICE2D_PATHABBRV}{self.geometry}/"
-            if not sgpath
-            else sgpath
-        )
-        self.init_stdFname(stdFnameSFFX)
-
-        
+        #
+        self.__init_stdFname__(stdFnameSFFX)
+        #
+        _ = DEFLattice2D_pthdict[self.geo]
+        self.sgpath = sgpath + _ if sgpath else _
+        #
+        self.__init_lattice__()
         super(Lattice2D, self).__init__(self.G, **kwargs)
-
-        self.init_graph()
-
     #
-    def init_graph(self):
-        if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
-            self.posG = dict(zip(self.G, self.G))
-            nx.set_node_attributes(self.G, values=self.posG, name="pos")
-        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
-            self.trianglepos = lambda x: (x[0]+.5*(x[1]%2), x[1]*np.sqrt(3)/2)
-            self.posG = dict((node, self.trianglepos(node)) 
-                             for node in self.G.nodes())
-        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[2]:
-            rows, cols = range(2*self.side1+2), range(self.side2+1)
-            ii = (i for i in cols for j in rows)
-            jj = (j for i in cols for j in rows)
-            xx = (0.5 + i + i // 2 + (j % 2) * ((i % 2) - 0.5) 
-                  for i in cols for j in rows)
-            yy = (np.sqrt(3)/2 * j for i in cols for j in rows)
-            self.posG = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) 
-                         if (i, j) in self.G}    
-
-        self.upd_graph_matrices()
-        
-
+    def __init_geo__(self, geo: str):
+        self.geo = geo
+        if geo not in DEFLattice2D_geolist:
+            if geo not in DEFLattice2D_geoabblist:
+                warnings.warn(DEFLattice2D_geowarnmsg, Lattice2DWarning)
+                self.geo = DEFLattice2D_geo
+            else:
+                self.geo = DEFLattice2D_geodictabb[geo]
     #
-    def init_stdFname(self, SFFX):
-        if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
-            self.stdFname = DEFLIST_LATTICE2D_GEOABBRV[0]
-        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
-            self.stdFname = DEFLIST_LATTICE2D_GEOABBRV[1]
-        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[2]:
-            self.stdFname = DEFLIST_LATTICE2D_GEOABBRV[2]
-        self.stdFname = self.stdFname + SFFX
-
-    def lattice_selection(self, pbc = None) -> Graph:
+    def __init_stdFname__(self, SFFX: str = ""):
+        self.stdFname = DEFLattice2D_geodict[self.geo] + SFFX
+    #
+    def __init_lattice__(self, pbc = None) -> None:
         if pbc is None:
             pbc = self.pbc
         else:
             pbc = False
-        if self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[0]:
-            nxfunc = nx.triangular_lattice_graph
-            self.p_c = 0.146
-            self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
-            kwdict = {"with_positions": False}
-            self.syshape = (self.side1, (self.side2+1)//2)
-        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[1]:
-            nxfunc = nx.grid_2d_graph
-            self.p_c = 0.103
-            self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
-            kwdict = {}
+        #
+        if self.geo == DEFLattice2D_geodictabb['tri']:
+            nxfunc = triangular_lattice_graph_FastPatch
             self.syshape = (self.side1, self.side2)
-        elif self.geometry == DEFLIST_LATTICE2D_GEOMETRIES[2]:
+        elif self.geo == DEFLattice2D_geodictabb['sqr']:
+            nxfunc = nx.grid_2d_graph
+            self.syshape = (self.side1, self.side2)
+        elif self.geo == DEFLattice2D_geodictabb['hex']:
             nxfunc = nx.hexagonal_lattice_graph
-            self.p_c = 0.065
-            self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
-            kwdict = {"with_positions": True}
+        #
         if self.side1 == self.side2:
             self.syshapeStr = f"N={self.side1**2}"
         elif self.side1 > self.side2:
@@ -112,7 +64,15 @@ class Lattice2D(SignedGraph):
         elif self.side2 > self.side1:
             self.syshapeStr = f"L1={self.side2}_L2={self.side1}"
         self.syshapePth = f"{self.syshapeStr}/"
-        return nxfunc(self.side1, self.side2, periodic=pbc, **kwdict)
+        #
+        self.p_c = DEFLattice2D_p_cdict[self.geo]
+        self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
+        #
+        self.G = nxfunc(self.side1, self.side2, periodic=pbc, 
+                        **DEFLattice2D_kwfuncdict[self.geo])
+        if self.geo == DEFLattice2D_geo:
+            nx.set_node_attributes(self.G, values=dict(zip(self.G, self.G)), 
+                                   name="pos")
 
     #
     class neg_weights_dicts_container:
@@ -126,15 +86,6 @@ class Lattice2D(SignedGraph):
             self.NEG_WEIGHTS_DICT_H_PFLIP = {e: -1 for e in random.sample(self.lattice.esetH, self.lattice.nflip)}
             self.WEIGHTS_DICT_H_PFLIP = {e: 1 for e in self.lattice.esetH}
             #
-            try: 
-                self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
-                self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
-            except KeyError:
-                self.H_cent_edge = (self.H_cent_edge[0]-1, self.H_cent_edge[1]-1)
-                self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
-                self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
-                pass
-            #
             # self.NEG_WEIGHTS_DICT_H_2ADJ = {lattice.esetH[self.midway_e]: -1, 
             #                                 lattice.esetH[self.midway_e+4]: -1}
             self.NEG_WEIGHTS_DICT_H_2CONT = {lattice.esetH[self.midway_e]: -1, 
@@ -145,24 +96,32 @@ class Lattice2D(SignedGraph):
             #
             self.node_flip_selection = np.random.choice(lattice.N, int(lattice.pflip * lattice.N))
             self.NEG_WEIGHTS_DICT_H_PCROSS = self.get_neg_weights_dict_h_pattern('cross')
-            if lattice.geometry == 'squared':
+            if lattice.geo == 'squared':
+                try: 
+                    self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
+                    self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
+                except KeyError:
+                    self.H_cent_edge = (self.H_cent_edge[0]-1, self.H_cent_edge[1]-1)
+                    self.DEFAULT_NEG_WEIGHTS_DICT_H = {self.H_cent_edge: -1}
+                    self.DEFAULT_NEG_WEIGHTS_DICT_G = {lattice.invedge_map[self.H_cent_edge]: -1}
+                    pass
                 self.NEG_WEIGHTS_DICT_H_PSQUARE = self.get_neg_weights_dict_h_pattern('square')
-            elif lattice.geometry == 'triangular':
+            elif lattice.geo == 'triangular':
                 self.NEG_WEIGHTS_DICT_H_PTRIA = self.get_neg_weights_dict_h_pattern('triangle')
-                self.G_cent_edge = ((lattice.side1//2-1,lattice.side1//2-1), (lattice.side1//2, lattice.side1//2-1))
+                self.G_cent_edge = ((lattice.side1//2-1,lattice.side2//2), (lattice.side1//2, lattice.side2//2))
                 self.DEFAULT_NEG_WEIGHTS_DICT_G = {self.G_cent_edge: -1}
                 self.DEFAULT_NEG_WEIGHTS_DICT_H = {lattice.edge_map[self.G_cent_edge]: -1}
-            elif lattice.geometry == 'hexagonal':
+            elif lattice.geo == 'hexagonal':
                 self.NEG_WEIGHTS_DICT_H_PHEXA = self.get_neg_weights_dict_h_pattern('hexagon')
                 
 
         #
         def get_central_edge_H(self):
-            if self.lattice.geometry == 'squared':
+            if self.lattice.geo == 'squared':
                 return self.lattice.esetH[self.midway_e +1]
-            elif self.lattice.geometry == 'triangular':
+            elif self.lattice.geo == 'triangular':
                 return (self.midway_H-1, self.midway_H)
-            elif self.lattice.geometry == 'hexagonal':
+            elif self.lattice.geo == 'hexagonal':
                 target_node = (self.lattice.side2//2, self.lattice.side1)
                 edge_with_change = [edge for edge in self.lattice.esetG if target_node in edge and
                                     any(other_node[0] == target_node[0] + 1 or other_node[0] == target_node[0] - 1
@@ -201,9 +160,9 @@ class Lattice2D(SignedGraph):
 
         def get_neg_weights_dict_h_triangle(self, node: int):
             node1 = node
-            node2 = random.sample(list(self.lattice.H.neighbors(node1)), 1)[0]
+            node2 = list(self.lattice.H.neighbors(node1))[0]
             common_neighbors = list(nx.common_neighbors(self.lattice.H, node1, node2))
-            node3 = random.sample(common_neighbors, 1)[0]
+            node3 = common_neighbors[0]
 
             dictH = {
                 (node1, node2): -1,
