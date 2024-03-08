@@ -1,9 +1,19 @@
 import os
 import sys
+import numpy as np
 #
 programName = "Lattice2D_percClusters"
-List = [8, 16, 32, 64, 128, 256, 512]
 plist = [0.01, 0.034, 0.08, 0.103, 0.12, 0.206, 0.412]
+
+List = [16, 32, 64, 128, 256, 512, 1024]
+plist = {L: np.concatenate(
+            (
+                np.linspace(0.01, 0.09, num=3),
+                np.linspace(0.09, 0.2, num=6),
+                np.linspace(0.01, 0.09, num=3)
+            )
+        ) for L in List}
+
 
 do_print = False
 if "--print" in sys.argv:
