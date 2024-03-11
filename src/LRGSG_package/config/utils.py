@@ -15,6 +15,41 @@ from scipy.interpolate import pchip
 from scipy.ndimage import shift
 
 
+def is_in_range(number, range_start, range_end):
+    """
+    Checks if a given number is within a specified range, inclusive.
+
+    Parameters:
+    -----------
+    number : int or float
+        The number to check if it lies within the given range.
+    range_start : int or float
+        The starting value of the range (inclusive).
+    range_end : int or float
+        The ending value of the range (inclusive).
+
+    Returns:
+    --------
+    bool
+        Returns True if the number is within the range specified by
+        range_start and range_end, inclusive; otherwise, False.
+
+    Notes:
+    ------
+    This function uses Python's ability to chain comparison operators,
+    making the check concise and efficient. It is versatile enough to handle
+    both integer and floating-point numbers.
+
+    Example:
+    --------
+    >>> is_in_range(5, 1, 10)
+    True
+    >>> is_in_range(15, 1, 10)
+    False
+    """
+    return range_start <= number <= range_end
+
+
 def find_matching_files(search_dir: str, pattern_str: str) -> List[str]:
     """
     Searches all files in the specified directory that match a given pattern.

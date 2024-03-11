@@ -1,9 +1,18 @@
-from Lattice2D_percClusters_Parser import *
-import faulthandler
-
-faulthandler.enable()
+from Lattice2D_pClusters_Parser import *
 #
 args = parser.parse_args()
+if args.cell_type == 'square':
+    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PSQUARE
+elif args.cell_type == 'triangle':
+    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PTRIA
+elif args.cell_type == 'hexagon':
+    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PHEXA
+elif args.cell_type == 'single':
+    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PFLIP
+elif args.cell_type == 'cross':
+    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PCROSS
+else:
+    raise ValueError("Invalid cell specified")
 #
 merged_dict = Counter()
 #
@@ -19,7 +28,7 @@ if os.path.exists(filename):
 #
 for avg in range(args.number_of_averages):
     lattice = Lattice2D(args.L, pflip=args.p, geo=args.geometry)
-    lattice.flip_random_fract_edges()
+    lattice.flip_sel_edges(geometry_func(lattice))
     dist_dict = lattice.cluster_distribution_list()
     merged_dict += Counter(dist_dict)
     try:

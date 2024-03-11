@@ -76,7 +76,7 @@ def get_neighbors_at_distance(G: nx.Graph, node: int, distance: int) -> list:
     neighbors_at_distance = [n for n, d in neighbor_dict.items() if d == distance]
     return neighbors_at_distance
 #
-def get_neighbors_within_distance(G: nx.Graph, node: int, distance: int) -> list:
+def get_neighbors_within_distance(G: nx.Graph, node: Any, distance: int) -> list:
     """
     Returns the neighbors of a given node within a specific distance in a networkx graph.
 
@@ -84,7 +84,7 @@ def get_neighbors_within_distance(G: nx.Graph, node: int, distance: int) -> list
     ----------
     G : Graph
         A NetworkX graph.
-    node : int
+    node : Any
         The node for which neighbors are to be found.
     distance : int
         The maximum distance from the node.
@@ -501,7 +501,7 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
 
 
 
-def hexagonal_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None) -> nx.Graph:
+def hexagonal_lattice_graph_FastPatch(n: int, m: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None) -> nx.Graph:
     """
     Generate a hexagonal lattice graph with optional periodic boundary conditions.
     
@@ -555,4 +555,68 @@ def hexagonal_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, wi
         pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in G}
         set_node_attributes(G, pos, "pos")
 
+    return G
+
+def squared_lattice_graph_FastPatch(m, n, periodic=False, create_using=None, with_positions: bool = True):
+    """Returns the two-dimensional grid graph.
+
+    The grid graph has each node connected to its four nearest neighbors.
+
+    Parameters
+    ----------
+    m, n : int 
+        If an integer, nodes are from `range(n)`.
+
+    periodic : bool or iterable
+        If `periodic` is True, both dimensions are periodic. If False, none
+        are periodic.  If `periodic` is iterable, it should yield 2 bool
+        values indicating whether the 1st and 2nd axes, respectively, are
+        periodic.
+
+    create_using : NetworkX graph constructor, optional (default=nx.Graph)
+        Graph type to create. If graph instance, then cleared before populated.
+
+    Returns
+    -------
+    NetworkX graph
+        The (possibly periodic) grid graph of the specified dimensions.
+
+    """
+    from networkx import set_node_attributes, empty_graph, NetworkXError
+    from networkx.utils import pairwise
+    G = empty_graph(0, create_using)
+    rows = range(m)
+    cols = range(n)
+    G.add_nodes_from((i, j) for i in rows for j in cols)
+    G.add_edges_from(((i, j), (pi, j)) for pi, i in pairwise(rows) for j in cols)
+    G.add_edges_from(((i, j), (i, pj)) for i in rows for pj, j in pairwise(cols))
+
+    try:
+        periodic_r, periodic_c = periodic
+    except TypeError:
+        periodic_r = periodic_c = periodic
+
+    if periodic_r and len(rows) > 2:
+        first = rows[0]
+        last = rows[-1]
+        G.add_edges_from(((first, j), (last, j)) for j in cols)
+    if periodic_c and len(cols) > 2:
+        first = cols[0]
+        last = cols[-1]
+        G.add_edges_from(((i, first), (i, last)) for i in rows)
+    # both directions for directed
+    if G.is_directed():
+        G.add_edges_from((v, u) for u, v in G.edges())
+    if with_positions:
+        # calc position in embedded space
+        ii = (i for i in cols for j in rows)
+        jj = (j for i in cols for j in rows)
+        xx = (i for i in cols for j in rows)  # x position matches column index
+        yy = (j for i in cols for j in rows)
+        if periodic:
+            xx = (i + 0.02 * j * j for i in cols for j in rows)  # x position matches column index
+            yy = (j + 0.02 * i * i for i in cols for j in rows)
+        # exclude nodes not in G
+        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in G}
+        set_node_attributes(G, pos, "pos")
     return G

@@ -1,24 +1,19 @@
 from Lattice2D_phasetr_Parser import *
 #
 args = parser.parse_args()
-if args.cell_type == 'square':
-    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PSQUARE
-elif args.cell_type == 'triangle':
-    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PTRIA
-elif args.cell_type == 'hexagon':
-    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PHEXA
+if args.cell_type in ['square', 'triangle', 'hexagon']:
+    geometry_func = lambda lattice: lattice.neg_weights_dict.nwdZERR
 elif args.cell_type == 'single':
-    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PFLIP
+    geometry_func = lambda lattice: lattice.neg_weights_dict.nwd_reflip
 elif args.cell_type == 'cross':
-    geometry_func = lambda lattice: lattice.neg_weights_dict.NEG_WEIGHTS_DICT_H_PCROSS
+    geometry_func = lambda lattice: lattice.neg_weights_dict.nwdXERR
 else:
     raise ValueError("Invalid cell specified")
 #
-
-Pinf=np.zeros(args.number_of_averages)
-Pinf2=np.zeros(args.number_of_averages)
-Fluct=np.zeros(args.number_of_averages)
-Fluct2=np.zeros(args.number_of_averages)
+Pinf = np.zeros(args.number_of_averages)
+Pinf2 = np.zeros(args.number_of_averages)
+Fluct = np.zeros(args.number_of_averages)
+Fluct2 = np.zeros(args.number_of_averages)
 
 lattice = Lattice2D(args.L, pflip=args.p, geo=args.geometry)
 def file_path_maker(mpath = lattice.phtrapath, ppath= args.p, 

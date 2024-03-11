@@ -5,8 +5,8 @@ class SignedGraph:
     p_c = None
     lsp = None
     slspectrum = None
-    pflmin = DEFAULT_MIN_PFLIPVAL
-    pflmax = DEFAULT_MAX_PFLIPVAL
+    rEdgeFlip = {}
+    GraphReprDict = {}
 
     def __init__(
         self,
@@ -22,13 +22,9 @@ class SignedGraph:
         self.__init_paths__(
             dataOutdir=dataOutdir, plotOutdir=plotOutdir, expOutdir=expOutdir
         )
-        if not self.pflmin <= pflip <= self.pflmax:
-            raise ValueError(
-                f"""
-                    pflip must be between {self.pflmin} and {self.pflmax}, 
-                    inclusive. Received: {pflip}
-                """
-            )
+
+        if not is_in_range(pflip, DEFLBpflip, DEFUBpflip):
+            raise ValueError(DEFSignedGraph_pflipverr)
         else:
             self.pflip = pflip
         self.lsp_mode = lsp_mode
@@ -36,18 +32,23 @@ class SignedGraph:
         self.__make_dirs__()
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
         if import_on:
-            self.graphfname = self.expOutdir + self.stdFname
+            self.graphFname = self.expOutdir + self.stdFname
             self.G = self.__init_graph_fromfile__()
         else:
             self.G = G
-            self.graphfname = self.expOutdir + self.stdFname
-        self.init_sgraph()
+            self.graphFname = self.expOutdir + self.stdFname
+        self.__init_sgraph__()
+        self.__init_graph_reprdict__()
         if init_weight_dict:
             self.neg_weights_dict = self.neg_weights_dicts_container(self)
 
     #
+    def __init_graph_reprdict__(self):
+        self.GraphReprDict['G'] = self.G
+        self.GraphReprDict['H'] = self.H
+
     def __init_graph_fromfile__(self):
-        return pickle.load(open(f"{self.graphfname}.pkl", "rb"))
+        return pickle.load(open(f"{self.graphFname}{ePKL}", "rb"))
 
     #
     def __init_paths__(
@@ -61,10 +62,10 @@ class SignedGraph:
         self.pltPath = f"{self.dataOutdir}{self.plotOutdir}{self.sgpath}"
         #
         self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH_DEFAULT
-        self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
-        self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
-        self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
-        self.DEFAULT_PHTRADIR = self.datPath + DEFAULT_PHTRA_OUTDIR
+        self.DEFAULT_ISINGDIR = self.datPath + DIR_ISING_DEFAULT
+        self.DEFAULT_VOTERDIR = self.datPath + DIR_VOTER_DEFAULT
+        self.DEFAULT_LRGSGDIR = self.datPath + DIR_LRGSG_DEFAULT
+        self.DEFAULT_PHTRADIR = self.datPath + DIR_PHTRA_DEFAULT
         #
         self.expOutdir = (
             expOutdir
@@ -119,22 +120,27 @@ class SignedGraph:
         self.N = self.G.number_of_nodes()
         self.Ne = self.G.number_of_edges()
 
-    def init_sgraph(self):
+    def __init_sgraph__(self):
         self.init_n_nodes_edges()
         if self.import_on:
             self.upd_H_graph()
             self.nflip = self.Ne_n
             self.pflip = self.nflip / self.Ne
-            self.randsample = np.where(
+            self.rEdgeFlip['H'] = np.where(
                 np.array(self.Adj.todense()).flatten() < 0
             )
+            self.rEdgeFlip['G'] = np.array([self.invedge_map[reH] 
+                                      for reH in self.rEdgeFlip['H']])
+
         else:
             self.nflip = int(self.pflip * self.Ne)
-            self.randsample = random.sample(range(self.Ne), self.nflip)
             self.init_weights()
             self.upd_H_graph()
         self.upd_G_graph()
         self.upd_graph_matrices()
+        if not self.import_on:
+            self.rEdgeFlip['H'] = random.sample(self.esetH, self.nflip)            
+            self.rEdgeFlip['G'] = random.sample(self.esetG, self.nflip)
 
     #
     def adjacency_matrix(self, weight: str = "weight"):
@@ -190,25 +196,15 @@ class SignedGraph:
         self.sLp = self.signed_laplacian()
 
     #
-    def flip_sel_edges(self, neg_weights_dict=None, on_graph="H"):
-        """Flips a specific edges of a graph G."""
+    def flip_sel_edges(self, links: List = [], on_graph = 'G'):
+        """Flips specific edges of a graph G."""
         #
-        if on_graph == "G":
-            if neg_weights_dict is None:
-                neg_weights_dict = (
-                    self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_G
-                )
-            nx.set_edge_attributes(
-                self.G, values=neg_weights_dict, name="weight"
-            )
-        elif on_graph == "H":
-            if neg_weights_dict is None:
-                neg_weights_dict = (
-                    self.neg_weights_dict.DEFAULT_NEG_WEIGHTS_DICT_H
-                )
-            nx.set_edge_attributes(
-                self.H, values=neg_weights_dict, name="weight"
-            )
+        neg_weights_dict = {}
+        if links:
+            neg_weights_dict = {(u, v): -1 * self.GraphReprDict[on_graph].get_edge_data(u, v)['weight'] for u, v in links}
+        nx.set_edge_attributes(
+            self.GraphReprDict[on_graph], values=neg_weights_dict, name="weight"
+        )
         self.upd_graph(on_graph=on_graph)
         self.upd_graph_matrices()
 
@@ -249,7 +245,7 @@ class SignedGraph:
         elif on_graph == "H":
             eset = self.esetH
         self.flip_sel_edges(
-            neg_weights_dict={e: -1 for e in random.sample(eset, self.nflip)},
+            neg_weights_dict={e: -1 for e in self.rEdgeFlip},
             on_graph=on_graph,
         )
 
@@ -385,6 +381,10 @@ class SignedGraph:
             },
         )
         return d
+    
+    def graph_neighbors(self, node, on_graph: str = 'G'):
+        graph = self.GraphReprDict[on_graph]
+        return list(graph.neighbors(node))
 
     #
     # def dfs_list(self, node, visited, sign):
@@ -442,11 +442,11 @@ class SignedGraph:
         if MODE == "pickle":
             pickle.dump(
                 self.G,
-                open(f"{self.graphfname}.pkl", "wb"),
+                open(f"{self.graphFname}.pkl", "wb"),
                 pickle.HIGHEST_PROTOCOL,
             )
         elif MODE == "gml":
-            nx.write_gml(self.G, f"{self.graphfname}.gml")
+            nx.write_gml(self.G, f"{self.graphFname}.gml")
 
     #
     def export_adj_bin(self, print_msg: bool = False) -> None:
@@ -509,8 +509,8 @@ class SignedGraph_DEV(Graph):
     syshapePth = ""
     stdFname = ""
     slspectrum = None
-    pflmin = DEFAULT_MIN_PFLIPVAL
-    pflmax = DEFAULT_MAX_PFLIPVAL
+    # pflmin = DEFAULT_MIN_PFLIPVAL
+    # pflmax = DEFAULT_MAX_PFLIPVAL
 
     def __init__(
         self,
@@ -523,9 +523,7 @@ class SignedGraph_DEV(Graph):
         self.__init_paths__(expOutdir)
         self.__make_dirs__()
         if not self.pflmin <= pflip <= self.pflmax:
-            raise ValueError(
-                f"pflip must be between {self.pflmin} and {self.pflmax}, inclusive. Received: {pflip}"
-            )
+            raise ValueError(DEFSignedGraph_pflipverr(pflip))
         else:
             self.pflip = pflip
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
@@ -538,10 +536,10 @@ class SignedGraph_DEV(Graph):
     def __init_paths__(self, expOutdir: str = ""):
         self.datPath = f"{DIR_DAT_DEFAULT}{self.sgpath}"
         self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH_DEFAULT
-        self.DEFAULT_ISINGDIR = self.datPath + DEFAULT_ISING_OUTDIR
-        self.DEFAULT_VOTERDIR = self.datPath + DEFAULT_VOTER_OUTDIR
-        self.DEFAULT_LRGSGDIR = self.datPath + DEFAULT_LRGSG_OUTDIR
-        self.DEFAULT_PHTRADIR = self.datPath + DEFAULT_PHTRA_OUTDIR
+        self.DEFAULT_ISINGDIR = self.datPath + DIR_ISING_DEFAULT
+        self.DEFAULT_VOTERDIR = self.datPath + DIR_VOTER_DEFAULT
+        self.DEFAULT_LRGSGDIR = self.datPath + DIR_LRGSG_DEFAULT
+        self.DEFAULT_PHTRADIR = self.datPath + DIR_PHTRA_DEFAULT
         self.graphpath = f"{self.DEFAULT_GRAPHDIR}{self.syshapePth}{expOutdir}"
         self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePth}{expOutdir}"
         self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePth}{expOutdir}"

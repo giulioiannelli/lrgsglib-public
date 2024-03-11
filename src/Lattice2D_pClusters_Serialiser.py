@@ -5,34 +5,31 @@ import numpy as np
 List = 2**np.arange(4, 11)
 plist = {L: np.concatenate(
             (
-                np.linspace(1./L**1.5, 0.2, num=25),
-                np.linspace(0.2, 0.5, num=10),
-                np.linspace(0.5, 1, num=5)
+                np.linspace(1./L**1.5, 0.08, num=3),
+                np.linspace(0.08, 0.2, num=10),
+                np.linspace(0.2, 0.5, num=3)
             )
         ) for L in List}
-geometry_cell_dict = {'squared': ['single', 'square', 'cross'],
-                      'triangular': ['single', 'triangle', 'cross'],
-                      'hexagonal': ['single', 'hexagon', 'cross']}
 
-programName = "Lattice2D_phasetr"
-programNamesht = "L2D_pt"
+
+programName = "Lattice2D_pClusters"
+programNamesht = "L2D_pC"
 launchstr = f"python src/{programName}.py"
 do_print = True
 flag_mmemb = False
 slanzarv_OPT = False
 default_noAvg = 1000
-#
+
 if any(pmsg in sys.argv for pmsg in ["--execute", "-e"]):
     do_print = False
 if any(pmsg in sys.argv for pmsg in ["--verbose", "-v", "--print"]):
     do_print = True
-#
 if "-n" in sys.argv:
     index = sys.argv.index("-n")
     noAvg = sys.argv[index+1]
 else:
     noAvg = default_noAvg
-#
+
 if "--slanzarv" in sys.argv:
     slanzarv_OPT = True
     index = sys.argv.index("--slanzarv")
@@ -44,7 +41,7 @@ if "--slanzarv" in sys.argv:
         slanzarv_MEMMB = int(sys.argv[index+2])
     except IndexError:
         slanzarv_MEMMB = 10240
-        flag_mmemb = True
+        flag_mmemb =True
     if flag_mmemb:
         def memoryfunc(x):
             return slanzarv_mEMMB
@@ -63,19 +60,27 @@ if "--slanzarv" in sys.argv:
 else:
     def slanzarv_STR(*args):
         return ""
+
+if "-g" in sys.argv:
+    index = sys.argv.index("-g")
+    geo = sys.argv[index+1]
+else:
+    geo = 'squared'
+if "-c" in sys.argv:
+    index = sys.argv.index("-g")
+    cell = sys.argv[index+1]
+else:
+    cell = 'single'
 #
 #
 #
 count = 0
 for L in List:
     for p in plist[L]:
-        for geo, cellst in geometry_cell_dict.items():
-            for c in cellst:
-                argstr = f"{L} {p:.3g} -g {geo} -c {c} -nA {noAvg} "
-                the_string = f"{slanzarv_STR(L, p, geo, c)} {launchstr} {argstr}"
-                if do_print:
-                    print(the_string)
-                else:
-                    os.system(the_string)
-                count += 1
-print("submitted jobs: ", count)
+        argstr = f"{L} {p:.3g} -g {geo} -c {cell} -nA {noAvg} "
+        the_string = f"{slanzarv_STR(L, p, geo, cell)} {launchstr} {argstr}"
+        if do_print:
+            print(the_string)
+        else:
+            os.system(the_string)
+        count += 1

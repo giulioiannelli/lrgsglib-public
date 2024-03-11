@@ -5,9 +5,10 @@ description = """
 """
 
 # Default values for the optional parameters
-DEFAULT_NUMBER_AVERAGES = 100  # Assuming a default value for demonstration
+DEFAULT_NUMBER_AVERAGES = 1000  # Assuming a default value for demonstration
 DEFAULT_OUT_SUFFIX = ""
 DEFAULT_GEO = "squared"
+DEFAULT_CELL = "single"
 
 
 # Helpers for argparse descriptions
@@ -19,6 +20,9 @@ HELP_p = """
     Flipping probability (p) for edges.
 """
 
+HELP_cell = f"""
+    Topological class of the defect: possible values 'single', 'square', 'triangle', 'hexagon', 'cross'. | default= '{DEFAULT_CELL}'
+"""
 HELP_geo = f"""
     Geometry of the lattice. | default={DEFAULT_GEO}
 """
@@ -63,6 +67,13 @@ parser.add_argument(
     default=DEFAULT_NUMBER_AVERAGES,
     help=HELP_nA,
     type=int,
+)
+
+parser.add_argument(
+    "-c", "--cell_type",
+    default=DEFAULT_CELL,
+    help=HELP_cell,
+    type=str,
 )
 
 parser.add_argument(
