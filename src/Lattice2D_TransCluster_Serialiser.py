@@ -18,7 +18,7 @@ plist = {L: np.concatenate(
                 np.linspace(0.2, 0.5, num=3)
             )
         ) for L in List}
-if any(pmsg in sys.argv for pmsg in ["--cluster", "-C"]):
+if any(pmsg in sys.argv for pmsg in ["--pCluster", "-pC"]):
     mode = 'pCluster'
     plist = {L: np.concatenate(
             (
