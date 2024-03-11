@@ -15,6 +15,36 @@ from scipy.interpolate import pchip
 from scipy.ndimage import shift
 
 
+def adjust_to_even(x):
+    """
+    Rounds the input number to the nearest even integer.
+
+    If the input is exactly halfway between two even numbers, it rounds up to the
+    higher even number.
+
+    Parameters
+    ----------
+    x : float
+        The input number to be rounded.
+
+    Returns
+    -------
+    int
+        The nearest even integer to the input number.
+
+    Examples
+    --------
+    >>> round_to_nearest_even(128 * np.sqrt(3))
+    222
+    >>> round_to_nearest_even(5.5)
+    6
+    >>> round_to_nearest_even(2.1)
+    2
+    """
+    lower_even = int(x) - int(x) % 2
+    upper_even = lower_even + 2
+    return lower_even if x - lower_even < upper_even - x else upper_even
+
 def is_in_range(number, range_start, range_end):
     """
     Checks if a given number is within a specified range, inclusive.

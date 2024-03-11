@@ -14,14 +14,11 @@ class Lattice2D(SignedGraph):
         with_positions: bool = False,
         **kwargs,
     ) -> None:
-        #
-        self.side1 = side1
-        self.side2 = side2 if side2 else side1
-        #
-        self.__init_geo__(geo)
-        #
+        self.__init_side__(side1, side2)
         self.pbc = pbc
+        self.__init_geo__(geo)
         self.fbc_val = fbc_val
+        #
         #
         self.__init_stdFname__(stdFnameSFFX)
         #
@@ -32,7 +29,14 @@ class Lattice2D(SignedGraph):
         self.__init_lattice__()
         super(Lattice2D, self).__init__(self.G, **kwargs)
     #
-    def __init_geo__(self, geo: str):
+    def __init_side__(self, side1: int, side2: int) -> None:
+        # to do add check for variables to be int and so on...
+        self.side1 = side1
+        if side2:
+            self.side2 = side2
+        #
+    #
+    def __init_geo__(self, geo: str) -> None:
         self.geo = geo
         if geo not in DEFLattice2D_geolist:
             if geo not in DEFLattice2D_geoabblist:
@@ -40,18 +44,19 @@ class Lattice2D(SignedGraph):
                 self.geo = DEFLattice2D_geo
             else:
                 self.geo = DEFLattice2D_geodictabb[geo]
-        if geo == 'hexagonal':
-            if self.side1 % 2 or self.side2 % 2:
+        
+        if self.geo == 'hexagonal':
+            if not hasattr(self, 'side2'):
+                self.side2 = adjust_to_even(self.side1*np.sqrt(3))
+            if (self.side1 % 2 or self.side2 % 2) and self.pbc:
                 raise ValueError(DEFLattice2D_geoerrmsg)
+        else:
+            self.side2 = self.side1
     #
-    def __init_stdFname__(self, SFFX: str = ""):
+    def __init_stdFname__(self, SFFX: str = "") -> None:
         self.stdFname = DEFLattice2D_geodict[self.geo] + SFFX
     #
-    def __init_lattice__(self, pbc = None) -> None:
-        if pbc is None:
-            pbc = self.pbc
-        else:
-            pbc = False
+    def __init_lattice__(self) -> None:
         #
         if self.geo == DEFLattice2D_geodictabb['tri']:
             nxfunc = triangular_lattice_graph_FastPatch
@@ -73,10 +78,12 @@ class Lattice2D(SignedGraph):
         self.p_c = DEFLattice2D_p_cdict[self.geo]
         self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
         #
-        self.G = nxfunc(self.side1, self.side2, periodic=pbc, with_positions=self.with_positions)
+        self.G = nxfunc(self.side1, self.side2, periodic=self.pbc, 
+                        with_positions=self.with_positions)
     #
     def degree_check(self, degree):
-        return np.where(np.array(list(map(lambda x: x[1], list(self.G.degree())))) != degree)
+        return np.where(np.array(list(map(lambda x: x[1], 
+                                          list(self.G.degree())))) != degree)
     #
     def get_central_edge(self, on_graph: str = 'G'):
         G = self.G
@@ -118,7 +125,7 @@ class Lattice2D(SignedGraph):
                                    for g in ['G', 'H']}
             self['randZERR'] = {g: self.get_nwd_pattern('unit_cell', on_graph=g) 
                                    for g in ['G', 'H']}
-            self['central'] = {g: [self.centedge[g]]
+            self['center'] = {g: [self.centedge[g]]
                                    for g in ['G', 'H']}
         #
         def get_links_cross(self, node: Any, on_graph: str = 'G'):
@@ -174,11 +181,13 @@ class Lattice2D(SignedGraph):
                     for i in node_nn_1b:
                         common_neighs = list(nx.common_neighbors(graph, samp_node_nn_2, i))
                         if common_neighs != []:
-                            common_nn = i
-                            nodes_in_cycle.append(nn)
+                            nodes_in_cycle.extend([nn, i, common_neighs[0]])
                             flag = False
                             break
-            nodes_in_cycle.extend([samp_node_nn_1, samp_node_nn_2, common_nn, common_neighs[0]])
+            try:
+                nodes_in_cycle.extend([samp_node_nn_1, samp_node_nn_2])
+            except IndexError:
+                pass
             subH = graph.subgraph(nodes_in_cycle)
             links = [tuple(sorted(edge)) for edge in subH.edges()]
             return links
