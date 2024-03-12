@@ -1,4 +1,4 @@
-from Lattice2D_phasetr_Parser import *
+from .Lattice2D_phasetr_Parser import *
 #
 args = parser.parse_args()
 if args.cell_type in ['square', 'triangle', 'hexagon']:
