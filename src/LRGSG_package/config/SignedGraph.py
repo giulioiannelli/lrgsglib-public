@@ -467,6 +467,19 @@ class SignedGraph:
                 # write each item on a new line
                 fp.write("%s %s %s\n" % item)
             print("Done")
+    #
+    def get_edge_color(self, on_graph: str = 'G'):
+        def map_values(value):
+            if value == -1:
+                return 'r'
+            elif value == 1:
+                return 'blue'
+            else:
+                return value
+        arr = nx.get_edge_attributes(self.GraphReprDict[on_graph], 'weight')
+        return list(map(map_values, arr.values()))
+    def get_pos(self, on_graph: str = 'G'):
+        return nx.get_node_attributes(self.GraphReprDict[on_graph], 'pos')
 
 
 """

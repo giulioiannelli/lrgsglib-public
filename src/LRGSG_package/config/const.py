@@ -25,6 +25,7 @@ DIR_VOTER_DEFAULT = "voter/"
 DIR_LRGSG_DEFAULT = "lrgsg/"
 DIR_PHTRA_DEFAULT = "phtra/"
 
+DEFSignedGraph_pflipverr = f""" pflip must be between {DEFLBpflip} and {DEFUBpflip}, inclusive."""
 
 DEFErdosReny_pthabb = "er/"
 
@@ -34,6 +35,7 @@ DEFLattice2D_pbc = True
 DEFLattice2D_fbcv = 1.
 DEFLattice2D_stdFn = ""
 DEFLattice2D_sgpath = ""
+DEFLattice2D_onrep = 'G'
 DEFLattice2D_pthabb = 'l2d_'
 DEFLattice2D_geoTri = 'triangular'
 DEFLattice2D_geoTri_abb = 'tri'
@@ -64,14 +66,13 @@ DEFLattice2D_geodictabb = {a: s for a,s in
 
 DEFLattice2D_geowarnmsg = """The selected geometry of the 2D lattice is not available. Setting it to 'squared' for a 2d regular grid."""
 DEFLattice2D_geoerrmsg = """Invalid side value for hexagonal lattice. In order to implement PBC on hexagonal lattice you need to provide an even value for side1 and side2."""
-DEFSignedGraph_pflipverr = f""" pflip must be between {DEFLBpflip} and {DEFUBpflip}, inclusive."""
 
-
-
-
-
-
-
+DEFLattice3D_dim = (16, 16, 16)
+DEFLattice3D_pbc = True
+DEFLattice3D_fbcv = 1.
+DEFLattice3D_stdFnsfx = ""
+DEFLattice3D_sgpath = ""
+DEFLattice3D_stdFn = ""
 
 
 DEFAULT_RECURSION_LIMIT = 1024**2

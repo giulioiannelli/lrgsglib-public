@@ -31,6 +31,22 @@ restr_twilight_vals = plt.cm.twilight(np.linspace(twilight_lim_low, twilight_lim
 restr_twilight = LinearSegmentedColormap.from_list("restr_twilight", restr_twilight_vals)
 
 
+def set_new_lower_ybound(ax, new_lower_bound):
+    """
+    Sets a new lower bound for the y-axis of a matplotlib axes object,
+    while keeping the upper bound unchanged.
+    
+    Parameters:
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes object to modify the y-axis limits of.
+    new_lower_bound : float
+        The new lower limit for the y-axis.
+    """
+    current_ylim = ax.get_ylim()  # Get current y-axis limits
+    ax.set_ylim(new_lower_bound, current_ylim[1])  # Update the lower limit
+
+
 def set_alpha_torgb(rgbacol, alpha=0.5):
     """
     Sets the alpha (transparency) channel of an RGBA color tuple and returns a new RGBA color tuple.
