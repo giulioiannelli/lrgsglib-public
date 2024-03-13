@@ -139,7 +139,7 @@ class Lattice2D(SignedGraph):
             dd = {'triangular': self.get_links_triangle,
              'squared': self.get_links_square,
              'hexagonal': self.get_links_hexagon}
-            return dd[geometry]
+            return dd[geometry](node, on_graph)
         #
         def get_links_triangle(self, node: Any, on_graph = DEFLattice2D_onrep):
             node2 = list(self.l.graph_neighbors(node, on_graph))[0]

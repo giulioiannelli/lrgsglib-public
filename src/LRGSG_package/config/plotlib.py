@@ -680,3 +680,84 @@ def plot_square_lattice(
     # Remove axes for a cleaner look
     ax.axis("off")
     ax.set_aspect('equal')
+
+
+def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel', 
+                            geometry: str = 'squared', cell: str = 'single'):
+    #
+    from .utils import flip_to_positive_majority
+    from scipy.optimize import curve_fit
+    #
+    kwlogfit = dict(marker='', c='red', label=r'$a\log(x) + b$')
+    def log_model(x, a, b):
+        return a * np.log(np.abs(x)) + b
+    if direction == 'parallel':
+        ylabel = r'${\phi(x,\, \bar{y}_\parallel)}/{\phi_{\min}}$'
+        ax.set_xlabel(r'$x$')
+    else:
+        ylabel = r'${\phi(\bar{x}_\perp,\, y)}/{\phi_{\min}}$'
+        ax.set_xlabel(r'$y$')
+    if geometry == 'squared':
+        if cell == 'single':
+            if direction == 'parallel':
+                xShiftConst = 0.
+                slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
+            else:
+                xShiftConst = -.5
+                slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
+        if cell == 'singleZERR':
+            if direction == 'parallel':
+                xShiftConst = 1.
+                slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
+            else:
+                xShiftConst = +.5
+                slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
+    if cell != 'singleXERR':
+        newLowerBound = 0.
+        def func(eigV):
+            eigV = flip_to_positive_majority(eigV)
+            eigV /= np.min(eigV)
+            return eigV
+    else:
+        def func(eigV):
+            return eigV
+            
+    ax.set_ylabel(ylabel, labelpad=10)
+    ax.set_xscale('symlog')
+    #
+    cmapv = restr_twilight(np.linspace(0, 1, len(sizes)))
+    for side, c in zip(sizes[::-1], cmapv):
+        kwdict = {"ls": '-',
+                'c': c, 
+                'marker': 'H', 
+                'ms': 10, 
+                'mfc': set_alpha_torgb(c, 0.75), 
+                'label': fr"$N={side**2}$"} 
+        eigV = lattices[side].eigV[0].reshape(lattices[side].syshape)
+        eigen_state = func(eigV)
+        
+        phi_plot = eigen_state[slice_cut(side)]
+        # print(np.min(eigen_state), min(phi_plot), slice_cut(side))
+        x = np.linspace(-side//2, side//2, num=len(phi_plot))+xShiftConst
+        ax.plot(x, phi_plot, **kwdict)
+    #
+    popt, pcov = curve_fit(log_model, x, phi_plot)
+    x = np.concatenate(
+        [
+            np.linspace(-sizes[-1]//2, -1, num=100),
+            np.linspace(-1, 1, num=2000),
+            np.linspace(1, sizes[-1]//2, num=100)
+        ]
+    )
+    ax.plot(x, log_model(x, *popt), **kwlogfit)
+
+    set_new_lower_ybound(ax, newLowerBound)
+    #
+    handles, labels = plt.gca().get_legend_handles_labels()
+    handles = handles[::-1]
+    labels = labels[::-1]
+    ax.legend(handles, labels, fontsize=24)
+    #
+    kwvlines = {'ls':'--', 'lw':1, 'c':'k'}
+    for i in [-1, +1, -lattices[sizes[0]].r_c, +lattices[sizes[0]].r_c]:
+        ax.axvline(i, **kwvlines)

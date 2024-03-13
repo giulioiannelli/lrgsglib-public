@@ -91,9 +91,9 @@ if mode == 'pCluster':
                 os.system(the_string)
             count += 1
 elif mode == 'phaseTr':
-    geometry_cell_dict = {'squared': ['single', 'square', 'cross'],
-                        'triangular': ['single', 'triangle', 'cross'],
-                        'hexagonal': ['single', 'hexagon', 'cross']}
+    geometry_cell_dict = {'squared': ['single', 'singleZERR', 'singleXERR'],
+                        'triangular': ['single', 'singleZERR', 'singleXERR'],
+                        'hexagonal': ['single', 'singleZERR', 'singleXERR']}
     #
     for L in List:
         for p in plist[L]:
