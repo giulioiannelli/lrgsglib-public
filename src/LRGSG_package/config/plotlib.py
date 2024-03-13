@@ -574,3 +574,109 @@ def set_ax_ratio_1_withlim(ax):
     # Set the new limits to ensure the plot is square and centered
     ax.set_xlim(x_center - max_range, x_center + max_range)
     ax.set_ylim(y_center - max_range, y_center + max_range)
+
+
+
+
+def plot_square_lattice(
+    ax,
+    size: int = 7,
+    size2: int = 7,  # New argument for the second dimension
+    kwargs_nodes: dict = dict(marker="o", ms=20, mec="k", mfc="w"),
+    kwargs_extl: dict = dict(ls=":", zorder=0, marker='None'),
+    etxl_len: float = 0.75,
+    kwargs_lines: dict = dict(lw=3),
+    pec="blue",
+    cpec="red",
+    kwargs_text: dict = dict(fontsize=20, color='black', ha='center', va='center')
+):
+    """
+    Function to plot a square lattice where the color and style of each link
+    can be controlled individually.
+    """
+    from  matplotlib import rc_context
+    x, y = np.meshgrid(np.arange(size), np.arange(size2), indexing='ij')  # Correct indexing for x and y
+
+    def determine_line_color(i, j, direction, pec, cpec):
+        """
+        Function to determine the color of a line based on its position and direction.
+        Customize this function to set specific link colors.
+        """
+        # Conditions for vertical lines
+        if direction == "vertical":
+            if i == 0 and j == 2:
+                return cpec
+            if i == 2 and j == 2:
+                return cpec
+            if i == 3 and j == 2:
+                return cpec
+            if i == 1 and j == 1:
+                return cpec
+            if i == 1 and j == 0:
+                return cpec
+            return pec
+        # Conditions for horizontal lines
+        elif direction == "horizontal":
+            if i == 3 and j == 2:
+                return cpec
+            if i == 3 and j == 1:
+                return cpec
+            if i == 1 and j == 0:
+                return cpec
+            if i == 2 and j == 0:
+                return cpec
+            return pec
+        else: 
+            return pec
+
+    def plot_line_with_style(ax, x_coords, y_coords, color, kwargs_lines, cpec):
+        """
+        Helper function to plot a line with a specific color and optional style.
+        """
+        kwargs_lines["color"] = color
+        if color == cpec:
+            with rc_context({'path.sketch': (5, 15, 1)}):
+                ax.plot(x_coords, y_coords, zorder=1, **kwargs_lines)
+        else:
+            ax.plot(x_coords, y_coords, zorder=1, **kwargs_lines)
+
+
+    # Plot lines individually with control over color
+    for i in range(size):
+        for j in range(size2):
+            # Vertical lines
+            if i < size - 1:
+                line_color = determine_line_color(i, j, "vertical", pec, cpec)
+                plot_line_with_style(ax, [x[i, j], x[i + 1, j]], [y[i, j], y[i + 1, j]], line_color, kwargs_lines, cpec)
+            
+            # Horizontal lines
+            if j < size2 - 1:
+                line_color = determine_line_color(i, j, "horizontal", pec, cpec)
+                plot_line_with_style(ax, [x[i, j], x[i, j + 1]], [y[i, j], y[i, j + 1]], line_color, kwargs_lines, cpec)
+            
+            # Nodes
+            ax.plot(x[i, j], y[i, j], zorder=2, **kwargs_nodes)
+            # Adjust text positioning and size
+            # ax.text(x[i, j] + 0.1, y[i, j] - 0.1, f'({x[i, j]}, {y[i, j]})', **kwargs_text)
+
+    for j in range(size2):
+        ax.plot([x[0, j], x[0, j]- etxl_len], [y[0, j], y[0, j]], c=random.choice([cpec, pec]), **kwargs_extl)
+        ax.plot([x[-1, j], x[-1, j]+ etxl_len], [y[-1, j], y[-1, j]], c=random.choice([cpec, pec]),**kwargs_extl)
+
+    for i in range(size):
+        # Extend downwards from the bottom nodes
+        ax.plot([x[i, 0], x[i, 0]], [y[i, 0], y[i, 0] - etxl_len], c=random.choice([cpec, pec]),**kwargs_extl)
+        # Extend upwards from the top nodes
+        ax.plot([x[i, -1], x[i, -1]], [y[i, -1], y[i, -1] + etxl_len], c=random.choice([cpec, pec]),**kwargs_extl)
+
+
+
+    ax.text(x[0, 2] + .5, y[0, 2] + 0.3, rf'single', c=cpec, **kwargs_text)
+    ax.text(x[3, 2] + .5, y[3, 2] + 0.3, r"$Z$", c=cpec, **kwargs_text)
+    ax.text(x[2, 0] + .3, y[2, 0] + 0.5, r"$X$", c=cpec, **kwargs_text)
+    # Add dashed lines on the boundaries with random colors
+    # add_boundary_lines(ax, size, size2, x, y, etxl_len, kwargs_extl, pec, cpec)
+
+    # Remove axes for a cleaner look
+    ax.axis("off")
+    ax.set_aspect('equal')
