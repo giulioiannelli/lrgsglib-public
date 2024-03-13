@@ -85,7 +85,7 @@ class Lattice2D(SignedGraph):
         return np.where(np.array(list(map(lambda x: x[1], 
                                           list(self.G.degree())))) != degree)
     #
-    def get_central_edge(self, on_graph: str = 'G'):
+    def get_central_edge(self, on_graph: str = DEFLattice2D_onrep):
         G = self.G
         if self.geo == 'triangular':
             cnode = (self.side1//2, self.side2//2)
@@ -94,8 +94,6 @@ class Lattice2D(SignedGraph):
             cnode = (self.side1//2-1, self.side2//2)
             cnode_t = (self.side1//2, self.side2//2)
         edge_t = (cnode, cnode_t)
-        if self.geo == 'squared':
-            return edge_t
         if not G.has_edge(cnode, cnode_t):
             if self.geo =='hexagonal':
                 cnode = cnode_t
@@ -108,58 +106,77 @@ class Lattice2D(SignedGraph):
     #
     class neg_weights_dicts_container(dict):
         NEG_WEIGHTS_DICT_G_PFLIP = {}
-        def __init__(self, l: SignedGraph, iterable=[], constant=None, **kwargs):
+        def __init__(self, l: SignedGraph, iterable=[], constant=None, 
+                     **kwargs):
             super().__init__(**kwargs)
             self.update((key, constant) for key in iterable)
             self.l = l
+            self.reprDict = list(self.l.GraphReprDict.keys())
             self.rNodeFlip = {g: random.sample(
-                list(self.l.GraphReprDict[g].nodes()), int(self.l.pflip*self.l.N))
-                for g in ['G', 'H']}
-            for n in self.rNodeFlip['G']:
-                if n not in set(self.l.G.nodes()):
-                    print(n, ' node error')
-            # #
-            self.centedge = {g: self.l.get_central_edge(g) for g in ['G', 'H']}
-            self['rand'] = {g: [e for e in self.l.rEdgeFlip[g]] for g in ['G', 'H']}
-            self['randXERR'] = {g: self.get_nwd_pattern('cross', on_graph=g) 
-                                   for g in ['G', 'H']}
-            self['randZERR'] = {g: self.get_nwd_pattern('unit_cell', on_graph=g) 
-                                   for g in ['G', 'H']}
-            self['center'] = {g: [self.centedge[g]]
-                                   for g in ['G', 'H']}
+                                    list(self.l.GraphReprDict[g].nodes()), 
+                                    int(self.l.pflip*self.l.N)
+                                ) for g in self.reprDict}
+            #
+            self.centedge = {g: self.l.get_central_edge(g) 
+                             for g in self.reprDict}
+            self['single'] = {g: [self.centedge[g]] for g in self.reprDict}
+            self['singleZERR'] = {g: self.get_links_ZERR(
+                self.centedge[g][0], g, self.l.geo) for g in self.reprDict}
+            self['singleXERR'] = {g: self.get_links_XERR(
+                self.centedge[g][0], g) for g in self.reprDict}
+            self['rand'] = {g: [e for e in self.l.rEdgeFlip[g]] 
+                            for g in self.reprDict}
+            self['randZERR'] = {g: self.get_rand_pattern('ZERR', on_graph=g) 
+                                   for g in self.reprDict}
+            self['randXERR'] = {g: self.get_rand_pattern('XERR', on_graph=g) 
+                                   for g in self.reprDict}
         #
-        def get_links_cross(self, node: Any, on_graph: str = 'G'):
+        def get_links_XERR(self, node: Any, on_graph: str = DEFLattice2D_onrep):
             return [(node, nn) for nn in self.l.graph_neighbors(node, on_graph)]
         #
-        def get_links_triangle(self, node: Any, on_graph = 'G'):
+        def get_links_ZERR(self, node: Any, on_graph: str = DEFLattice2D_onrep, 
+                           geometry: str = DEFLattice2D_geo):
+            dd = {'triangular': self.get_links_triangle,
+             'squared': self.get_links_square,
+             'hexagonal': self.get_links_hexagon}
+            return dd[geometry]
+        #
+        def get_links_triangle(self, node: Any, on_graph = DEFLattice2D_onrep):
             node2 = list(self.l.graph_neighbors(node, on_graph))[0]
-            common_neighbors = list(nx.common_neighbors(self.l.GraphReprDict[on_graph], node, node2))
-            node3 = common_neighbors[0]
-            links = [(node, node2), (node2, node3), (node, node3)]
+            common_neighbors = list(nx.common_neighbors(
+                self.l.GraphReprDict[on_graph], node, node2))
+            try:
+                node3 = common_neighbors[0]
+                links = [(node, node2), (node2, node3), (node, node3)]
+            except IndexError:
+                links = [(node, node2)]
             return links
         #
-        def get_links_square(self, node: Any, on_graph = 'G'):
-            graph = self.l.GraphReprDict[on_graph]
-            neighbors = list(graph.neighbors(node))    
+        def get_links_square(self, node: Any, on_graph = DEFLattice2D_onrep):
+            g = self.l.GraphReprDict[on_graph]
+            neighbors = list(g.neighbors(node))
             for i in range(1, len(neighbors)):
                 first_neighbor = neighbors[0]  # Always the first neighbor
                 second_neighbor = neighbors[i]  # Iterating through the rest
                 # Find common neighbors excluding the start_node
-                common_neighbors = set(graph.neighbors(first_neighbor)) & set(graph.neighbors(second_neighbor))
+                common_neighbors = set(g.neighbors(first_neighbor)) \
+                    & set(g.neighbors(second_neighbor))
                 common_neighbors.discard(node)
                 # If there is a common neighbor, we found a square
                 if common_neighbors:
-                    common_neighbor = common_neighbors.pop()  # Get one common neighbor to form a square
+                    common_neighbor = common_neighbors.pop()
                     # Now, extract the links forming the square
                     links = [(node, first_neighbor),
                             (node, second_neighbor),
                             (first_neighbor, common_neighbor),
                             (second_neighbor, common_neighbor)]
-                    
                     return links
-            return None
+            links = [(node, first_neighbor),
+                     (node, second_neighbor)]
+            return links
         #
-        def get_links_hexagon(self, node: int, on_graph: str = 'G'):
+        def get_links_hexagon(self, node: int, 
+                              on_graph: str = DEFLattice2D_onrep):
             graph = self.l.GraphReprDict[on_graph]
             nodes_in_cycle = [node]
             node_nn = list(self.l.GraphReprDict[on_graph].neighbors(node))
@@ -179,7 +196,8 @@ class Lattice2D(SignedGraph):
                     node_nn_1b = list(graph.neighbors(nn))
                     node_nn_1b.remove(node)
                     for i in node_nn_1b:
-                        common_neighs = list(nx.common_neighbors(graph, samp_node_nn_2, i))
+                        common_neighs = list(
+                            nx.common_neighbors(graph, samp_node_nn_2, i))
                         if common_neighs != []:
                             nodes_in_cycle.extend([nn, i, common_neighs[0]])
                             flag = False
@@ -192,17 +210,18 @@ class Lattice2D(SignedGraph):
             links = [tuple(sorted(edge)) for edge in subH.edges()]
             return links
         #
-        def get_nwd_pattern(self, mode: str, on_graph: str = 'G'):
-            if mode == "unit_cell":
+        def get_rand_pattern(self, mode: str, 
+                             on_graph: str = DEFLattice2D_onrep):
+            if mode == "ZERR":
                 if self.l.geo == 'squared':
                     mode = "square"
                 elif self.l.geo == 'triangular':
                     mode = "triangle"
                 elif self.l.geo == 'hexagonal':
                     mode = "hexagon"
-            if mode == "cross":
+            if mode == "XERR":
                 patternList = [k for i in self.rNodeFlip[on_graph] 
-                               for k in self.get_links_cross(i, on_graph)]
+                               for k in self.get_links_XERR(i, on_graph)]
             elif mode == "hexagon":
                 patternList = [k for i in self.rNodeFlip[on_graph]
                                 for k in self.get_links_hexagon(i, on_graph)]
@@ -212,13 +231,16 @@ class Lattice2D(SignedGraph):
             elif mode == "triangle":
                 patternList = [k for i in self.rNodeFlip[on_graph] 
                                for k in self.get_links_triangle(i, on_graph)]
-            return patternList
+            return list(set(patternList))
         #
-        def get_links_rball(self, R: int = 1, center: Any = None, on_graph: str = 'G'):
+        def get_links_rball(self, R: int = 1, center: Any = None, 
+                            on_graph: str = DEFLattice2D_onrep):
+            graph = self.l.GraphReprDict[on_graph]
             if not center:
                 center = self.centedge[on_graph][0]
-            neighs_to_flip = get_neighbors_within_distance(self.l.GraphReprDict[on_graph], center, R)
-            links = {(node, neighbor) for node in neighs_to_flip for neighbor in self.l.GraphReprDict[on_graph].neighbors(node)}
+            neighs_to_flip = get_neighbors_within_distance(graph, center, R)
+            links = {(node, neighbor) for node in neighs_to_flip 
+                     for neighbor in graph.neighbors(node)}
             return links
         # #
     def make_animation(self, fig, ax, frames):
