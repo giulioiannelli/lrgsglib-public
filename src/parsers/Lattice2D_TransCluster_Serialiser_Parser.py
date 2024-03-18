@@ -1,29 +1,35 @@
 from LRGSG_package.LRGSG import *
 description = """
-    [MODE] pCluster: This program computes the cluster distribution size of the sign fluctuation inside the signed Laplacian operator of a square lattice. It requires specifying the size of the lattice and the flipping probability. Optionally, it can average the results over multiple runs.\n\n
-    [MODE] phaseTr: Compute the order parameter of the transition and the susceptibility for a lattice setting.
+    [MODE] (slanzarv_)pCluster: This program computes the cluster distribution size of the sign fluctuation inside the signed Laplacian operator of a square lattice. It requires specifying the size of the lattice and the flipping probability. Optionally, it can average the results over multiple runs.\n\n
+    [MODE] (slanzarv_)ordParam: Compute the order parameter of the transition and the susceptibility for a lattice setting.
 """
 # Default values for the optional parameters
-DEFAULT_NUMBER_AVERAGES = 1000  # Assuming a default value for demonstration
+DEFAULT_NUMBER_AVERAGES = 10**4  # Assuming a default value for demonstration
 DEFAULT_OUT_SUFFIX = ""
-DEFAULT_MODE = 'phaseTr'
+DEFAULT_MODE = 'ordParam'
 DEFAULT_GEO = "squared"
 DEFAULT_CELL = "single"
-DEFAULT_PRINT = True
-DEFAULT_EXEC = False
+DEFAULT_PRINT = False
+DEFAULT_EXEC = "no"
+DEFAULT_mMB = 2**10
+DEFAULT_MMB = 2**14
 # Helpers for argparse descriptions
-HELP_print = """
+HELP_print = f"""
     Option to print the output of the Serialiser. | default={DEFAULT_PRINT}
 """
-HELP_except = """
+HELP_exc = f"""
+    Option to exec the output of the Serialiser. | default={DEFAULT_EXEC}
+"""
+# HELP_slanzarv = f"""
+#     Option to exec the output of the Serialiser. | default={DEFAULT_EXEC}
+# """
+HELP_mMB = f"""
+    Minimum MB quantity to be allocated for the single process | default={DEFAULT_mMB}
+"""
+HELP_MMB = f"""
+    Maximum MB quantity to be allocated for the single process | default={DEFAULT_MMB}
+"""
 
-"""
-HELP_L = """
-    Size (L) of the square lattice.
-"""
-HELP_p = """
-    Flipping probability (p) for edges.
-"""
 HELP_geo = f"""
     Geometry of the lattice. | default={DEFAULT_GEO}
 """
@@ -39,30 +45,38 @@ HELP_mode = f"""
 HELP_o = f"""
     Suffix for the output file name (optional) | default='{DEFAULT_OUT_SUFFIX}'
 """
+
+Lattice2D_TransCluster_progName = "Lattice2D_TransCluster"
+Lattice2D_TransCluster_progNameShrt = "L2D"
 # Setup the argument parser
 parser = argparse.ArgumentParser(description=description)
 # Required parameters
 parser.add_argument(
-    "-p", "--print"
-    help=HELP_PRINT,
-    default=DEFAULT_PRINT
-    type=bool,
+    "--print",
+    help=HELP_print,
+    action=argparse.BooleanOptionalAction,
 )
 parser.add_argument(
-    "-e", "--exec"
-    help=HELP_EXEC,
-    default=DEFAULT_EXEC
-    type=bool,
+    "--exec",
+    help=HELP_exc,
+    action=argparse.BooleanOptionalAction,
+)
+# parser.add_argument(
+#     "--slanzarv",
+#     help=HELP_slanzarv,
+#     action=argparse.BooleanOptionalAction,
+# )
+parser.add_argument(
+    "-mMB", "--slanzarv_minMB",
+    help=HELP_mMB,
+    default=DEFAULT_mMB,
+    type=str,
 )
 parser.add_argument(
-    "L",
-    help=HELP_L,
-    type=int,
-)
-parser.add_argument(
-    "p",
-    help=HELP_p,
-    type=float,
+    "-MMB", "--slanzarv_maxMB",
+    help=HELP_MMB,
+    default=DEFAULT_MMB,
+    type=str,
 )
 # Optional parameters
 parser.add_argument(

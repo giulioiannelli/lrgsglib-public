@@ -34,6 +34,8 @@ class Lattice2D(SignedGraph):
         self.side1 = side1
         if side2:
             self.side2 = side2
+        else:
+            self.side2 = self.side1
         #
     #
     def __init_geo__(self, geo: str) -> None:
@@ -46,12 +48,11 @@ class Lattice2D(SignedGraph):
                 self.geo = DEFLattice2D_geodictabb[geo]
         
         if self.geo == 'hexagonal':
-            if not hasattr(self, 'side2'):
-                self.side2 = adjust_to_even(self.side1*np.sqrt(3))
+            if self.side2 == self.side1:
+                self.side1 = adjust_to_even(self.side1/np.sqrt(3))
             if (self.side1 % 2 or self.side2 % 2) and self.pbc:
                 raise ValueError(DEFLattice2D_geoerrmsg)
-        else:
-            self.side2 = self.side1
+        
     #
     def __init_stdFname__(self, SFFX: str = "") -> None:
         self.stdFname = DEFLattice2D_geodict[self.geo] + SFFX
@@ -181,12 +182,12 @@ class Lattice2D(SignedGraph):
             nodes_in_cycle = [node]
             node_nn = list(self.l.GraphReprDict[on_graph].neighbors(node))
 
-            samp_node_nn_1 = random.sample(node_nn, 1)[0]
+            samp_node_nn_1 = node_nn[0]
             node_nn.remove(samp_node_nn_1)
             # #
             node_nn_1 = list(graph.neighbors(samp_node_nn_1))
             node_nn_1.remove(node)
-            samp_node_nn_2 = random.sample(node_nn_1, 1)[0]
+            samp_node_nn_2 = node_nn_1[0]
             node_nn_1.remove(samp_node_nn_2)
             #
             flag = True

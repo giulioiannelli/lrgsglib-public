@@ -92,6 +92,3 @@ DEFAULT_MAX_THRESHOLD = 2 * DEFAULT_SPIKE_THRESHOLD
 
 # default lists
 DEFAULT_ERGRAPH_ABBRV = "randGraph"
-
-
-Lattice2D_TransCluster_programName = "Lattice2D_TransCluster"
