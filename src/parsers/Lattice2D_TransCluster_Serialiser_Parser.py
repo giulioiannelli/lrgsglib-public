@@ -70,13 +70,13 @@ parser.add_argument(
     "-mMB", "--slanzarv_minMB",
     help=HELP_mMB,
     default=DEFAULT_mMB,
-    type=str,
+    type=int,
 )
 parser.add_argument(
     "-MMB", "--slanzarv_maxMB",
     help=HELP_MMB,
     default=DEFAULT_MMB,
-    type=str,
+    type=int,
 )
 # Optional parameters
 parser.add_argument(
