@@ -1,16 +1,14 @@
-import os
-import sys
-import numpy as np
+from LRGSG_package.LRGSG import *
+from .parsers.Lattice2D_TransCluster_Serialiser_Parser import *
 #
-programName = "Lattice2D_TransCluster"
-programNamesht = "L2D_TC"
-launchstr = f"python src/{programName}.py"
+progName =Lattice2D_TransCluster_programName
+lnchStr = f"python src/{progName}.py"
 do_print = True
 flag_mmemb = False
 slanzarv_OPT = False
-default_noAvg = 1000
+default_noAvg = 10**4
 mode = 'phaseTr'
-List = 2**np.arange(4, 11)
+List = 2**np.arange(4, 9)
 plist = {L: np.concatenate(
             (
                 np.linspace(1./L**1.5, 0.08, num=3),
@@ -27,6 +25,8 @@ if any(pmsg in sys.argv for pmsg in ["--pCluster", "-pC"]):
                 np.linspace(0.5, 1, num=5)
             )
         ) for L in List}
+programNamesht = f"L2D_{mode}"
+#
 if any(pmsg in sys.argv for pmsg in ["--execute", "-e"]):
     do_print = False
 if any(pmsg in sys.argv for pmsg in ["--verbose", "-v", "--print"]):
@@ -91,9 +91,10 @@ if mode == 'pCluster':
                 os.system(the_string)
             count += 1
 elif mode == 'phaseTr':
-    geometry_cell_dict = {'squared': ['single', 'singleZERR', 'singleXERR'],
-                        'triangular': ['single', 'singleZERR', 'singleXERR'],
-                        'hexagonal': ['single', 'singleZERR', 'singleXERR']}
+    DEFLattice2D_singcellist = ['single', 'singleXERR', 'singleZERR']
+    geometry_cell_dict = {'squared': DEFLattice2D_singcellist,
+                        'triangular': DEFLattice2D_singcellist,
+                        'hexagonal': DEFLattice2D_singcellist}
     #
     for L in List:
         for p in plist[L]:

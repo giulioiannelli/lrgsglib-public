@@ -1,4 +1,4 @@
-from Lattice2D_TransCluster_Parser import *
+from parsers.Lattice2D_TransCluster_Parser import *
 #
 args = parser.parse_args()
 if args.cell_type in ['square', 'triangle', 'hexagon']:
@@ -69,10 +69,15 @@ elif args.mode == 'phaseTr':
         Pinf[cont]=lattice.Pinf
         Pinf2[cont]=lattice.Pinf**2
         #
-        data=[lattice.pflip, np.sum(Pinf)/(1+avg), np.sum(Pinf2)/(1+avg), 
-        np.sum(Fluct)/(1+avg), np.sum(Fluct2)/(1+avg), 
-        np.var(Fluct[Fluct!=0]),int(avg+1)]
+        data=[lattice.pflip,
+              int(avg+1),
+              np.sum(Pinf)/(1+avg), 
+              np.sum(Pinf2)/(1+avg), 
+              np.sum(Fluct)/(1+avg), 
+              np.sum(Fluct2)/(1+avg), 
+              np.var(Fluct[Fluct!=0])]
         #
+        
         filename = file_path_maker(napath=avg+1)
         with open(filename, 'wb') as file:
             np.savetxt(file, np.atleast_2d(data), fmt='%.7g')

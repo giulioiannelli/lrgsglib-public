@@ -1,19 +1,30 @@
-import string
+import lmfit
 import pickle
+import string
+import random
 import numpy as np
 import networkx as nx
 #
 from .const import *
 from .errwar import *
 #
+from collections.abc import Iterable
+from cycler import cycler
 from numpy import ndarray
 from os import chdir, getcwd
 from os.path import join as pthjoin
-#
-from collections.abc import Iterable
 from scipy.interpolate import pchip
 from scipy.ndimage import shift
-
+#
+def sym_log_func_unsafe(x, a, b, c, d):
+    """Return values from a general log function with safety checks."""
+    # Ensure safe computation by adjusting values close to d
+    return a * np.log(b * (np.abs(x) - d)) + c
+def sym_log_func(x, a, b, c, d):
+    """Return values from a general log function with safety checks."""
+    # Ensure safe computation by adjusting values close to d
+    safe_x = np.where(np.abs(x) > d, np.abs(x), d + 1e-10)
+    return a * np.log(b * (safe_x - d)) + c
 
 def adjust_to_even(x):
     """

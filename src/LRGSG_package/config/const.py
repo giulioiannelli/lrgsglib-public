@@ -13,6 +13,10 @@ PATH_ROOTF = "LRG-Signed"
 DEFLBpflip = .0
 DEFUBpflip = 1.
 
+twilight_lim_low = 0.2
+twilight_lim_high = 0.8
+twilight_lim_blu = 0.65
+
 
 DIR_SRC_DEFAULT = "src/"
 DIR_PCK_DEFAULT = "LRGSG_package/"
@@ -53,6 +57,7 @@ DEFLattice2D_geoabblist = [DEFLattice2D_geoTri_abb,
 DEFLattice2D_geolist = [DEFLattice2D_geoTri, 
                         DEFLattice2D_geoSqr, 
                         DEFLattice2D_geoHex]
+DEFLattice2D_singcellist = ['single', 'singleXERR', 'singleZERR']
 #
 
 DEFLattice2D_p_cdict = {g: p for g,p in 
@@ -87,3 +92,6 @@ DEFAULT_MAX_THRESHOLD = 2 * DEFAULT_SPIKE_THRESHOLD
 
 # default lists
 DEFAULT_ERGRAPH_ABBRV = "randGraph"
+
+
+Lattice2D_TransCluster_programName = "Lattice2D_TransCluster"

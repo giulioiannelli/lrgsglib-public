@@ -1,17 +1,18 @@
-import random
 #
-import numpy as np
+from .const import *
+from .utils import *
+#
 import matplotlib.animation as animation
 import matplotlib.cm as cm
 import matplotlib.colors as mplc
 import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 #
-from cycler import cycler
 from matplotlib import gridspec
 from matplotlib.axes import Axes
-from matplotlib.cm import hsv
-from matplotlib.colors import Colormap, ListedColormap, LinearSegmentedColormap, Normalize
+from matplotlib.cm import hsv, twilight
+from matplotlib.colors import Colormap, ListedColormap
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
 from matplotlib.path import Path
 from matplotlib.text import Text
@@ -19,18 +20,20 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 #
-from .const import *
-
-
-twilight_lim_low = 0.2
-twilight_lim_high = 0.8
-twilight_lim_blu = 0.65
-cred = plt.cm.twilight(twilight_lim_low)
-cblu = plt.cm.twilight(twilight_lim_blu)
-restr_twilight_vals = plt.cm.twilight(np.linspace(twilight_lim_low, twilight_lim_high))
-restr_twilight = LinearSegmentedColormap.from_list("restr_twilight", restr_twilight_vals)
-
-
+#
+#
+#
+cred, cblu = twilight(twilight_lim_low), twilight(twilight_lim_blu)
+restr_twilight_vals = plt.cm.twilight(
+    np.linspace(twilight_lim_low, twilight_lim_high)
+)
+restr_twilight = LinearSegmentedColormap.from_list(
+    "restr_twilight", restr_twilight_vals
+)
+#
+#
+#
+#
 def set_new_lower_ybound(ax, new_lower_bound):
     """
     Sets a new lower bound for the y-axis of a matplotlib axes object,
@@ -43,8 +46,9 @@ def set_new_lower_ybound(ax, new_lower_bound):
     new_lower_bound : float
         The new lower limit for the y-axis.
     """
-    current_ylim = ax.get_ylim()  # Get current y-axis limits
-    ax.set_ylim(new_lower_bound, current_ylim[1])  # Update the lower limit
+    if new_lower_bound is not None:
+        current_ylim = ax.get_ylim()  # Get current y-axis limits
+        ax.set_ylim(new_lower_bound, current_ylim[1])  # Update the lower limit
 
 
 def set_alpha_torgb(rgbacol, alpha=0.5):
@@ -683,14 +687,14 @@ def plot_square_lattice(
 
 
 def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel', 
-                            geometry: str = 'squared', cell: str = 'single'):
+                            geometry: str = 'squared', cell: str = 'single', 
+                            fit_mode: str = 'lmfit'):
     #
     from .utils import flip_to_positive_majority
     from scipy.optimize import curve_fit
     #
-    kwlogfit = dict(marker='', c='red', label=r'$a\log(x) + b$')
-    def log_model(x, a, b):
-        return a * np.log(np.abs(x)) + b
+    newLowerBound = None
+    kwlogfit = dict(marker='', c='red')# label=r'$a\log(x) + b$'
     if direction == 'parallel':
         ylabel = r'${\phi(x,\, \bar{y}_\parallel)}/{\phi_{\min}}$'
         ax.set_xlabel(r'$x$')
@@ -707,13 +711,14 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
                 slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
         if cell == 'singleZERR':
             if direction == 'parallel':
-                xShiftConst = 1.
+                xShiftConst = 3.
                 slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
             else:
-                xShiftConst = +.5
+                xShiftConst = +1.
                 slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
     if cell != 'singleXERR':
-        newLowerBound = 0.
+        if direction == 'parallel':
+            newLowerBound = 0.
         def func(eigV):
             eigV = flip_to_positive_majority(eigV)
             eigV /= np.min(eigV)
@@ -721,7 +726,8 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
     else:
         def func(eigV):
             return eigV
-            
+
+    print(geometry, direction, cell, xShiftConst)       
     ax.set_ylabel(ylabel, labelpad=10)
     ax.set_xscale('symlog')
     #
@@ -735,28 +741,41 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
                 'label': fr"$N={side**2}$"} 
         eigV = lattices[side].eigV[0].reshape(lattices[side].syshape)
         eigen_state = func(eigV)
-        
         phi_plot = eigen_state[slice_cut(side)]
+        if side == sizes[-1]:
+            phi_plot0 = phi_plot
         # print(np.min(eigen_state), min(phi_plot), slice_cut(side))
-        x = np.linspace(-side//2, side//2, num=len(phi_plot))+xShiftConst
+        x = np.linspace(-side//2, side//2, num=side)+xShiftConst
         ax.plot(x, phi_plot, **kwdict)
     #
-    popt, pcov = curve_fit(log_model, x, phi_plot)
-    x = np.concatenate(
+    # idx = (x < -side//3) | (x > side//3)
+    x_values = np.linspace(-sizes[-1]//2, sizes[-1]//2, num=sizes[-1])+xShiftConst
+    y_values = phi_plot0
+    
+    x_plot = np.concatenate(
         [
             np.linspace(-sizes[-1]//2, -1, num=100),
             np.linspace(-1, 1, num=2000),
             np.linspace(1, sizes[-1]//2, num=100)
         ]
     )
-    ax.plot(x, log_model(x, *popt), **kwlogfit)
-
+    if fit_mode == 'lmfit':
+        true_params = dict(a=1, b=2, c=0.5, d=0.1)
+        # Create a Model with the function and fit to the data
+        regressor = lmfit.Model(sym_log_func, nan_policy='omit')
+        params = regressor.make_params(a=1, b=1.5, c=1, d=0)
+        params['b'].set(min=1e-10)  # Prevent b from being zero or negative
+        params['d'].set(min=-np.inf, max=np.inf) 
+        result = regressor.fit(y_values, params, x=x_values)
+        # y_fit = regressor.eval(params=result.params, x=x_plot)
+        popt = np.array([result.params[key].value for key in result.params])
+    elif fit_mode == 'scipy':
+        weights = np.abs(x)
+        popt, _ = curve_fit(sym_log_func, x, phi_plot0, sigma=1/weights, 
+                            p0=[1, 1.5, 1, 0])
+    y_fit = sym_log_func_unsafe(x_plot, *popt)
+    ax.plot(x_plot, y_fit, **kwlogfit)
     set_new_lower_ybound(ax, newLowerBound)
-    #
-    handles, labels = plt.gca().get_legend_handles_labels()
-    handles = handles[::-1]
-    labels = labels[::-1]
-    ax.legend(handles, labels, fontsize=24)
     #
     kwvlines = {'ls':'--', 'lw':1, 'c':'k'}
     for i in [-1, +1, -lattices[sizes[0]].r_c, +lattices[sizes[0]].r_c]:
