@@ -14,7 +14,7 @@ dependencies:
   - brotli=1.0.9=h5eee18b_7
   - brotli-bin=1.0.9=h5eee18b_7
   - bzip2=1.0.8=h5eee18b_5
-  - ca-certificates=2024.3.11=h06a4308_0
+  - ca-certificates
   - click=8.1.7=py39h06a4308_0
   - comm=0.1.2=py39h06a4308_0
   - contourpy=1.2.0=py39hdb19cb5_0
@@ -96,7 +96,7 @@ dependencies:
   - numpy-base=1.26.4=py39hb5e798b_0
   - openjpeg=2.4.0=h3ad879b_0
   - openssl=3.0.13=h7f8727e_0
-  - packaging=23.2=py39h06a4308_0
+  - packaging
   - pandas=2.1.4=py39h1128e8f_0
   - parso=0.8.3=pyhd3eb1b0_0
   - pathspec=0.12.1=pyhd8ed1ab_0
