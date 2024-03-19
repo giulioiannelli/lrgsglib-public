@@ -592,6 +592,7 @@ def plot_square_lattice(
     kwargs_lines: dict = dict(lw=3),
     pec="blue",
     cpec="red",
+    mode = 'defects',
     kwargs_text: dict = dict(fontsize=20, color='black', ha='center', va='center')
 ):
     """
@@ -600,38 +601,43 @@ def plot_square_lattice(
     """
     from  matplotlib import rc_context
     x, y = np.meshgrid(np.arange(size), np.arange(size2), indexing='ij')  # Correct indexing for x and y
+    if mode == 'defects':
+        def determine_line_color(i, j, direction):
+            """
+            Function to determine the color of a line based on its position and direction.
+            Customize this function to set specific link colors.
+            """
+            # Conditions for vertical lines
+            if direction == "vertical":
+                if i == 0 and j == 2:
+                    return cpec
+                if i == 2 and j == 2:
+                    return cpec
+                if i == 3 and j == 2:
+                    return cpec
+                if i == 1 and j == 1:
+                    return cpec
+                if i == 1 and j == 0:
+                    return cpec
+                return pec
+            # Conditions for horizontal lines
+            elif direction == "horizontal":
+                if i == 3 and j == 2:
+                    return cpec
+                if i == 3 and j == 1:
+                    return cpec
+                if i == 1 and j == 0:
+                    return cpec
+                if i == 2 and j == 0:
+                    return cpec
+                return pec
+            else: 
+                return pec
+    else:
+        def determine_line_color(*args):
+            return random.choice([cpec, pec])
 
-    def determine_line_color(i, j, direction, pec, cpec):
-        """
-        Function to determine the color of a line based on its position and direction.
-        Customize this function to set specific link colors.
-        """
-        # Conditions for vertical lines
-        if direction == "vertical":
-            if i == 0 and j == 2:
-                return cpec
-            if i == 2 and j == 2:
-                return cpec
-            if i == 3 and j == 2:
-                return cpec
-            if i == 1 and j == 1:
-                return cpec
-            if i == 1 and j == 0:
-                return cpec
-            return pec
-        # Conditions for horizontal lines
-        elif direction == "horizontal":
-            if i == 3 and j == 2:
-                return cpec
-            if i == 3 and j == 1:
-                return cpec
-            if i == 1 and j == 0:
-                return cpec
-            if i == 2 and j == 0:
-                return cpec
-            return pec
-        else: 
-            return pec
+
 
     def plot_line_with_style(ax, x_coords, y_coords, color, kwargs_lines, cpec):
         """
@@ -650,12 +656,12 @@ def plot_square_lattice(
         for j in range(size2):
             # Vertical lines
             if i < size - 1:
-                line_color = determine_line_color(i, j, "vertical", pec, cpec)
+                line_color = determine_line_color(i, j, "vertical")
                 plot_line_with_style(ax, [x[i, j], x[i + 1, j]], [y[i, j], y[i + 1, j]], line_color, kwargs_lines, cpec)
             
             # Horizontal lines
             if j < size2 - 1:
-                line_color = determine_line_color(i, j, "horizontal", pec, cpec)
+                line_color = determine_line_color(i, j, "horizontal")
                 plot_line_with_style(ax, [x[i, j], x[i, j + 1]], [y[i, j], y[i, j + 1]], line_color, kwargs_lines, cpec)
             
             # Nodes
@@ -674,10 +680,10 @@ def plot_square_lattice(
         ax.plot([x[i, -1], x[i, -1]], [y[i, -1], y[i, -1] + etxl_len], c=random.choice([cpec, pec]),**kwargs_extl)
 
 
-
-    ax.text(x[0, 2] + .5, y[0, 2] + 0.3, rf'single', c=cpec, **kwargs_text)
-    ax.text(x[3, 2] + .5, y[3, 2] + 0.3, r"$Z$", c=cpec, **kwargs_text)
-    ax.text(x[2, 0] + .3, y[2, 0] + 0.5, r"$X$", c=cpec, **kwargs_text)
+    if mode == 'defects':
+        ax.text(x[0, 2] + .5, y[0, 2] + 0.3, rf'single', c=cpec, **kwargs_text)
+        ax.text(x[3, 2] + .5, y[3, 2] + 0.3, r"$Z$", c=cpec, **kwargs_text)
+        ax.text(x[2, 0] + .3, y[2, 0] + 0.5, r"$X$", c=cpec, **kwargs_text)
     # Add dashed lines on the boundaries with random colors
     # add_boundary_lines(ax, size, size2, x, y, etxl_len, kwargs_extl, pec, cpec)
 
