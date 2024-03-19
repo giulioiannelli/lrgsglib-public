@@ -372,9 +372,9 @@ def triangular_lattice_graph_modified(
 
 
     from networkx import empty_graph, NetworkXError, set_node_attributes
-    H = empty_graph(0, create_using)
+    G = empty_graph(0, create_using)
     if n == 0 or m == 0:
-        return H
+        return G
     if periodic:
         if n < 5 or m < 3:
             msg = f"m > 2 and n > 4 required for periodic. m={m}, n={n}"
@@ -387,24 +387,24 @@ def triangular_lattice_graph_modified(
     if periodic:
         for i in range(n+1):
             for j in range(m+1):
-                H.add_node((i % n, j % m))  # Add node with PBC
+                G.add_node((i % n, j % m))  # Add node with PBC
                 # Add horizontal edges within the grid, with PBC for the last column
                 if i < n or j % 2 == 0:  # For even rows, wrap horizontally
-                    H.add_edge((i % n, j % m), ((i + 1) % n, j % m))
+                    G.add_edge((i % n, j % m), ((i + 1) % n, j % m))
                 # Add vertical and diagonal edges, with PBC for the last row
                 if j < m:
-                    H.add_edge((i % n, j % m), (i % n, (j + 1) % m))
+                    G.add_edge((i % n, j % m), (i % n, (j + 1) % m))
                     if j % 2:  # Diagonal for even rows
-                        H.add_edge((i % n, j % m), ((i + 1) % n, (j + 1) % m))
+                        G.add_edge((i % n, j % m), ((i + 1) % n, (j + 1) % m))
                     else:  # Diagonal for odd rows, wrapping if at the edge
-                        H.add_edge((i % n, j % m), ((i - 1) % n, (j + 1) % m))
+                        G.add_edge((i % n, j % m), ((i - 1) % n, (j + 1) % m))
     else:
         # Make grid
-        H.add_edges_from(((i, j), (i + 1, j)) for j in rows for i in cols[:n-1])
-        H.add_edges_from(((i, j), (i, j + 1)) for j in rows[:m-1] for i in cols)
+        G.add_edges_from(((i, j), (i + 1, j)) for j in rows for i in cols[:n-1])
+        G.add_edges_from(((i, j), (i, j + 1)) for j in rows[:m-1] for i in cols)
         # # add diagonals
-        H.add_edges_from(((i, j), (i + 1, j + 1)) for j in rows[1:m-1:2] for i in cols[:n-1])
-        H.add_edges_from(((i + 1, j), (i, j + 1)) for j in rows[:m-1:2] for i in cols[:n-1])
+        G.add_edges_from(((i, j), (i + 1, j + 1)) for j in rows[1:m-1:2] for i in cols[:n-1])
+        G.add_edges_from(((i + 1, j), (i, j + 1)) for j in rows[:m-1:2] for i in cols[:n-1])
 
     # Add position node attributes
     if with_positions:
@@ -416,9 +416,9 @@ def triangular_lattice_graph_modified(
             yy = (h * j + 0.01 * i * i for i in cols for j in rows)
         else:
             yy = (h * j for i in cols for j in rows)
-        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in H}
-        set_node_attributes(H, pos, "pos")
-    return H
+        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in G}
+        set_node_attributes(G, pos, "pos")
+    return G
 
 
 def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None) -> nx.Graph:
@@ -453,9 +453,9 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
         If periodic is True and m < 3 or n < 5.
     """
     from networkx import empty_graph, NetworkXError, set_node_attributes
-    H = empty_graph(0, create_using)
+    G = empty_graph(0, create_using)
     if n == 0 or m == 0:
-        return H
+        return G
     if periodic:
         if n < 5 or m < 3:
             msg = f"m > 2 and n > 4 required for periodic. m={m}, n={n}"
@@ -466,24 +466,24 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
     if periodic:
         for i in range(n+1):
             for j in range(m+1):
-                H.add_node((i % n, j % m))  # Add node with PBC
+                G.add_node((i % n, j % m))  # Add node with PBC
                 # Add horizontal edges within the grid, with PBC for the last column
                 if i < n or j % 2 == 0:  # For even rows, wrap horizontally
-                    H.add_edge((i % n, j % m), ((i + 1) % n, j % m))
+                    G.add_edge((i % n, j % m), ((i + 1) % n, j % m))
                 # Add vertical and diagonal edges, with PBC for the last row
                 if j < m:
-                    H.add_edge((i % n, j % m), (i % n, (j + 1) % m))
+                    G.add_edge((i % n, j % m), (i % n, (j + 1) % m))
                     if j % 2:  # Diagonal for even rows
-                        H.add_edge((i % n, j % m), ((i + 1) % n, (j + 1) % m))
+                        G.add_edge((i % n, j % m), ((i + 1) % n, (j + 1) % m))
                     else:  # Diagonal for odd rows, wrapping if at the edge
-                        H.add_edge((i % n, j % m), ((i - 1) % n, (j + 1) % m))
+                        G.add_edge((i % n, j % m), ((i - 1) % n, (j + 1) % m))
     else:
         # Make grid
-        H.add_edges_from(((i, j), (i + 1, j)) for j in rows for i in cols[:n-1])
-        H.add_edges_from(((i, j), (i, j + 1)) for j in rows[:m-1] for i in cols)
+        G.add_edges_from(((i, j), (i + 1, j)) for j in rows for i in cols[:n-1])
+        G.add_edges_from(((i, j), (i, j + 1)) for j in rows[:m-1] for i in cols)
         # add diagonals
-        H.add_edges_from(((i, j), (i + 1, j + 1)) for j in rows[1:m-1:2] for i in cols[:n-1])
-        H.add_edges_from(((i + 1, j), (i, j + 1)) for j in rows[:m-1:2] for i in cols[:n-1])
+        G.add_edges_from(((i, j), (i + 1, j + 1)) for j in rows[1:m-1:2] for i in cols[:n-1])
+        G.add_edges_from(((i + 1, j), (i, j + 1)) for j in rows[:m-1:2] for i in cols[:n-1])
 
     # Add position node attributes
     if with_positions:
@@ -495,9 +495,9 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
             yy = (h * j + 0.01 * i * i for i in cols for j in rows)
         else:
             yy = (h * j for i in cols for j in rows)
-        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in H}
-        set_node_attributes(H, pos, "pos")
-    return H
+        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in G}
+        set_node_attributes(G, pos, "pos")
+    return G
 
 
 

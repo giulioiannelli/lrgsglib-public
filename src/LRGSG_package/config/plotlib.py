@@ -696,44 +696,44 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
     newLowerBound = None
     xShiftConst = 0
     kwlogfit = dict(marker='', c='red')# label=r'$a\log(x) + b$'
-    if direction == 'parallel':
-        ylabel = r'${\phi(x,\, \bar{y}_\parallel)}/{\phi_{\min}}$'
-        ax.set_xlabel(r'$x$')
-    else:
+    if direction == 'perpendicular':
         ylabel = r'${\phi(\bar{x}_\perp,\, y)}/{\phi_{\min}}$'
         ax.set_xlabel(r'$y$')
+    else:
+        ylabel = r'${\phi(x,\, \bar{y}_\parallel)}/{\phi_{\min}}$'
+        ax.set_xlabel(r'$x$')
     if geometry == 'squared':
         if cell == 'single':
             if direction == 'parallel':
-                xShiftConst = 0
+                xShiftConst = -.5
+                newLowerBound = .5
                 slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
             else:
-                xShiftConst = -.5
+                xShiftConst = 0
+                newLowerBound = 0
                 slice_cut = lambda side: np.s_[lattices[side].side1//2, :]
         if cell == 'singleZERR':
             if direction == 'parallel':
-                xShiftConst = +1
-                slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
+                xShiftConst = 0
+                newLowerBound = -.5
+                slice_cut = lambda side: np.s_[:, lattices[side].side2//2-1]
             else:
-                xShiftConst = +0
-                slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
+                xShiftConst = 1
+                newLowerBound = -.5
+                slice_cut = lambda side: np.s_[lattices[side].side1//2, :]
 
         if cell == 'singleXERR':
             if direction == 'parallel':
-                xShiftConst = +.5
-                slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
-            else:
                 xShiftConst = -.5
-                slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
+                slice_cut = lambda side: np.s_[:, lattices[side].side2//2-1]
+            else:
+                xShiftConst = +.5
+                slice_cut = lambda side: np.s_[lattices[side].side1//2, :]
             def func(eigV):
                 eigV = flip_to_positive_majority(eigV)
                 eigV /= np.max(eigV)
                 return eigV
         else:
-            if direction == 'parallel':
-                newLowerBound = 0
-            if direction == 'perpendicular' and cell == 'singleZERR':
-                newLowerBound = 0
             def func(eigV):
                 eigV = flip_to_positive_majority(eigV)
                 eigV /= np.min(eigV)
@@ -751,14 +751,21 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
                 eigV /= np.max(eigV)
                 return eigV
         if direction == 'parallel':
-            slice_cut = lambda side: np.s_[:, lattices[side].side2//2-3]
-        else:
+            xShiftConst = -1
+            if cell == 'singleZERR':
+                xShiftConst = 0
+            elif cell == 'singleXERR':
+                xShiftConst = -.5
             slice_cut = lambda side: np.s_[lattices[side].side1//2, :]
+            if cell != 'singleXERR':
+                newLowerBound = .5 
+        else:
+            xShiftConst = -.5
+            slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
 
     
     
 
-    print(geometry, direction, cell, xShiftConst, newLowerBound)       
     ax.set_ylabel(ylabel, labelpad=10)
     ax.set_xscale('symlog')
     #
@@ -779,7 +786,10 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
         if geometry == 'squared':
             sideop = side
         elif geometry == 'triangular':
-            sideop = lattices[side].side1 
+            if direction == 'parallel':
+                sideop = lattices[side].side2 
+            elif direction == 'perpendicular':
+                sideop = lattices[side].side1
         x = np.linspace(-sideop//2, sideop//2, num=sideop)+xShiftConst
         ax.plot(x, phi_plot, **kwdict)
     #

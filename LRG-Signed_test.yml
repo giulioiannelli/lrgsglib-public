@@ -14,7 +14,7 @@ dependencies:
   - brotli=1.0.9=h5eee18b_7
   - brotli-bin=1.0.9=h5eee18b_7
   - bzip2=1.0.8=h5eee18b_5
-  - ca-certificates=2024.2.2=hbcca054_0
+  - ca-certificates=2024.3.11=h06a4308_0
   - click=8.1.7=py39h06a4308_0
   - comm=0.1.2=py39h06a4308_0
   - contourpy=1.2.0=py39hdb19cb5_0
@@ -45,6 +45,7 @@ dependencies:
   - jpeg=9e=h5eee18b_1
   - jupyter_client=8.6.0=py39h06a4308_0
   - jupyter_core=5.5.0=py39h06a4308_0
+  - kiwisolver=1.4.2=py39hf939315_1
   - krb5=1.20.1=h143b758_1
   - lcms2=2.12=h3be6417_0
   - ld_impl_linux-64=2.38=h1181459_1
@@ -98,6 +99,7 @@ dependencies:
   - packaging=23.2=py39h06a4308_0
   - pandas=2.1.4=py39h1128e8f_0
   - parso=0.8.3=pyhd3eb1b0_0
+  - pathspec=0.12.1=pyhd8ed1ab_0
   - pcre2=10.42=hebb0a14_0
   - pexpect=4.8.0=pyhd3eb1b0_3
   - pickleshare=0.7.5=pyhd3eb1b0_1003
@@ -116,6 +118,7 @@ dependencies:
   - python=3.9.18=h955ad1f_0
   - python-dateutil=2.8.2=pyhd3eb1b0_0
   - python-tzdata=2023.3=pyhd3eb1b0_0
+  - python_abi=3.9=2_cp39
   - pytz=2023.3.post1=py39h06a4308_0
   - pyzmq=25.1.0=py39h6a678d5_0
   - qt-main=5.15.2=h53bd1ea_10
@@ -143,8 +146,3 @@ dependencies:
   - zipp=3.17.0=py39h06a4308_0
   - zlib=1.2.13=h5eee18b_0
   - zstd=1.5.5=hc292b87_0
-  - pip:
-      - kiwisolver==1.4.5
-      - lrgsg-package==0.0.1
-      - pathspec==0.12.1
-prefix: /home/opisthofulax/anaconda3/envs/LRG-Signed
