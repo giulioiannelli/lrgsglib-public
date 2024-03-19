@@ -701,7 +701,7 @@ def flip_to_positive_majority(arr):
         >>> import numpy as np
         >>> arr = np.array([1, -2, -3, 4, -5])
         >>> flip_to_positive_majority(arr)
-        array([ 1,  2,  3,  4,  5])
+        array([ -1,  2,  3,  -4,  5])
 
         >>> arr = np.array([-1, 2, 3])
         >>> flip_to_positive_majority(arr)
@@ -736,8 +736,10 @@ def shift_with_wrap(image, shift_right, shift_down):
     return shifted_image
 
 
-def unravel_1d_to_2d_nodemap(arr1d, imap):
-    arr_2d = np.empty(tuple(int(np.sqrt(len(arr1d))) for i in range(2)), dtype=arr1d.dtype)
+def unravel_1d_to_2d_nodemap(arr1d, imap, dims: Tuple = None):
+    if not dims:
+        dims = tuple(int(np.sqrt(len(arr1d))) for i in range(2))
+    arr_2d = np.empty(dims, dtype=arr1d.dtype)
     for idx_1d, (row, col) in imap.items():
         arr_2d[col, row] = arr1d[idx_1d]
     return arr_2d

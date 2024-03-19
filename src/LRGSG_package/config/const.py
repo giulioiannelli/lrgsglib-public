@@ -1,6 +1,8 @@
-from typing import Any, Optional, Union, List
+from typing import Any, Optional, Union, List, Tuple
 from scipy.sparse import csr_array
 from networkx.classes.graph import Graph
+#
+ColorType = Union[Tuple[int, int, int], Tuple[float, float, float], Tuple[int, int, int, int], Tuple[float, float, float, float], str]
 # extensions
 ePDF = ".pdf"
 eTXT = ".txt"

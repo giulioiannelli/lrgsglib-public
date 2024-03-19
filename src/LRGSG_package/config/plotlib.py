@@ -694,6 +694,7 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
     from scipy.optimize import curve_fit
     #
     newLowerBound = None
+    xShiftConst = 0
     kwlogfit = dict(marker='', c='red')# label=r'$a\log(x) + b$'
     if direction == 'parallel':
         ylabel = r'${\phi(x,\, \bar{y}_\parallel)}/{\phi_{\min}}$'
@@ -704,30 +705,60 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
     if geometry == 'squared':
         if cell == 'single':
             if direction == 'parallel':
-                xShiftConst = 0.
+                xShiftConst = 0
+                slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
+            else:
+                xShiftConst = -.5
+                slice_cut = lambda side: np.s_[lattices[side].side1//2, :]
+        if cell == 'singleZERR':
+            if direction == 'parallel':
+                xShiftConst = +1
+                slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
+            else:
+                xShiftConst = +0
+                slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
+
+        if cell == 'singleXERR':
+            if direction == 'parallel':
+                xShiftConst = +.5
                 slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
             else:
                 xShiftConst = -.5
                 slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
-        if cell == 'singleZERR':
+            def func(eigV):
+                eigV = flip_to_positive_majority(eigV)
+                eigV /= np.max(eigV)
+                return eigV
+        else:
             if direction == 'parallel':
-                xShiftConst = 3.
-                slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
-            else:
-                xShiftConst = +1.
-                slice_cut = lambda side: np.s_[lattices[side].side1//2-1, :]
-    if cell != 'singleXERR':
+                newLowerBound = 0
+            if direction == 'perpendicular' and cell == 'singleZERR':
+                newLowerBound = 0
+            def func(eigV):
+                eigV = flip_to_positive_majority(eigV)
+                eigV /= np.min(eigV)
+                return eigV
+    elif geometry == 'triangular':
+        xShiftConst = 0
+        if cell != 'singleXERR':
+            def func(eigV):
+                eigV = flip_to_positive_majority(eigV)
+                eigV /= np.min(eigV)
+                return eigV
+        else:
+            def func(eigV):
+                eigV = flip_to_positive_majority(eigV)
+                eigV /= np.max(eigV)
+                return eigV
         if direction == 'parallel':
-            newLowerBound = 0.
-        def func(eigV):
-            eigV = flip_to_positive_majority(eigV)
-            eigV /= np.min(eigV)
-            return eigV
-    else:
-        def func(eigV):
-            return eigV
+            slice_cut = lambda side: np.s_[:, lattices[side].side2//2-3]
+        else:
+            slice_cut = lambda side: np.s_[lattices[side].side1//2, :]
 
-    print(geometry, direction, cell, xShiftConst)       
+    
+    
+
+    print(geometry, direction, cell, xShiftConst, newLowerBound)       
     ax.set_ylabel(ylabel, labelpad=10)
     ax.set_xscale('symlog')
     #
@@ -739,7 +770,7 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
                 'ms': 10, 
                 'mfc': set_alpha_torgb(c, 0.75), 
                 'label': fr"$N={side**2}$"} 
-        eigV = lattices[side].eigV[0].reshape(lattices[side].syshape)
+        eigV = unravel_1d_to_2d_nodemap(lattices[side].eigV[0], lattices[side].invnode_map, lattices[side].syshape)
         eigen_state = func(eigV)
         phi_plot = eigen_state[slice_cut(side)]
         if side == sizes[-1]:
@@ -748,33 +779,34 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
         x = np.linspace(-side//2, side//2, num=side)+xShiftConst
         ax.plot(x, phi_plot, **kwdict)
     #
-    # idx = (x < -side//3) | (x > side//3)
-    x_values = np.linspace(-sizes[-1]//2, sizes[-1]//2, num=sizes[-1])+xShiftConst
-    y_values = phi_plot0
-    
-    x_plot = np.concatenate(
-        [
-            np.linspace(-sizes[-1]//2, -1, num=100),
-            np.linspace(-1, 1, num=2000),
-            np.linspace(1, sizes[-1]//2, num=100)
-        ]
-    )
-    if fit_mode == 'lmfit':
-        true_params = dict(a=1, b=2, c=0.5, d=0.1)
-        # Create a Model with the function and fit to the data
-        regressor = lmfit.Model(sym_log_func, nan_policy='omit')
-        params = regressor.make_params(a=1, b=1.5, c=1, d=0)
-        params['b'].set(min=1e-10)  # Prevent b from being zero or negative
-        params['d'].set(min=-np.inf, max=np.inf) 
-        result = regressor.fit(y_values, params, x=x_values)
-        # y_fit = regressor.eval(params=result.params, x=x_plot)
-        popt = np.array([result.params[key].value for key in result.params])
-    elif fit_mode == 'scipy':
-        weights = np.abs(x)
-        popt, _ = curve_fit(sym_log_func, x, phi_plot0, sigma=1/weights, 
-                            p0=[1, 1.5, 1, 0])
-    y_fit = sym_log_func_unsafe(x_plot, *popt)
-    ax.plot(x_plot, y_fit, **kwlogfit)
+    if fit_mode and cell != 'singleXERR':
+        # idx = (x < -side//3) | (x > side//3)
+        x_values = np.linspace(-sizes[-1]//2, sizes[-1]//2, num=sizes[-1])+xShiftConst
+        y_values = phi_plot0
+        
+        x_plot = np.concatenate(
+            [
+                np.linspace(-sizes[-1]//2, -1, num=100),
+                np.linspace(-1, 1, num=2000),
+                np.linspace(1, sizes[-1]//2, num=100)
+            ]
+        )
+        if fit_mode == 'lmfit':
+            true_params = dict(a=1, b=2, c=0.5, d=0.1)
+            # Create a Model with the function and fit to the data
+            regressor = lmfit.Model(sym_log_func, nan_policy='omit')
+            params = regressor.make_params(a=1, b=1.5, c=1, d=0)
+            params['b'].set(min=1e-10)  # Prevent b from being zero or negative
+            params['d'].set(min=-np.inf, max=np.inf) 
+            result = regressor.fit(y_values, params, x=x_values)
+            # y_fit = regressor.eval(params=result.params, x=x_plot)
+            popt = np.array([result.params[key].value for key in result.params])
+        elif fit_mode == 'scipy':
+            weights = np.abs(x)
+            popt, _ = curve_fit(sym_log_func, x, phi_plot0, sigma=1/weights, 
+                                p0=[1, 1.5, 1, 0])
+        y_fit = sym_log_func_unsafe(x_plot, *popt)
+        ax.plot(x_plot, y_fit, **kwlogfit)
     set_new_lower_ybound(ax, newLowerBound)
     #
     kwvlines = {'ls':'--', 'lw':1, 'c':'k'}

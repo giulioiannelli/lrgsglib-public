@@ -2,12 +2,6 @@ from .nx_objects import *
 
 
 class SignedGraph:
-    p_c = None
-    lsp = None
-    slspectrum = None
-    rEdgeFlip = {}
-    GraphReprDict = {}
-
     def __init__(
         self,
         G: Graph,
@@ -28,6 +22,9 @@ class SignedGraph:
         else:
             self.pflip = pflip
         self.lsp_mode = lsp_mode
+        self.p_c = None
+        self.slspectrum = None
+        self.rEdgeFlip = {}
         self.import_on = import_on
         self.__make_dirs__()
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
@@ -44,8 +41,12 @@ class SignedGraph:
 
     #
     def __init_graph_reprdict__(self):
+        self.GraphReprDict = {}
         self.GraphReprDict['G'] = self.G
-        self.GraphReprDict['H'] = self.H
+        try:
+            self.GraphReprDict['H'] = self.H
+        except KeyError:
+            pass
 
     def __init_graph_fromfile__(self):
         return pickle.load(open(f"{self.graphFname}{ePKL}", "rb"))
@@ -468,17 +469,19 @@ class SignedGraph:
                 fp.write("%s %s %s\n" % item)
             print("Done")
     #
-    def get_edge_color(self, on_graph: str = 'G'):
+    def get_edge_color(self, on_graph: str = 'G', pec: ColorType = 'blue', nec: ColorType = 'red'):
         def map_values(value):
             if value == -1:
-                return 'r'
+                return nec
             elif value == 1:
-                return 'blue'
+                return pec
             else:
                 return value
         arr = nx.get_edge_attributes(self.GraphReprDict[on_graph], 'weight')
         return list(map(map_values, arr.values()))
-    def get_pos(self, on_graph: str = 'G'):
+        # return list(map(lambda x: pec if x == 1 else nec, nx.get_edge_attributes(self.GraphReprDict[on_graph], 'weight').values()))
+    #
+    def get_node_pos(self, on_graph: str = 'G'):
         return nx.get_node_attributes(self.GraphReprDict[on_graph], 'pos')
 
 

@@ -52,6 +52,10 @@ class Lattice2D(SignedGraph):
                 self.side1 = adjust_to_even(self.side1/np.sqrt(3))
             if (self.side1 % 2 or self.side2 % 2) and self.pbc:
                 raise ValueError(DEFLattice2D_geoerrmsg)
+        elif self.geo == 'triangular':
+            self.side2 = int(2*self.side1/np.sqrt(3))
+            # if (self.side1 % 2 or self.side2 % 2) and self.pbc:
+            #     raise ValueError(DEFLattice2D_geoerrmsg)
         
     #
     def __init_stdFname__(self, SFFX: str = "") -> None:
