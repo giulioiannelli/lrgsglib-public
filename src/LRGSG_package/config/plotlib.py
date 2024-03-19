@@ -776,7 +776,11 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
         if side == sizes[-1]:
             phi_plot0 = phi_plot
         # print(np.min(eigen_state), min(phi_plot), slice_cut(side))
-        x = np.linspace(-side//2, side//2, num=side)+xShiftConst
+        if geometry == 'squared':
+            sideop = side
+        elif geometry == 'triangular':
+            sideop = lattices[side].side1 
+        x = np.linspace(-sideop//2, sideop//2, num=sideop)+xShiftConst
         ax.plot(x, phi_plot, **kwdict)
     #
     if fit_mode and cell != 'singleXERR':
