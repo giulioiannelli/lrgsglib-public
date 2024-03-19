@@ -1,5 +1,6 @@
 #paths
 data/*
+!data/plot/paper
 .trash/*
 #extensions
 *.pdf
