@@ -77,7 +77,19 @@ parser.add_argument(
     default=DEFAULT_MMB,
     type=int,
 )
-
+parser.add_argument(
+    "-g",
+    "--geometry",
+    default=DEFAULT_GEO,
+    help=HELP_geo,
+    type=str,
+)
+parser.add_argument(
+    "-c", "--cell_type",
+    default=DEFAULT_CELL,
+    help=HELP_cell,
+    type=str,
+)
 parser.add_argument(
     "-nA",
     "--number_of_averages",

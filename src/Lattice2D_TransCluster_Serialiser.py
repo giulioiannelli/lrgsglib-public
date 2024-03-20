@@ -4,8 +4,9 @@ from parsers.Lattice2D_TransCluster_Serialiser_Parser import *
 args = parser.parse_args()
 
 progName = Lattice2D_TransCluster_progName
-progNameShrt = f"{Lattice2D_TransCluster_progNameShrt}_{args.mode[:-8]}"
+progNameShrt = f"{Lattice2D_TransCluster_progNameShrt}"
 lnchStr = f"python src/{progName}.py"
+navg = args.number_of_averages
 # List = 2**np.arange(4, 9)
 List = [16, 32, 48, 64, 96, 128]
 #
@@ -20,7 +21,7 @@ if args.mode.startswith('slanzarv'):
                 
     def slanzarv_STR(mode, L, p, geo, c):
         slanzarvstr = f'slanzarv -m {memoryfunc(L)} --nomail --jobname '
-        argstr = f'"{progNameShrt}{mode}_{L}_{p:.3g}_{geo}_{c}"'
+        argstr = f'"{progNameShrt}{mode}_{L}_{p:.3g}_{geo[:3]}_{c[4:]}"'
         return slanzarvstr + argstr 
 else:
     def slanzarv_STR(*args):
@@ -39,6 +40,11 @@ if args.exec or args.print:
     elif args.print:
         def operate(s, *args):
             print(s)
+    def exec_string(L, p, geo, cell, navg, mode):
+        argstr = (f"{L} {p:.3g} -g {geo} -c {cell} -n "
+                    f"{navg} --mode={mode}")
+        return (f"{slanzarv_STR(mode, L, p, geo, cell)} "
+                        f"{lnchStr} {argstr}")
     count = 0
     if args.mode.endswith('pCluster'):
         mode = 'pCluster'
@@ -54,7 +60,7 @@ if args.exec or args.print:
         #
         for L in List:
             for p in plist[L]:
-                argstr = f"""{L} {p:.3g} -g {geo} -c {cell} -nA 
+                argstr = f"""{L} {p:.3g} -g {geo} -c {cell} -A 
                     {args.number_of_averages} --mode={mode}"""
                 the_string = f"""{slanzarv_STR(mode, L, p, geo, cell)} 
                     {lnchStr} {argstr}"""
@@ -62,6 +68,7 @@ if args.exec or args.print:
                 count += 1
     elif args.mode.endswith('ordParam'):
         mode = 'ordParam'
+
         DEFLattice2D_singcellist = ['rand', 'randXERR', 'randZERR']
         geometry_cell_dict = {'squared': DEFLattice2D_singcellist,
                             'triangular': DEFLattice2D_singcellist,
@@ -79,11 +86,8 @@ if args.exec or args.print:
         #
         for L in List:
             for geo, cellst in geometry_cell_dict.items():
-                for c in cellst:
-                    for p in plist[geo][c]:
-                        argstr = f"""{L} {p:.3g} -g {geo} -c {c} -nA 
-                            {args.number_of_averages} --mode={mode}"""
-                        the_string = f"""{slanzarv_STR(mode, L, p, geo, c)} 
-                            {lnchStr} {argstr}"""
-                        operate(the_string, count)         
+                for cell in cellst:
+                    for p in plist[geo][cell]:
+                        estring = exec_string(L, p, geo, cell, navg, mode)
+                        operate(estring, count)         
     print("submitted jobs: ", count)
