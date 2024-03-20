@@ -8,7 +8,7 @@ progNameShrt = f"{Lattice2D_TransCluster_progNameShrt}"
 lnchStr = f"python src/{progName}.py"
 navg = args.number_of_averages
 # List = 2**np.arange(4, 9)
-List = [16, 32, 48, 64, 96, 128]
+List = [8, 16, 32, 48, 64, 96, 128]
 #
 if args.mode.startswith('slanzarv'):
     if args.slanzarv_minMB == args.slanzarv_maxMB:
