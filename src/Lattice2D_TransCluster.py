@@ -45,7 +45,7 @@ def file_path_maker(mpath, ppath = p,
                     spath = outsx,
                     ctpath = cell,
                     extout = extout):
-    return f'{mpath}{mode}_p={ppath:.3g}_{ctpath}_na={napath}{spath}{extout}'
+    return f'{mpath}{mode}_p={ppath:.3g}_{ctpath}_na={napath}_{spath}{extout}'
 #
 lattice = Lattice2D(side, pflip=p, geo=geo, 
                     init_weight_dict=False, 

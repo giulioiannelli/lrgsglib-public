@@ -28,14 +28,16 @@ else:
 #
 if args.exec or args.print:
     if args.exec and args.print:
-        def operate(s):
+        def operate(s, count):
             print(s)
             os.system(s)
+            count += 1
     elif args.exec:
-        def operate(s):
+        def operate(s, count):
             os.system(s)
+            count += 1
     elif args.print:
-        def operate(s):
+        def operate(s, *args):
             print(s)
     count = 0
     if args.mode.endswith('pCluster'):
@@ -54,7 +56,7 @@ if args.exec or args.print:
             for p in plist[L]:
                 argstr = f"{L} {p:.3g} -g {geo} -c {cell} -nA {args.number_of_averages} --mode={mode}"
                 the_string = f"{slanzarv_STR(mode, L, p, geo, cell)} {lnchStr} {argstr}"
-                operate(the_string)
+                operate(the_string, count)
                 count += 1
     elif args.mode.endswith('ordParam'):
         mode = 'ordParam'
@@ -78,6 +80,5 @@ if args.exec or args.print:
                     for p in plist[geo][c]:
                         argstr = f"{L} {p:.3g} -g {geo} -c {c} -nA {args.number_of_averages} --mode={mode}"
                         the_string = f"{slanzarv_STR(mode, L, p, geo, c)} {lnchStr} {argstr}"
-                        operate(the_string)
-                        count += 1
+                        operate(the_string, count)         
     print("submitted jobs: ", count)

@@ -1,7 +1,6 @@
 from LRGSG_package.LRGSG import *
 description = """
-    [MODE] (slanzarv_)pCluster: This program computes the cluster distribution size of the sign fluctuation inside the signed Laplacian operator of a square lattice. It requires specifying the size of the lattice and the flipping probability. Optionally, it can average the results over multiple runs.\n\n
-    [MODE] (slanzarv_)ordParam: Compute the order parameter of the transition and the susceptibility for a lattice setting.
+    Serialiser for Lattice2D_TransCluster.py
 """
 # Default values for the optional parameters
 DEFAULT_NUMBER_AVERAGES = 10**4  # Assuming a default value for demonstration
@@ -78,26 +77,13 @@ parser.add_argument(
     default=DEFAULT_MMB,
     type=int,
 )
-# Optional parameters
-parser.add_argument(
-    "-g",
-    "--geometry",
-    default=DEFAULT_GEO,
-    help=HELP_geo,
-    type=str,
-)
+
 parser.add_argument(
     "-nA",
     "--number_of_averages",
     default=DEFAULT_NUMBER_AVERAGES,
     help=HELP_nA,
     type=int,
-)
-parser.add_argument(
-    "-c", "--cell_type",
-    default=DEFAULT_CELL,
-    help=HELP_cell,
-    type=str,
 )
 parser.add_argument(
     "-o",

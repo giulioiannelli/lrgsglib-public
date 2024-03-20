@@ -46,8 +46,8 @@ class Lattice2D(SignedGraph):
                 self.geo = DEFLattice2D_geodictabb[geo]
         if not hasattr(self, 'side2'):
             if self.geo == 'hexagonal':
-                if self.side2 == self.side1:
-                    self.side1 = adjust_to_even(self.side1/np.sqrt(3))
+                self.side2 = self.side1
+                self.side1 = adjust_to_even(self.side1/np.sqrt(3))
                 if (self.side1 % 2 or self.side2 % 2) and self.pbc:
                     raise ValueError(DEFLattice2D_geoerrmsg)
             else:
