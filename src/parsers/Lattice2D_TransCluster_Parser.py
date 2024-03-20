@@ -1,13 +1,13 @@
 from LRGSG_package.LRGSG import *
 description = """
     [MODE] pCluster: This program computes the cluster distribution size of the sign fluctuation inside the signed Laplacian operator of a square lattice. It requires specifying the size of the lattice and the flipping probability. Optionally, it can average the results over multiple runs.\n\n
-    [MODE] phaseTr: Compute the order parameter of the transition and the susceptibility for a lattice setting.
+    [MODE] ordParam: Compute the order parameter of the transition and the susceptibility for a lattice setting.
 """
 # Default values for the optional parameters
 DEFAULT_NUMBER_AVERAGES = 1000  # Assuming a default value for demonstration
 DEFAULT_SAVING_FREQUENCY = 0
 DEFAULT_OUT_SUFFIX = ""
-DEFAULT_MODE = 'phaseTr'
+DEFAULT_MODE = 'ordParam'
 DEFAULT_GEO = "squared"
 DEFAULT_CELL = "single"
 # Helpers for argparse descriptions
@@ -27,7 +27,7 @@ HELP_nA = f"""
     Number of averages to compute (optional) | default={DEFAULT_NUMBER_AVERAGES}
 """
 HELP_mode = f"""
-    mode, phaseTr or pCluster | default='{DEFAULT_MODE}'
+    mode, ordParam or pCluster | default='{DEFAULT_MODE}'
 """
 HELP_o = f"""
     Suffix for the output file name (optional) | default='{DEFAULT_OUT_SUFFIX}'
@@ -65,7 +65,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-sF",
-    "--saving_frequency",
+    "--save_frequency",
     default=DEFAULT_SAVING_FREQUENCY,
     help=HELP_svfreq,
     type=int,
