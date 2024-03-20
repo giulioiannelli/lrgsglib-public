@@ -757,6 +757,32 @@ def unravel_1d_to_2d_nodemap(arr1d: np.ndarray, imap: Dict[int, Tuple[int, int]]
     return arr_2d
 
 
+def unravel_1d_to_2d_nodemap2(arr1d: np.ndarray, imap: Dict[int, Tuple[int, int]], dims: Tuple[int, int] = None) -> np.ndarray:
+    """
+    Transforms a 1D array into a 2D array based on a given index mapping and optional dimensions.
+
+    Parameters:
+    ---------------
+    arr1d : np.ndarray
+        The 1D input numpy array to be transformed.
+    imap : Dict[int, Tuple[int, int]]
+        A dictionary where keys are indices in the 1D array and values are (row, col) positions in the 2D output.
+    dims : Tuple[int, int], optional
+        The dimensions of the 2D output array. If not provided, it's assumed to be a square array.
+
+    Returns:
+    ---------------
+    np.ndarray
+        The 2D array obtained from rearranging `arr1d` according to `imap`.
+    """
+    if not dims:
+        side = int(np.sqrt(len(arr1d)))
+        dims = (side, side)
+    arr_2d = np.empty(dims, dtype=arr1d.dtype)
+    for idx_1d, (row, col) in imap.items():
+        arr_2d[col, row] = arr1d[idx_1d]  # Adjusted indexing to [row, col] for clarity
+    return arr_2d
+
 def get_first_int_in_str(s):
     """
     Finds the first sequence of digits in the given string and returns it as an integer.

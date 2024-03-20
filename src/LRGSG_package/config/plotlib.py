@@ -32,6 +32,9 @@ restr_twilight_vals = plt.cm.twilight(
 restr_twilight = LinearSegmentedColormap.from_list(
     "restr_twilight", restr_twilight_vals
 )
+cm.register_cmap(name="restr_twilight", cmap=restr_twilight)
+cm.register_cmap(name='restr_twilight_r', cmap=restr_twilight.reversed())
+
 #
 #
 #

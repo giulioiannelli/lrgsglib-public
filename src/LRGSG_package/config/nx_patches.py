@@ -456,10 +456,10 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
     G = empty_graph(0, create_using)
     if n == 0 or m == 0:
         return G
-    if periodic:
-        if n < 5 or m < 3:
-            msg = f"m > 2 and n > 4 required for periodic. m={m}, n={n}"
-            raise NetworkXError(msg)
+    # if periodic:
+    #     if n < 5 or m < 3:
+    #         msg = f"m > 2 and n > 4 required for periodic. m={m}, n={n}"
+    #         raise NetworkXError(msg)
     rows = range(m)
     cols = range(n)
     # identify boundary nodes if periodic

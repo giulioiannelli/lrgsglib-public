@@ -94,8 +94,8 @@ class Lattice2D(SignedGraph):
             cnode = (self.side1//2, self.side2//2)
             cnode_t = (self.side1//2+1, self.side2//2)
         else:
-            cnode = (self.side1//2-1, self.side2//2)
-            cnode_t = (self.side1//2, self.side2//2)
+            cnode = (self.side1//2, self.side2//2)
+            cnode_t = (self.side1//2+1, self.side2//2)
         edge_t = (cnode, cnode_t)
         if not G.has_edge(cnode, cnode_t):
             if self.geo =='hexagonal':
