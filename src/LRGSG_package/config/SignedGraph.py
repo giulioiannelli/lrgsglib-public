@@ -37,7 +37,7 @@ class SignedGraph:
         self.__init_sgraph__()
         self.__init_graph_reprdict__()
         if init_weight_dict:
-            self.neg_weights_dict = self.neg_weights_dicts_container(self)
+            self.nwDict = self.neg_weights_dicts_container(self)
 
     #
     def __init_graph_reprdict__(self):

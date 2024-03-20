@@ -1,74 +1,95 @@
 from parsers.Lattice2D_TransCluster_Parser import *
 #
 args = parser.parse_args()
-if args.cell_type in ['rand', 'randZERR', 'randXERR']:
-    geometry_func = lambda lattice: lattice.neg_weights_dict['randZERR']['G']
-elif args.cell_type == 'cross':
-    geometry_func = lambda lattice: lattice.neg_weights_dict['randXERR']['G']
-elif args.cell_type == 'single':
-    geometry_func = lambda lattice: lattice.neg_weights_dict['rand']['G']
+#
+side = args.L
+p = args.p
+geo = args.geometry
+cell = args.cell_type
+mode = args.mode
+navg = args.number_of_averages
+sfreq = args.save_frequency if args.save_frequency else navg // 20
+outsx = args.out_suffix
+#
+if cell in ['rand', 'randZERR', 'randXERR'] or cell.startswith('ball'):
+    if cell == 'rand':
+        def geometry_func(lattice: Lattice2D):
+            return lattice.nwDict[cell]['G']
+    elif cell == 'randZERR':
+        def geometry_func(lattice: Lattice2D):
+            return lattice.nwDict[cell]['G']
+    elif cell == 'randXERR':
+        def geometry_func(lattice: Lattice2D):
+            return lattice.nwDict[cell]['G']
+    elif cell.startswith('ball'):
+        radius = get_first_int_in_str(cell)
+        def geometry_func(lattice: Lattice2D):
+            return lattice.nwDict.get_links_rball(radius)
 else:
     raise ValueError("Invalid cell specified")
 #
-lattice = Lattice2D(args.L, pflip=args.p, geo=args.geometry, 
-                    init_weight_dict=False, with_positions=False)
-mpath = {'pCluster': lattice.lrgsgpath,
-       'ordParam': lattice.phtrapath}
-#
-if args.mode == 'pCluster':
+if mode == 'pCluster':
     merged_dict = Counter()
     extout = ePKL
-elif args.mode == 'ordParam':
-    Pinf = np.zeros(args.number_of_averages)
-    Pinf2 = np.zeros(args.number_of_averages)
-    Fluct = np.zeros(args.number_of_averages)
-    Fluct2 = np.zeros(args.number_of_averages)
+elif mode == 'ordParam':
+    Pinf = np.zeros(navg)
+    Pinf2 = np.zeros(navg)
+    Fluct = np.zeros(navg)
+    Fluct2 = np.zeros(navg)
     extout = eTXT
+else:
+    raise ValueError("Invalid mode specified")
 #
-def file_path_maker(mpath, ppath = args.p, 
-                    napath = args.number_of_averages, 
-                    spath = args.out_suffix,
-                    ctpath = args.cell_type,
+def file_path_maker(mpath, ppath = p, 
+                    napath = navg, 
+                    spath = outsx,
+                    ctpath = cell,
                     extout = extout):
-    return f'{mpath}{args.mode}_p={ppath:.3g}_{ctpath}_na={napath}{spath}{extout}'
+    return f'{mpath}{mode}_p={ppath:.3g}_{ctpath}_na={napath}{spath}{extout}'
 #
-
+lattice = Lattice2D(side, pflip=p, geo=geo, 
+                    init_weight_dict=False, 
+                    with_positions=False)
+mpath = {'pCluster': lattice.lrgsgpath, 
+         'ordParam': lattice.phtrapath}
+filename = file_path_maker(mpath[mode])
+if os.path.exists(filename):
+    exit(f"File {os.path.split(filename)[1]} already exists.")
 #
-if args.mode == 'pCluster':
-    filename = file_path_maker(mpath[args.mode])
-    if os.path.exists(filename):
-        exit(f"File {os.path.split(filename)[1]} already exists.")
-    for avg in range(args.number_of_averages):
-        lattice = Lattice2D(args.L, pflip=args.p, geo=args.geometry)
-        lattice.flip_sel_edges(geometry_func(lattice))
+#
+#
+if mode == 'pCluster':
+    for avg in range(navg):
+        l = Lattice2D(side, pflip=p, geo=geo)
+        l.flip_sel_edges(geometry_func(l))
         #
-        dist_dict = lattice.cluster_distribution_list()
+        dist_dict = l.cluster_distribution_list()
         merged_dict += Counter(dist_dict)
         #
-        if avg % 100 == 0:
+        if (avg % sfreq == 0):
             try:
-                filenameold = file_path_maker(mpath[args.mode], napath=avg)
+                filenameold = file_path_maker(mpath[mode], napath=avg)
                 os.remove(filenameold)
             except OSError:
                 pass
-            filename = file_path_maker(mpath[args.mode], napath=avg+100)
+            filename = file_path_maker(mpath[mode], napath=avg+sfreq)
             with open(filename, 'wb') as file:
                 pickle.dump(merged_dict, file)
-elif args.mode == 'ordParam':
-    for cont, avg in enumerate(range(args.number_of_averages)):
-        lattice = Lattice2D(args.L, pflip=args.p, geo=args.geometry)
-        lattice.flip_sel_edges(geometry_func(lattice))
+elif mode == 'ordParam':
+    for cont, avg in enumerate(range(navg)):
+        l = Lattice2D(side, pflip=p, geo=geo)
+        l.flip_sel_edges(geometry_func(l))
         #
-        lattice.compute_k_eigvV()
-        lattice.calc_fluct_Pinf()
+        l.compute_k_eigvV()
+        l.calc_fluct_Pinf()
         #
-        Fluct[cont]=lattice.eigV_fluct
-        Fluct2[cont]=lattice.eigV_fluct**2
-        Pinf[cont]=lattice.Pinf
-        Pinf2[cont]=lattice.Pinf**2
+        Fluct[cont]=l.eigV_fluct
+        Fluct2[cont]=l.eigV_fluct**2
+        Pinf[cont]=l.Pinf
+        Pinf2[cont]=l.Pinf**2
         #
-        data=[lattice.pflip,
-              lattice.Ne_n,
+        data=[l.pflip,
+              l.Ne_n,
               avg+1,
               np.sum(Pinf), 
               np.sum(Pinf2), 
@@ -76,12 +97,12 @@ elif args.mode == 'ordParam':
               np.sum(Fluct2), 
               np.var(Fluct[Fluct!=0])]
         #
-        if avg % 100 == 0:
+        if (avg % sfreq == 0):
             try:
-                filenameold = file_path_maker(mpath[args.mode], napath=avg)
+                filenameold = file_path_maker(mpath[mode], napath=avg)
                 os.remove(filenameold)
             except OSError:
                 pass
-            filename = file_path_maker(mpath[args.mode], napath=avg+100)
+            filename = file_path_maker(mpath[mode], napath=avg+sfreq)
             with open(filename, 'wb') as file:
                 np.savetxt(file, np.atleast_2d(data), fmt='%.7g')

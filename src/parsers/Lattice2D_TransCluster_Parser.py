@@ -5,6 +5,7 @@ description = """
 """
 # Default values for the optional parameters
 DEFAULT_NUMBER_AVERAGES = 1000  # Assuming a default value for demonstration
+DEFAULT_SAVING_FREQUENCY = 0
 DEFAULT_OUT_SUFFIX = ""
 DEFAULT_MODE = 'phaseTr'
 DEFAULT_GEO = "squared"
@@ -30,6 +31,9 @@ HELP_mode = f"""
 """
 HELP_o = f"""
     Suffix for the output file name (optional) | default='{DEFAULT_OUT_SUFFIX}'
+"""
+HELP_svfreq = f"""
+    Saving frequency for the data. By default 1/20 of the number of averages (optional) | default='{DEFAULT_NUMBER_AVERAGES // 20}'
 """
 # Setup the argument parser
 parser = argparse.ArgumentParser(description=description)
@@ -57,6 +61,13 @@ parser.add_argument(
     "--number_of_averages",
     default=DEFAULT_NUMBER_AVERAGES,
     help=HELP_nA,
+    type=int,
+)
+parser.add_argument(
+    "-sF",
+    "--saving_frequency",
+    default=DEFAULT_SAVING_FREQUENCY,
+    help=HELP_svfreq,
     type=int,
 )
 parser.add_argument(
