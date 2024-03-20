@@ -1,5 +1,7 @@
 #paths
-data/*
+# Explicitly ignore everything in data and data/plot, except the paper directory
+data/*/
+data/plot/*/
 !data/plot/paper/
 .trash/*
 #extensions
