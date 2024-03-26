@@ -5,7 +5,7 @@ description = """
 # Default values for the optional parameters
 DEFAULT_NUMBER_AVERAGES = 10**4  # Assuming a default value for demonstration
 DEFAULT_OUT_SUFFIX = ""
-DEFAULT_MODE = 'ordParam'
+DEFAULT_MODE = 'slanzarv_ordParam'
 DEFAULT_GEO = "squared"
 DEFAULT_CELL = "single"
 DEFAULT_PRINT = False
