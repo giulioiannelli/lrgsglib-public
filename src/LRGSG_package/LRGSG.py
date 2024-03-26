@@ -324,7 +324,7 @@ class SignedLaplacianAnalysis:
         #
         fig.tight_layout()
         ani.save(
-            f"{savename}{eMP4}",
+            f"{savename}{MP4}",
             writer=animation.FFMpegWriter(fps=fps),
             dpi=dpi,
         )

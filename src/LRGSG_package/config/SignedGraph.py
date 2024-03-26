@@ -11,14 +11,14 @@ class SignedGraph:
         expOutdir: str = "",
         dataOutdir: str = "",
         plotOutdir: str = "",
-        init_weight_dict: bool = True,
+        initNwDict: bool = True,
     ):
         self.__init_paths__(
             dataOutdir=dataOutdir, plotOutdir=plotOutdir, expOutdir=expOutdir
         )
 
-        if not is_in_range(pflip, DEFLBpflip, DEFUBpflip):
-            raise ValueError(DEFSignedGraph_pflipverr)
+        if not is_in_range(pflip, LB_PFLIP, UB_PFLIP):
+            raise ValueError(SG_ERRMSG_PFLIP)
         else:
             self.pflip = pflip
         self.lsp_mode = lsp_mode
@@ -36,8 +36,8 @@ class SignedGraph:
             self.graphFname = self.expOutdir + self.stdFname
         self.__init_sgraph__()
         self.__init_graph_reprdict__()
-        if init_weight_dict:
-            self.nwDict = self.neg_weights_dicts_container(self)
+        if initNwDict:
+            self.nwDict = self.nwContainer(self)
 
     #
     def __init_graph_reprdict__(self):
@@ -49,24 +49,24 @@ class SignedGraph:
             pass
 
     def __init_graph_fromfile__(self):
-        return pickle.load(open(f"{self.graphFname}{ePKL}", "rb"))
+        return pickle.load(open(f"{self.graphFname}{PKL}", "rb"))
 
     #
     def __init_paths__(
         self, dataOutdir: str = "", plotOutdir: str = "", expOutdir: str = ""
     ):
-        self.dataOutdir = dataOutdir if dataOutdir else DIR_DAT_DEFAULT
+        self.dataOutdir = dataOutdir if dataOutdir else DIR_DAT
 
-        self.plotOutdir = plotOutdir if plotOutdir else DIR_PLT_DEFAULT
+        self.plotOutdir = plotOutdir if plotOutdir else DIR_PLT
         #
         self.datPath = f"{self.dataOutdir}{self.sgpath}"
         self.pltPath = f"{self.dataOutdir}{self.plotOutdir}{self.sgpath}"
         #
-        self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH_DEFAULT
-        self.DEFAULT_ISINGDIR = self.datPath + DIR_ISING_DEFAULT
-        self.DEFAULT_VOTERDIR = self.datPath + DIR_VOTER_DEFAULT
-        self.DEFAULT_LRGSGDIR = self.datPath + DIR_LRGSG_DEFAULT
-        self.DEFAULT_PHTRADIR = self.datPath + DIR_PHTRA_DEFAULT
+        self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH
+        self.DEFAULT_ISINGDIR = self.datPath + DIR_ISING
+        self.DEFAULT_VOTERDIR = self.datPath + DIR_VOTER
+        self.DEFAULT_LRGSGDIR = self.datPath + DIR_LRGSG
+        self.DEFAULT_PHTRADIR = self.datPath + DIR_PHTRA
         #
         self.expOutdir = (
             expOutdir
@@ -142,7 +142,8 @@ class SignedGraph:
         if not self.import_on:
             self.rEdgeFlip['H'] = random.sample(self.esetH, self.nflip)            
             self.rEdgeFlip['G'] = random.sample(self.esetG, self.nflip)
-
+    def degree_update(self, on_graph: str = SG_GRAPH_REPR):
+        self.degrees = list(dict(self.GraphReprDict[on_graph].degree).values())
     #
     def adjacency_matrix(self, weight: str = "weight"):
         return nx.to_scipy_sparse_array(self.H, weight=weight, format="csr")
@@ -325,68 +326,63 @@ class SignedGraph:
             )
             self.resLp = self.resLp - new_eigv0 * np.identity(self.N)
 
-    #
-    def lsp_selection(self, custom_list):
-        if self.lsp_mode == "custom":
-            self.lsp = np.array(custom_list)
-        elif self.lsp_mode == "intervals":
-            intervals = []
-            tmp = max([vset["rsf"] for vset in custom_list])
-            for vset in custom_list:
-                if vset["kind"] == "log":
-                    spacing_f = np.logspace
-                    vset["start"] = np.log10(vset["start"])
-                    vset["stop"] = np.log10(vset["stop"])
-                elif vset["kind"] == "lin":
-                    spacing_f = np.linspace
-                intervals.append(  #
-                    round_sigfig_n(  #
-                        spacing_f(
-                            vset["start"],
-                            vset["stop"],
-                            num=vset["num"],
-                            endpoint=False,
-                        ),
-                        vset["rsf"],
-                    )
-                )
-            self.lsp = (intervals := np.concatenate(intervals))
-            while set(self.lsp).__len__() == intervals.__len__():
-                tmp = tmp - 1
-                self.lsp = np.round(self.lsp, tmp)
-            tmp = tmp + 1
-            self.lsp = np.round(intervals, tmp)
+    # #
+    # def lsp_selection(self, custom_list):
+    #     if self.lsp_mode == "custom":
+    #         self.lsp = np.array(custom_list)
+    #     elif self.lsp_mode == "intervals":
+    #         intervals = []
+    #         tmp = max([vset["rsf"] for vset in custom_list])
+    #         for vset in custom_list:
+    #             if vset["kind"] == "log":
+    #                 spacing_f = np.logspace
+    #                 vset["start"] = np.log10(vset["start"])
+    #                 vset["stop"] = np.log10(vset["stop"])
+    #             elif vset["kind"] == "lin":
+    #                 spacing_f = np.linspace
+    #             intervals.append(  #
+    #                 round_sigfig_n(  #
+    #                     spacing_f(
+    #                         vset["start"],
+    #                         vset["stop"],
+    #                         num=vset["num"],
+    #                         endpoint=False,
+    #                     ),
+    #                     vset["rsf"],
+    #                 )
+    #             )
+    #         self.lsp = (intervals := np.concatenate(intervals))
+    #         while set(self.lsp).__len__() == intervals.__len__():
+    #             tmp = tmp - 1
+    #             self.lsp = np.round(self.lsp, tmp)
+    #         tmp = tmp + 1
+    #         self.lsp = np.round(intervals, tmp)
 
-    def default_dict_lsp(self, num_low=3, num_at=6, num_high=3):
-        d = (  #
-            {
-                "kind": "lin",
-                "start": 0.001,
-                "stop": self.p_c - self.p_c * num_at / 100,
-                "num": num_low,
-                "rsf": 1,
-            },
-            {
-                "kind": "lin",
-                "start": self.p_c - self.p_c * num_at / 100,
-                "stop": self.p_c + self.p_c * num_at / 100,
-                "num": num_at,
-                "rsf": 3,
-            },
-            {
-                "kind": "lin",
-                "start": self.p_c + self.p_c * num_at / 100,
-                "stop": 1,
-                "num": num_high,
-                "rsf": 1,
-            },
-        )
-        return d
-    
-    def graph_neighbors(self, node, on_graph: str = 'G'):
-        graph = self.GraphReprDict[on_graph]
-        return list(graph.neighbors(node))
-
+    # def default_dict_lsp(self, num_low=3, num_at=6, num_high=3):
+    #     d = (  #
+    #         {
+    #             "kind": "lin",
+    #             "start": 0.001,
+    #             "stop": self.p_c - self.p_c * num_at / 100,
+    #             "num": num_low,
+    #             "rsf": 1,
+    #         },
+    #         {
+    #             "kind": "lin",
+    #             "start": self.p_c - self.p_c * num_at / 100,
+    #             "stop": self.p_c + self.p_c * num_at / 100,
+    #             "num": num_at,
+    #             "rsf": 3,
+    #         },
+    #         {
+    #             "kind": "lin",
+    #             "start": self.p_c + self.p_c * num_at / 100,
+    #             "stop": 1,
+    #             "num": num_high,
+    #             "rsf": 1,
+    #         },
+    #     )
+    #     return d
     #
     # def dfs_list(self, node, visited, sign):
     #     if visited[node] or sign[node] <= 0:
@@ -413,6 +409,26 @@ class SignedGraph:
     #             distribution[size] = distribution.get(size, 0) + 1
     #     return distribution
     #
+    
+    def graph_neighbors(self, node, on_graph: str = SG_GRAPH_REPR):
+        graph = self.GraphReprDict[on_graph]
+        return list(graph.neighbors(node))
+    
+    def get_node_attr(self, attr, on_graph: str = SG_GRAPH_REPR):
+        node_attr = nx.get_node_attributes(self.GraphReprDict[on_graph], attr)
+        node_attrs = [node_attr[node] for node in self.GraphReprDict[on_graph].nodes()]
+        return node_attrs
+
+    def load_eigV_on_graph(self, which: int = 0, on_graph: str = SG_GRAPH_REPR):
+        try:
+            eigV = flip_to_positive_majority(self.eigV[which])
+        except (IndexError, AttributeError):
+            self.compute_k_eigvV(howmany=which+1)
+            eigV = flip_to_positive_majority(self.eigV[which])
+        eigVNodeAttr = {nd: v for v, nd in 
+                        zip(eigV, self.GraphReprDict[on_graph].nodes)}
+        nx.set_node_attributes(self.GraphReprDict[on_graph], eigVNodeAttr, f"eigV{which}")
+
     def cluster_distribution_list(self, which: int = 0):
         node_values = flip_to_positive_majority(self.bin_eigV(which=which))
 
@@ -539,7 +555,7 @@ class SignedGraph_DEV(Graph):
         self.__init_paths__(expOutdir)
         self.__make_dirs__()
         if not self.pflmin <= pflip <= self.pflmax:
-            raise ValueError(DEFSignedGraph_pflipverr(pflip))
+            raise ValueError(SG_ERRMSG_PFLIP(pflip))
         else:
             self.pflip = pflip
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
@@ -550,12 +566,12 @@ class SignedGraph_DEV(Graph):
 
     #
     def __init_paths__(self, expOutdir: str = ""):
-        self.datPath = f"{DIR_DAT_DEFAULT}{self.sgpath}"
-        self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH_DEFAULT
-        self.DEFAULT_ISINGDIR = self.datPath + DIR_ISING_DEFAULT
-        self.DEFAULT_VOTERDIR = self.datPath + DIR_VOTER_DEFAULT
-        self.DEFAULT_LRGSGDIR = self.datPath + DIR_LRGSG_DEFAULT
-        self.DEFAULT_PHTRADIR = self.datPath + DIR_PHTRA_DEFAULT
+        self.datPath = f"{DIR_DAT}{self.sgpath}"
+        self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH
+        self.DEFAULT_ISINGDIR = self.datPath + DIR_ISING
+        self.DEFAULT_VOTERDIR = self.datPath + DIR_VOTER
+        self.DEFAULT_LRGSGDIR = self.datPath + DIR_LRGSG
+        self.DEFAULT_PHTRADIR = self.datPath + DIR_PHTRA
         self.graphpath = f"{self.DEFAULT_GRAPHDIR}{self.syshapePth}{expOutdir}"
         self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePth}{expOutdir}"
         self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePth}{expOutdir}"

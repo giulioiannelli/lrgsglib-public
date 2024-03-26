@@ -30,13 +30,13 @@ else:
 #
 if mode == 'pCluster':
     merged_dict = Counter()
-    extout = ePKL
+    extout = PKL
 elif mode == 'ordParam':
     Pinf = np.zeros(navg)
     Pinf2 = np.zeros(navg)
     Fluct = np.zeros(navg)
     Fluct2 = np.zeros(navg)
-    extout = eTXT
+    extout = TXT
 else:
     raise ValueError("Invalid mode specified")
 #
@@ -50,7 +50,7 @@ def file_path_maker(mpath, ppath = p,
     return f'{mpath}{mode}_p={ppath:.3g}_{ctpath}_na={napath}{spath}{extout}'
 #
 lattice = Lattice2D(side, pflip=p, geo=geo, 
-                    init_weight_dict=False, 
+                    initNwDict=False, 
                     with_positions=False)
 mpath = {'pCluster': lattice.lrgsgpath, 
          'ordParam': lattice.phtrapath}
@@ -78,11 +78,12 @@ if mode == 'pCluster':
             with open(filename, 'wb') as file:
                 pickle.dump(merged_dict, file)
 elif mode == 'ordParam':
+    neglinks = 0
     for cont, avg in enumerate(range(navg)):
+        avg1 = avg+1
         l = Lattice2D(side, pflip=p, geo=geo)
         l.flip_sel_edges(geometry_func(l))
         #
-        l.compute_k_eigvV()
         l.calc_fluct_Pinf()
         #
         Fluct[cont]=l.eigV_fluct
@@ -90,13 +91,14 @@ elif mode == 'ordParam':
         Pinf[cont]=l.Pinf
         Pinf2[cont]=l.Pinf**2
         #
+        neglinks += l.Ne_n
         data=[l.pflip,
-              l.Ne_n,
-              avg+1,
-              np.sum(Pinf), 
-              np.sum(Pinf2), 
-              np.sum(Fluct), 
-              np.sum(Fluct2), 
+              neglinks,
+              avg1,
+              np.sum(Pinf)/avg1, 
+              np.sum(Pinf2)/avg1, 
+              np.sum(Fluct)/avg1, 
+              np.sum(Fluct2)/avg1, 
               np.var(Fluct[Fluct!=0])]
         #
         if (avg % sfreq == 0):
@@ -107,4 +109,4 @@ elif mode == 'ordParam':
                 pass
             filename = file_path_maker(mpath[mode], napath=avg+sfreq)
             with open(filename, 'wb') as file:
-                np.savetxt(file, np.atleast_2d(data), fmt='%.7g')
+                np.savetxt(file, data, fmt='%.7g')

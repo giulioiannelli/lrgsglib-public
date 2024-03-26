@@ -454,8 +454,7 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
     """
     from networkx import empty_graph, NetworkXError, set_node_attributes
     G = empty_graph(0, create_using)
-    if n == 0 or m == 0:
-        return G
+
     # if periodic:
     #     if n < 5 or m < 3:
     #         msg = f"m > 2 and n > 4 required for periodic. m={m}, n={n}"
@@ -487,15 +486,15 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
 
     # Add position node attributes
     if with_positions:
-        ii = (i for i in cols for j in rows)
-        jj = (j for i in cols for j in rows)
-        xx = (0.5 * (j % 2) + i for i in cols for j in rows)
+        ii = (i for i in rows for j in cols)
+        jj = (j for i in rows for j in cols)
+        xx = (0.5 * (i % 2) + j for i in rows for j in cols)
         h = np.sqrt(3) / 2
         if periodic:
-            yy = (h * j + 0.01 * i * i for i in cols for j in rows)
+            yy = (h * i + 0.01 * j * j for i in rows for j in cols)
         else:
-            yy = (h * j for i in cols for j in rows)
-        pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in G}
+            yy = (h * i for i in rows for j in cols)
+        pos = {(j, i): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (j, i) in G}
         set_node_attributes(G, pos, "pos")
     return G
 
@@ -609,13 +608,13 @@ def squared_lattice_graph_FastPatch(m, n, periodic=False, create_using=None, wit
         G.add_edges_from((v, u) for u, v in G.edges())
     if with_positions:
         # calc position in embedded space
-        ii = (i for i in cols for j in rows)
-        jj = (j for i in cols for j in rows)
-        xx = (i for i in cols for j in rows)  # x position matches column index
-        yy = (j for i in cols for j in rows)
+        ii = (i for i in rows for j in cols)
+        jj = (j for i in rows for j in cols)
+        xx = (i for i in rows for j in cols)  # x position matches column index
+        yy = (j for i in rows for j in cols)
         if periodic:
-            xx = (i + 0.02 * j * j for i in cols for j in rows)  # x position matches column index
-            yy = (j + 0.02 * i * i for i in cols for j in rows)
+            xx = (i + 0.02 * j * j for i in rows for j in cols)  # x position matches column index
+            yy = (j + 0.02 * i * i for i in rows for j in cols)
         # exclude nodes not in G
         pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in G}
         set_node_attributes(G, pos, "pos")

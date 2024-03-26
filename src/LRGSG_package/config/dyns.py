@@ -92,7 +92,7 @@ class VoterModel(BinDynSys):
         if out_suffix == "":
             out_suffix = '\'\''
         self.cprogram = [
-            pthjoin(DIR_SRC_DEFAULT, DIR_PCK_DEFAULT, self.dyn_UVclass),
+            pthjoin(DIR_SRC, DIR_PCK, self.dyn_UVclass),
             # f"{DIR_SRC_DEFAULT}{DIR_PCK_DEFAULT}{self.dyn_UVclass}",
             f"{self.sg.N}",
             f"{self.sg.pflip}",
@@ -568,6 +568,7 @@ class IsingDynamics:
                 save_magn_array()
 
     def find_ising_clusters(self, import_cl: bool = False):
+        #can be easily reworked
         if import_cl:
             for i in range(self.NoClust):
                 self.Ising_clusters.append(

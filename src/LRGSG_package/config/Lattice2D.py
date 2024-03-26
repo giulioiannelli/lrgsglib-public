@@ -4,13 +4,13 @@ class Lattice2D(SignedGraph):
     #
     def __init__(
         self,
-        side1: int = DEFLattice2D_side1,
-        side2: int = DEFLattice2D_side2,
-        geo: str = DEFLattice2D_geo,
-        pbc: bool = DEFLattice2D_pbc,
-        fbc_val: float = DEFLattice2D_fbcv,
-        stdFnameSFFX: str = DEFLattice2D_stdFn,
-        sgpath: str = DEFLattice2D_sgpath,
+        side1: int = L2D_SIDE1,
+        side2: int = L2D_SIDE2,
+        geo: str = L2D_GEO,
+        pbc: bool = L2D_PBC,
+        fbc_val: float = L2D_FBCV,
+        stdFnameSFFX: str = L2D_STDFN,
+        sgpath: str = L2D_SGPATH,
         with_positions: bool = False,
         **kwargs,
     ) -> None:
@@ -22,7 +22,7 @@ class Lattice2D(SignedGraph):
         #
         self.__init_stdFname__(stdFnameSFFX)
         #
-        _ = DEFLattice2D_pthdict[self.geo]
+        _ = L2D_PATH_DICT[self.geo]
         self.sgpath = sgpath + _ if sgpath else _
         self.with_positions = with_positions
         #
@@ -31,25 +31,31 @@ class Lattice2D(SignedGraph):
     #
     def __init_side__(self, side1: int, side2: int) -> None:
         # to do add check for variables to be int and so on...
-        self.side1 = side1
         if side2:
-            self.side2 = side2
+            if side2 > side1:
+                self.side2 = side1
+                self.side1 = side2
+            else:
+                self.side1 = side1
+                self.side2 = side2
+        else:
+            self.side1 = side1
         #
     #
     def __init_geo__(self, geo: str) -> None:
         self.geo = geo
-        if geo not in DEFLattice2D_geolist:
-            if geo not in DEFLattice2D_geoabblist:
-                warnings.warn(DEFLattice2D_geowarnmsg, Lattice2DWarning)
-                self.geo = DEFLattice2D_geo
+        if geo not in L2D_GEO_LIST:
+            if geo not in L2D_GEO_SHRT_LIST:
+                warnings.warn(L2D_WARNMSG_GEO, Lattice2DWarning)
+                self.geo = L2D_GEO
             else:
-                self.geo = DEFLattice2D_geodictabb[geo]
+                self.geo = L2D_SHRT_GEO_DICT[geo]
         if not hasattr(self, 'side2'):
             if self.geo == 'hexagonal':
                 self.side2 = self.side1
                 self.side1 = adjust_to_even(self.side1/np.sqrt(3))
                 if (self.side1 % 2 or self.side2 % 2) and self.pbc:
-                    raise ValueError(DEFLattice2D_geoerrmsg)
+                    raise ValueError(L2D_ERRMSG_GEO)
             else:
                 self.side2 = self.side1
             # if (self.side1 % 2 or self.side2 % 2) and self.pbc:
@@ -57,17 +63,17 @@ class Lattice2D(SignedGraph):
         
     #
     def __init_stdFname__(self, SFFX: str = "") -> None:
-        self.stdFname = DEFLattice2D_geodict[self.geo] + SFFX
+        self.stdFname = L2D_GEO_SHRT_DICT[self.geo] + SFFX
     #
     def __init_lattice__(self) -> None:
         #
-        if self.geo == DEFLattice2D_geodictabb['tri']:
+        if self.geo == L2D_SHRT_GEO_DICT['tri']:
             nxfunc = triangular_lattice_graph_FastPatch
             self.syshape = (self.side1, self.side2)
-        elif self.geo == DEFLattice2D_geodictabb['sqr']:
+        elif self.geo == L2D_SHRT_GEO_DICT['sqr']:
             nxfunc = squared_lattice_graph_FastPatch
             self.syshape = (self.side1, self.side2)
-        elif self.geo == DEFLattice2D_geodictabb['hex']:
+        elif self.geo == L2D_SHRT_GEO_DICT['hex']:
             nxfunc = hexagonal_lattice_graph_FastPatch
         #
         if self.side1 == self.side2:
@@ -78,7 +84,7 @@ class Lattice2D(SignedGraph):
             self.syshapeStr = f"L1={self.side2}_L2={self.side1}"
         self.syshapePth = f"{self.syshapeStr}/"
         #
-        self.p_c = DEFLattice2D_p_cdict[self.geo]
+        self.p_c = L2D_P_C_DICT[self.geo]
         self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
         #
         self.G = nxfunc(self.side1, self.side2, periodic=self.pbc, 
@@ -88,26 +94,25 @@ class Lattice2D(SignedGraph):
         return np.where(np.array(list(map(lambda x: x[1], 
                                           list(self.G.degree())))) != degree)
     #
-    def get_central_edge(self, on_graph: str = DEFLattice2D_onrep):
+    def get_central_edge(self, on_graph: str = L2D_ONREP):
         G = self.G
+        cnode = (self.side1//2-1, self.side2//2)
+        cnode_t = (self.side1//2, self.side2//2)
         if self.geo == 'triangular':
-            cnode = (self.side1//2, self.side2//2)
-            cnode_t = (self.side1//2+1, self.side2//2)
-        else:
-            cnode = (self.side1//2, self.side2//2)
-            cnode_t = (self.side1//2+1, self.side2//2)
+            cnode = (self.side2//2, self.side1//2-1)
+            cnode_t = (self.side2//2, self.side1//2)
         edge_t = (cnode, cnode_t)
-        if not G.has_edge(cnode, cnode_t):
+        if not G.has_edge(*edge_t):
             if self.geo =='hexagonal':
                 cnode = cnode_t
                 cnode_t = (self.side1//2+1, self.side2//2)
-            edge_t = (cnode, cnode_t)
+                edge_t = (cnode, cnode_t)
         if on_graph == 'G':
             return edge_t
         elif on_graph == 'H':
             return self.edge_map[edge_t]
     #
-    class neg_weights_dicts_container(dict):
+    class nwContainer(dict):
         NEG_WEIGHTS_DICT_G_PFLIP = {}
         def __init__(self, l: SignedGraph, iterable=[], constant=None, 
                      **kwargs):
@@ -134,17 +139,17 @@ class Lattice2D(SignedGraph):
             self['randXERR'] = {g: self.get_rand_pattern('XERR', on_graph=g) 
                                    for g in self.reprDict}
         #
-        def get_links_XERR(self, node: Any, on_graph: str = DEFLattice2D_onrep):
+        def get_links_XERR(self, node: Any, on_graph: str = L2D_ONREP):
             return [(node, nn) for nn in self.l.graph_neighbors(node, on_graph)]
         #
-        def get_links_ZERR(self, node: Any, on_graph: str = DEFLattice2D_onrep, 
-                           geometry: str = DEFLattice2D_geo):
+        def get_links_ZERR(self, node: Any, on_graph: str = L2D_ONREP, 
+                           geometry: str = L2D_GEO):
             dd = {'triangular': self.get_links_triangle,
              'squared': self.get_links_square,
              'hexagonal': self.get_links_hexagon}
             return dd[geometry](node, on_graph)
         #
-        def get_links_triangle(self, node: Any, on_graph = DEFLattice2D_onrep):
+        def get_links_triangle(self, node: Any, on_graph = L2D_ONREP):
             node2 = list(self.l.graph_neighbors(node, on_graph))[0]
             common_neighbors = list(nx.common_neighbors(
                 self.l.GraphReprDict[on_graph], node, node2))
@@ -155,7 +160,7 @@ class Lattice2D(SignedGraph):
                 links = [(node, node2)]
             return links
         #
-        def get_links_square(self, node: Any, on_graph = DEFLattice2D_onrep):
+        def get_links_square(self, node: Any, on_graph = L2D_ONREP):
             g = self.l.GraphReprDict[on_graph]
             neighbors = list(g.neighbors(node))
             for i in range(1, len(neighbors)):
@@ -179,7 +184,7 @@ class Lattice2D(SignedGraph):
             return links
         #
         def get_links_hexagon(self, node: int, 
-                              on_graph: str = DEFLattice2D_onrep):
+                              on_graph: str = L2D_ONREP):
             graph = self.l.GraphReprDict[on_graph]
             nodes_in_cycle = [node]
             node_nn = list(self.l.GraphReprDict[on_graph].neighbors(node))
@@ -214,7 +219,7 @@ class Lattice2D(SignedGraph):
             return links
         #
         def get_rand_pattern(self, mode: str, 
-                             on_graph: str = DEFLattice2D_onrep):
+                             on_graph: str = L2D_ONREP):
             if mode == "ZERR":
                 if self.l.geo == 'squared':
                     mode = "square"
@@ -237,7 +242,7 @@ class Lattice2D(SignedGraph):
             return list(set(patternList))
         #
         def get_links_rball(self, R: int = 1, center: Any = None, 
-                            on_graph: str = DEFLattice2D_onrep):
+                            on_graph: str = L2D_ONREP):
             graph = self.l.GraphReprDict[on_graph]
             if not center:
                 center = self.centedge[on_graph][0]

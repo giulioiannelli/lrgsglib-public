@@ -25,6 +25,9 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 #
 #
 #
+twilight_lim_low = 0.2
+twilight_lim_high = 0.8
+twilight_lim_blu = 0.65
 cred, cblu = twilight(twilight_lim_low), twilight(twilight_lim_blu)
 restr_twilight_vals = plt.cm.twilight(
     np.linspace(twilight_lim_low, twilight_lim_high)
@@ -716,11 +719,11 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
     if geometry == 'squared':
         if cell == 'single':
             if direction == 'parallel':
-                xShiftConst = -.5
+                xShiftConst = 0
                 newLowerBound = .5
                 slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
             else:
-                xShiftConst = 0
+                xShiftConst = -.5
                 newLowerBound = 0
                 slice_cut = lambda side: np.s_[lattices[side].side1//2, :]
         if cell == 'singleZERR':
@@ -742,12 +745,14 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
                 slice_cut = lambda side: np.s_[lattices[side].side1//2, :]
             def func(eigV):
                 eigV = flip_to_positive_majority(eigV)
+                eigV = np.max(eigV) - eigV
                 eigV /= np.max(eigV)
                 return eigV
         else:
             def func(eigV):
                 eigV = flip_to_positive_majority(eigV)
-                eigV /= np.min(eigV)
+                eigV = np.max(eigV) - eigV
+                eigV /= np.max(eigV)
                 return eigV
     elif geometry == 'triangular':
         xShiftConst = 0
@@ -774,13 +779,12 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
             xShiftConst = -.5
             slice_cut = lambda side: np.s_[:, lattices[side].side2//2]
 
-    
-    
-
     ax.set_ylabel(ylabel, labelpad=10)
     ax.set_xscale('symlog')
+    ax.set_yscale('log')
     #
     cmapv = restr_twilight(np.linspace(0, 1, len(sizes)))
+    lista = []
     for side, c in zip(sizes[::-1], cmapv):
         kwdict = {"ls": '-',
                 'c': c, 
@@ -801,8 +805,11 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
                 sideop = lattices[side].side2 
             elif direction == 'perpendicular':
                 sideop = lattices[side].side1
-        x = np.linspace(-sideop//2, sideop//2, num=sideop)+xShiftConst
+        x = np.rint(np.linspace(-sideop//2, sideop//2, num=sideop)+xShiftConst)
         ax.plot(x, phi_plot, **kwdict)
+        ax.plot(np.argmax(np.abs(x))+2, phi_plot[np.argmax(np.abs(x))]+2, 'or')
+        lista.append(x[np.argmax(np.abs(x))+2]+sideop//2)
+        print(np.argmax(np.abs(x)), x[np.argmax(np.abs(x)):np.argmax(np.abs(x))+2], )
     #
     if fit_mode and cell != 'singleXERR':
         # idx = (x < -side//3) | (x > side//3)
@@ -837,3 +844,4 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
     kwvlines = {'ls':'--', 'lw':1, 'c':'k'}
     for i in [-1, +1, -lattices[sizes[0]].r_c, +lattices[sizes[0]].r_c]:
         ax.axvline(i, **kwvlines)
+    return lista

@@ -2,75 +2,69 @@ from .shared import *
 #
 ColorType = Union[Tuple[int, int, int], Tuple[float, float, float], Tuple[int, int, int, int], Tuple[float, float, float, float], str]
 # extensions
-ePDF = ".pdf"
-eTXT = ".txt"
-eBIN = ".bin"
-eMP4 = ".mp4"
-ePKL = ".pkl"
+PDF = ".pdf"
+TXT = ".txt"
+BIN = ".bin"
+MP4 = ".mp4"
+PKL = ".pkl"
 # paths
 PATH_ROOTF = "LRG-Signed"
 # default values
-DEFLBpflip = .0
-DEFUBpflip = 1.
+LB_PFLIP = .0
+UB_PFLIP = 1.
 
-twilight_lim_low = 0.2
-twilight_lim_high = 0.8
-twilight_lim_blu = 0.65
+DIR_SRC = "src/"
+DIR_PCK = "LRGSG_package/"
+DIR_PLT = "plot/"
+DIR_DAT = "data/"
 
-
-DIR_SRC_DEFAULT = "src/"
-DIR_PCK_DEFAULT = "LRGSG_package/"
-DIR_PLT_DEFAULT = "plot/"
-DIR_DAT_DEFAULT = "data/"
-
-DIR_GRAPH_DEFAULT = "graphs/"
-DIR_ISING_DEFAULT = "ising/"
-DIR_VOTER_DEFAULT = "voter/"
-DIR_LRGSG_DEFAULT = "lrgsg/"
-DIR_PHTRA_DEFAULT = "phtra/"
-
-DEFSignedGraph_pflipverr = f""" pflip must be between {DEFLBpflip} and {DEFUBpflip}, inclusive."""
-
+DIR_GRAPH = "graphs/"
+DIR_ISING = "ising/"
+DIR_VOTER = "voter/"
+DIR_LRGSG = "lrgsg/"
+DIR_PHTRA = "phtra/"
+# Signed Graph default values
+SG_GRAPH_REPR = 'G'
+SG_ERRMSG_PFLIP = f""" pflip must be between {LB_PFLIP} and {UB_PFLIP}, inclusive."""
+#
 DEFErdosReny_pthabb = "er/"
-
-DEFLattice2D_side1 = 32
-DEFLattice2D_side2 = 0
-DEFLattice2D_pbc = True
-DEFLattice2D_fbcv = 1.
-DEFLattice2D_stdFn = ""
-DEFLattice2D_sgpath = ""
-DEFLattice2D_onrep = 'G'
-DEFLattice2D_pthabb = 'l2d_'
-DEFLattice2D_geoTri = 'triangular'
-DEFLattice2D_geoTri_abb = 'tri'
-DEFLattice2D_geoSqr = 'squared'
-DEFLattice2D_geoSqr_abb = 'sqr'
-DEFLattice2D_geoHex = 'hexagonal'
-DEFLattice2D_geoHex_abb = 'hex'
-DEFLattice2D_p_clist = [0.146, 0.103, 0.065] 
+# 2D Lattice default values
+L2D_FBCV = 1.
+L2D_PBC = True
+L2D_STDFN = ""
+L2D_SIDE1 = 32
+L2D_SIDE2 = 0
+L2D_SGPATH = ""
+L2D_ONREP = 'G'
+L2D_PHTABB = 'l2d_'
+L2D_GEO_TRI = 'triangular'
+L2D_GEO_SQR = 'squared'
+L2D_GEO_HEX = 'hexagonal'
+L2D_GEO_TRI_SHRT = 'tri'
+L2D_GEO_SQR_SHRT = 'sqr'
+L2D_GEO_HEX_SHRT = 'hex'
+L2D_P_C_LIST = [0.146, 0.103, 0.065] 
+# 
+L2D_GEO = L2D_GEO_SQR
+# 
+L2D_GEO_LIST = [L2D_GEO_TRI, 
+                        L2D_GEO_SQR, 
+                        L2D_GEO_HEX]
+L2D_GEO_SHRT_LIST = [L2D_GEO_TRI_SHRT, 
+                        L2D_GEO_SQR_SHRT, 
+                        L2D_GEO_HEX_SHRT]
+L2D_SINGLE_CELL_LIST = ['single', 'singleXERR', 'singleZERR']
 #
-DEFLattice2D_geo = DEFLattice2D_geoSqr
-#
-DEFLattice2D_geoabblist = [DEFLattice2D_geoTri_abb, 
-                        DEFLattice2D_geoSqr_abb, 
-                        DEFLattice2D_geoHex_abb]
-DEFLattice2D_geolist = [DEFLattice2D_geoTri, 
-                        DEFLattice2D_geoSqr, 
-                        DEFLattice2D_geoHex]
-DEFLattice2D_singcellist = ['single', 'singleXERR', 'singleZERR']
-#
+L2D_P_C_DICT = {g: p for g,p in zip(L2D_GEO_LIST, L2D_P_C_LIST)}
+L2D_PATH_DICT = {g: f"{L2D_PHTABB}{g}/" for a,g in 
+                        zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST)}
+L2D_GEO_SHRT_DICT = {s: a for a,s in 
+                        zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST)}
+L2D_SHRT_GEO_DICT = {a: s for a,s in 
+                        zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST)}
 
-DEFLattice2D_p_cdict = {g: p for g,p in 
-                        zip(DEFLattice2D_geolist, DEFLattice2D_p_clist)}
-DEFLattice2D_pthdict = {g: f"{DEFLattice2D_pthabb}{g}/" for a,g in 
-                        zip(DEFLattice2D_geoabblist, DEFLattice2D_geolist)}
-DEFLattice2D_geodict = {s: a for a,s in 
-                        zip(DEFLattice2D_geoabblist, DEFLattice2D_geolist)}
-DEFLattice2D_geodictabb = {a: s for a,s in 
-                        zip(DEFLattice2D_geoabblist, DEFLattice2D_geolist)}
-
-DEFLattice2D_geowarnmsg = """The selected geometry of the 2D lattice is not available. Setting it to 'squared' for a 2d regular grid."""
-DEFLattice2D_geoerrmsg = """Invalid side value for hexagonal lattice. In order to implement PBC on hexagonal lattice you need to provide an even value for side1 and side2."""
+L2D_WARNMSG_GEO = """The selected geometry of the 2D lattice is not available. Setting it to 'squared' for a 2d regular grid."""
+L2D_ERRMSG_GEO = """Invalid side value for hexagonal lattice. In order to implement PBC on hexagonal lattice you need to provide an even value for side1 and side2."""
 
 DEFLattice3D_dim = (16, 16, 16)
 DEFLattice3D_pbc = True
