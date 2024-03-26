@@ -10,7 +10,7 @@ import matplotlib.colors as mplc
 import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 #
-from matplotlib import gridspec
+from matplotlib import gridspec, rc_context
 from matplotlib.axes import Axes
 from matplotlib.cm import hsv, twilight, ScalarMappable
 from matplotlib.colors import Colormap, ListedColormap
@@ -22,22 +22,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 #
-#
-#
-#
-twilight_lim_low = 0.2
-twilight_lim_high = 0.8
-twilight_lim_blu = 0.65
-cred, cblu = twilight(twilight_lim_low), twilight(twilight_lim_blu)
-restr_twilight_vals = plt.cm.twilight(
-    np.linspace(twilight_lim_low, twilight_lim_high)
-)
-restr_twilight = LinearSegmentedColormap.from_list(
-    "restr_twilight", restr_twilight_vals
-)
-cm.register_cmap(name="restr_twilight", cmap=restr_twilight)
-cm.register_cmap(name='restr_twilight_r', cmap=restr_twilight.reversed())
-
+from .const_plotlib import *
 #
 #
 #
@@ -336,7 +321,7 @@ def get_complementary_color(color_name):
 
     return comp_hex
 
-def plot_square_lattice(
+def scheme_Lattice2DSquared(
     ax,
     size: int = 7,
     kwargs_nodes: dict = dict(marker="o", ms=20, mec="k", mfc="w"),
@@ -392,7 +377,6 @@ def plot_square_lattice(
     for i in range(size):
         for j in range(size):
             kwargs_lines["color"] = random.choice([pec, cpec])
-            import matplotlib as mpl
             if kwargs_lines["color"] == pec:
                 if i < size - 1:
                     ax.plot(
@@ -409,7 +393,7 @@ def plot_square_lattice(
                         **kwargs_lines,
                     )  # Horizontal
             else:
-                with mpl.rc_context({'path.sketch': (5, 15, 1)}):
+                with rc_context({'path.sketch': (5, 15, 1)}):
                     if i < size - 1:
                         ax.plot(
                             [x[i, j], x[i + 1, j]],
@@ -587,117 +571,138 @@ def set_ax_ratio_1_withlim(ax):
     ax.set_xlim(x_center - max_range, x_center + max_range)
     ax.set_ylim(y_center - max_range, y_center + max_range)
 
-
-
-
-def plot_square_lattice(
-    ax,
-    size: int = 7,
-    size2: int = 7,  # New argument for the second dimension
-    kwargs_nodes: dict = dict(marker="o", ms=20, mec="k", mfc="w"),
-    kwargs_extl: dict = dict(ls=":", zorder=0, marker='None'),
-    etxl_len: float = 0.75,
-    kwargs_lines: dict = dict(lw=3),
-    pec="blue",
-    cpec="red",
-    mode = 'defects',
-    kwargs_text: dict = dict(fontsize=20, color='black', ha='center', va='center')
-):
+def plot_line_with_style(ax, x_coords, y_coords, color, kwargs_lines, cpec):
     """
-    Function to plot a square lattice where the color and style of each link
-    can be controlled individually.
+    Helper function to plot a line with a specific color and optional style.
     """
-    from  matplotlib import rc_context
-    x, y = np.meshgrid(np.arange(size), np.arange(size2), indexing='ij')  # Correct indexing for x and y
+    kwargs_lines["color"] = color
+    if color == cpec:
+        with rc_context({'path.sketch': (5, 15, 1)}):
+            ax.plot(x_coords, y_coords, zorder=1, **kwargs_lines)
+    else:
+        ax.plot(x_coords, y_coords, zorder=1, **kwargs_lines)
+#
+def scheme_Lattice2DSquared(
+        ax: Axes, 
+        side1: int = PLT_SL2DSQ_SIDE1,
+        side2: int = PLT_SL2DSQ_SIDE2,
+        mode: str = PLT_SL2DSQ_MODE,
+        kwargNodes: dict = PLT_SL2DSQ_KWNODE,
+        kwargsExtl: dict = PLT_SL2DSQ_KWEXTL,
+        lenExtl: float = PLT_SL2DSQ_LNEXTL,
+        kwargsLines: dict = PLT_SL2DSQ_KWLINE,
+        pec: ColorType = PLT_SL2DSQ_PEC,
+        cpec: ColorType = PLT_SL2DSQ_CPEC,
+        pflip: float = PLT_SL2DSQ_PFLIP,
+        kwargsTxt: dict = PLT_SL2DSQ_KWTXT
+        ) -> None:
+    """
+        Function to plot a square lattice where the color and style of each link
+        can be controlled individually. This includes the ability to create defects
+        or randomly alter the appearance of links and nodes within the lattice.
+
+        Parameters
+        ----------
+        ax : Axes
+            The matplotlib axes to plot on.
+        side1 : int, optional
+            Number of nodes on one side of the square lattice.
+        side2 : int, optional
+            Number of nodes on the other side of the square lattice.
+        mode : str, optional
+            The mode of coloring the lattice links. Can be 'rand' for random 
+            colors or 'defects' to specify certain links with different colors.
+        kwargNodes : dict, optional
+            Keyword arguments for plotting the nodes.
+        kwargsExtl : dict, optional
+            Keyword arguments for plotting the extended links.
+        lenExtl : float, optional
+            Length of the extended links.
+        kwargsLines : dict, optional
+            Keyword arguments for plotting the lattice links.
+        pec : ColorType, optional
+            Primary color for the lattice links.
+        cpec : ColorType, optional
+            Color for the specified or random links based on the mode.
+        pflip : float, optional
+            Probability of flipping the color of a link in 'rand' mode.
+        kwargsTxt : dict, optional
+            Keyword arguments for plotting text labels on the lattice.
+
+        Returns
+        -------
+        None
+            This function does not return a value. It modifies the given Axes object
+            in-place, adding a visual representation of a 2D squared lattice.
+
+        Notes
+        -----
+        The 'defects' mode allows for specifying particular links to have a different
+        appearance (e.g., color) to represent defects or special cases in the lattice.
+        The 'rand' mode uses the `pflip` parameter to randomly change the appearance of
+        links, simulating randomness or disorder within the lattice.
+
+        This function is designed to be flexible, with many aspects of the visualization
+        customizable through keyword arguments. This allows for a wide range of visual
+        styles and representations to suit different requirements or preferences.
+    """
+    if kwargsExtl == PLT_SL2DSQ_KWNODE:
+        kwargsExtl.update(dict(c=pec))
+    x, y = np.meshgrid(np.arange(side1), np.arange(side2), indexing='ij')
+    #
     if mode == 'defects':
         def determine_line_color(i, j, direction):
-            """
-            Function to determine the color of a line based on its position and direction.
-            Customize this function to set specific link colors.
-            """
-            # Conditions for vertical lines
             if direction == "vertical":
-                if i == 0 and j == 2:
-                    return cpec
-                if i == 2 and j == 2:
-                    return cpec
-                if i == 3 and j == 2:
-                    return cpec
-                if i == 1 and j == 1:
-                    return cpec
-                if i == 1 and j == 0:
+                if (i, j) in PLT_SL2DSQ_VDCPEC:
                     return cpec
                 return pec
             # Conditions for horizontal lines
             elif direction == "horizontal":
-                if i == 3 and j == 2:
-                    return cpec
-                if i == 3 and j == 1:
-                    return cpec
-                if i == 1 and j == 0:
-                    return cpec
-                if i == 2 and j == 0:
+                if (i, j) in PLT_SL2DSQ_HDCPEC:
                     return cpec
                 return pec
             else: 
                 return pec
-    else:
+    elif mode == 'rand':
         def determine_line_color(*args):
-            return random.choice([cpec, pec])
-
-
-
-    def plot_line_with_style(ax, x_coords, y_coords, color, kwargs_lines, cpec):
-        """
-        Helper function to plot a line with a specific color and optional style.
-        """
-        kwargs_lines["color"] = color
-        if color == cpec:
-            with rc_context({'path.sketch': (5, 15, 1)}):
-                ax.plot(x_coords, y_coords, zorder=1, **kwargs_lines)
-        else:
-            ax.plot(x_coords, y_coords, zorder=1, **kwargs_lines)
-
-
-    # Plot lines individually with control over color
-    for i in range(size):
-        for j in range(size2):
+            return random.choices([pec, cpec], [1-pflip, pflip], k=1)[0]
+    #
+    for i in range(side1):
+        for j in range(side2):
             # Vertical lines
-            if i < size - 1:
-                line_color = determine_line_color(i, j, "vertical")
-                plot_line_with_style(ax, [x[i, j], x[i + 1, j]], [y[i, j], y[i + 1, j]], line_color, kwargs_lines, cpec)
-            
+            if i < side1 - 1:
+                xPt = [x[i, j], x[i+1, j]]
+                yPt = [y[i, j], y[i+1, j]]
+                lc = determine_line_color(i, j, "vertical")
+                plot_line_with_style(ax, xPt, yPt, lc, kwargsLines, cpec)
             # Horizontal lines
-            if j < size2 - 1:
-                line_color = determine_line_color(i, j, "horizontal")
-                plot_line_with_style(ax, [x[i, j], x[i, j + 1]], [y[i, j], y[i, j + 1]], line_color, kwargs_lines, cpec)
-            
+            if j < side2 - 1:
+                xPt = [x[i, j], x[i, j+1]]
+                yPt = [y[i, j], y[i, j+1]]
+                lc = determine_line_color(i, j, "horizontal")
+                plot_line_with_style(ax, xPt, yPt, lc, kwargsLines, cpec)
             # Nodes
-            ax.plot(x[i, j], y[i, j], zorder=2, **kwargs_nodes)
-            # Adjust text positioning and size
-            # ax.text(x[i, j] + 0.1, y[i, j] - 0.1, f'({x[i, j]}, {y[i, j]})', **kwargs_text)
+            ax.plot(x[i, j], y[i, j], zorder=2, **kwargNodes)
+    
+    for j in range(side2):
+        # Extend left from the left nodes
+        ax.plot([x[0, j], x[0, j]- lenExtl], [y[0, j], y[0, j]], **kwargsExtl)
+        # Extend right from the right nodes
+        ax.plot([x[-1, j], x[-1, j]+ lenExtl], 
+                [y[-1, j], y[-1, j]], **kwargsExtl)
 
-    for j in range(size2):
-        ax.plot([x[0, j], x[0, j]- etxl_len], [y[0, j], y[0, j]], c=random.choice([cpec, pec]), **kwargs_extl)
-        ax.plot([x[-1, j], x[-1, j]+ etxl_len], [y[-1, j], y[-1, j]], c=random.choice([cpec, pec]),**kwargs_extl)
-
-    for i in range(size):
+    for i in range(side1):
         # Extend downwards from the bottom nodes
-        ax.plot([x[i, 0], x[i, 0]], [y[i, 0], y[i, 0] - etxl_len], c=random.choice([cpec, pec]),**kwargs_extl)
+        ax.plot([x[i, 0], x[i, 0]], [y[i, 0], y[i, 0] - lenExtl], **kwargsExtl)
         # Extend upwards from the top nodes
-        ax.plot([x[i, -1], x[i, -1]], [y[i, -1], y[i, -1] + etxl_len], c=random.choice([cpec, pec]),**kwargs_extl)
+        ax.plot([x[i, -1], x[i, -1]], 
+                [y[i, -1], y[i, -1] + lenExtl], **kwargsExtl)
 
 
     if mode == 'defects':
-        ax.text(x[0, 2] + .5, y[0, 2] + 0.3, rf'single', c=cpec, **kwargs_text)
-        ax.text(x[3, 2] + .5, y[3, 2] + 0.3, r"$Z$", c=cpec, **kwargs_text)
-        ax.text(x[2, 0] + .3, y[2, 0] + 0.5, r"$X$", c=cpec, **kwargs_text)
-    # Add dashed lines on the boundaries with random colors
-    # add_boundary_lines(ax, size, size2, x, y, etxl_len, kwargs_extl, pec, cpec)
-
-    # Remove axes for a cleaner look
-    ax.axis("off")
-    ax.set_aspect('equal')
+        ax.text(x[0, 2] + .5, y[0, 2] + 0.3, rf'$S$', c=cpec, **kwargsTxt)
+        ax.text(x[3, 2] + .5, y[3, 2] + 0.3, r"$Z$", c=cpec, **kwargsTxt)
+        ax.text(x[2, 0] + .3, y[2, 0] + 0.5, r"$X$", c=cpec, **kwargsTxt)
 
 
 def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel', 
