@@ -113,7 +113,6 @@ class Lattice2D(SignedGraph):
             return self.edge_map[edge_t]
     #
     class nwContainer(dict):
-        NEG_WEIGHTS_DICT_G_PFLIP = {}
         def __init__(self, l: SignedGraph, iterable=[], constant=None, 
                      **kwargs):
             super().__init__(**kwargs)
