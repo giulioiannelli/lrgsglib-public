@@ -69,7 +69,7 @@ class Lattice3D(SignedGraph):
         self.phi = phi
         self.fbc_val = fbc_val
         self.__init_stdFname__(stdFnameSFFX)
-        _ = '['+('{},'*(len(dim)-1)+'{}').format(*dim)+']'
+        _ = L3D_PATH_DICT[self.geo]
         self.sgpath = sgpath + _ if sgpath else _
         self.with_positions = with_positions
         self.__init_lattice__()

@@ -72,7 +72,21 @@ DEFLattice3D_fbcv = 1.
 DEFLattice3D_stdFnsfx = ""
 DEFLattice3D_sgpath = ""
 DEFLattice3D_stdFn = ""
-
+L3D_PHTABB = "l3d_"
+L3D_GEO_SC = 'cubic'
+L3D_GEO_BCC = 'bcc'
+L3D_GEO_FCC = 'fcc'
+L3D_GEO_SC_SHRT = 'cubic'
+L3D_GEO_BCC_SHRT = 'bcc'
+L3D_GEO_FCC_SHRT = 'fcc'
+L3D_GEO_LIST = [L3D_GEO_SC, 
+                        L3D_GEO_BCC, 
+                        L3D_GEO_FCC]
+L3D_GEO_SHRT_LIST = [L3D_GEO_SC_SHRT, 
+                        L3D_GEO_BCC_SHRT, 
+                        L3D_GEO_FCC_SHRT]
+L3D_PATH_DICT = {g: f"{L3D_PHTABB}{g}/" for a,g in 
+                        zip(L3D_GEO_SHRT_LIST, L3D_GEO_LIST)}
 
 DEFAULT_RECURSION_LIMIT = 1024**2
 DEFAULT_ENTROPY_STEPS = 1000

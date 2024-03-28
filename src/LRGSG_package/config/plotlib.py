@@ -700,9 +700,9 @@ def scheme_Lattice2DSquared(
 
 
     if mode == 'defects':
-        ax.text(x[0, 2] + .5, y[0, 2] + 0.3, rf'$S$', c=cpec, **kwargsTxt)
-        ax.text(x[3, 2] + .5, y[3, 2] + 0.3, r"$Z$", c=cpec, **kwargsTxt)
-        ax.text(x[2, 0] + .3, y[2, 0] + 0.5, r"$X$", c=cpec, **kwargsTxt)
+        ax.text(x[0, 2] + .5, y[0, 2] + 0.3, rf'$S$', color=cpec, **kwargsTxt)
+        ax.text(x[3, 2] + .5, y[3, 2] + 0.3, r"$Z$", color=cpec, **kwargsTxt)
+        ax.text(x[2, 0] + .3, y[2, 0] + 0.5, r"$X$", color=cpec, **kwargsTxt)
 
 
 def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel', 
