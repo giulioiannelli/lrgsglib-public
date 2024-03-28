@@ -17,6 +17,11 @@ restr_twilight = LinearSegmentedColormap.from_list(
 cm.register_cmap(name="restr_twilight", cmap=restr_twilight)
 cm.register_cmap(name='restr_twilight_r', cmap=restr_twilight.reversed())
 
+red_blue = LinearSegmentedColormap.from_list("red_blue", ["red", "blue"])
+cm.register_cmap(name="red_blue", cmap=red_blue)
+cm.register_cmap(name="red_blue_r", cmap=red_blue.reversed())
+
+
 PLT_SL2DSQ_SIDE1 = 7
 PLT_SL2DSQ_SIDE2 = 7
 PLT_SL2DSQ_UNIDS = 1.

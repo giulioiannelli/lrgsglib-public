@@ -11,7 +11,7 @@ class Lattice2D(SignedGraph):
         fbc_val: float = L2D_FBCV,
         stdFnameSFFX: str = L2D_STDFN,
         sgpath: str = L2D_SGPATH,
-        with_positions: bool = False,
+        with_positions: bool = L2D_WITH_POS,
         **kwargs,
     ) -> None:
         self.__init_side__(side1, side2)

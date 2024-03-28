@@ -242,13 +242,8 @@ class SignedGraph:
             self.check_pflip()
         except NflipError:
             return None
-        if on_graph == "G":
-            eset = self.esetG
-        elif on_graph == "H":
-            eset = self.esetH
         self.flip_sel_edges(
-            neg_weights_dict={e: -1 for e in self.rEdgeFlip},
-            on_graph=on_graph,
+            self.rEdgeFlip[on_graph]
         )
 
     #
@@ -421,10 +416,10 @@ class SignedGraph:
 
     def load_eigV_on_graph(self, which: int = 0, on_graph: str = SG_GRAPH_REPR):
         try:
-            eigV = flip_to_positive_majority(self.eigV[which])
+            eigV = self.eigV[which]
         except (IndexError, AttributeError):
             self.compute_k_eigvV(howmany=which+1)
-            eigV = flip_to_positive_majority(self.eigV[which])
+            eigV = self.eigV[which]
         eigVNodeAttr = {nd: v for v, nd in 
                         zip(eigV, self.GraphReprDict[on_graph].nodes)}
         nx.set_node_attributes(self.GraphReprDict[on_graph], eigVNodeAttr, f"eigV{which}")

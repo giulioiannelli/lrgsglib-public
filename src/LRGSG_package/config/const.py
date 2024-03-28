@@ -44,6 +44,7 @@ L2D_GEO_TRI_SHRT = 'tri'
 L2D_GEO_SQR_SHRT = 'sqr'
 L2D_GEO_HEX_SHRT = 'hex'
 L2D_P_C_LIST = [0.146, 0.103, 0.065] 
+L2D_WITH_POS = False
 # 
 L2D_GEO = L2D_GEO_SQR
 # 
@@ -66,27 +67,35 @@ L2D_SHRT_GEO_DICT = {a: s for a,s in
 L2D_WARNMSG_GEO = """The selected geometry of the 2D lattice is not available. Setting it to 'squared' for a 2d regular grid."""
 L2D_ERRMSG_GEO = """Invalid side value for hexagonal lattice. In order to implement PBC on hexagonal lattice you need to provide an even value for side1 and side2."""
 
-DEFLattice3D_dim = (16, 16, 16)
-DEFLattice3D_pbc = True
-DEFLattice3D_fbcv = 1.
-DEFLattice3D_stdFnsfx = ""
-DEFLattice3D_sgpath = ""
-DEFLattice3D_stdFn = ""
+L3D_DIM = (16, 16, 16)
+L3D_PBC = True
+L3D_FBCV = 1.
+L3D_SGPATH = ""
+L3D_STDFN = ""
 L3D_PHTABB = "l3d_"
-L3D_GEO_SC = 'cubic'
-L3D_GEO_BCC = 'bcc'
-L3D_GEO_FCC = 'fcc'
-L3D_GEO_SC_SHRT = 'cubic'
+L3D_GEO_SC = 'simple_cubic'
+L3D_GEO_BCC = 'body_centered'
+L3D_GEO_FCC = 'face_centered'
+L3D_GEO_SC_SHRT1 = 'cubic'
+L3D_GEO_SC_SHRT = 'sc'
 L3D_GEO_BCC_SHRT = 'bcc'
 L3D_GEO_FCC_SHRT = 'fcc'
+L3D_WITH_POS = False
+L3D_THETA = np.pi/6
+L3D_PHI = np.pi/6
+# 
+L3D_GEO = L3D_GEO_SC
+#
 L3D_GEO_LIST = [L3D_GEO_SC, 
                         L3D_GEO_BCC, 
                         L3D_GEO_FCC]
 L3D_GEO_SHRT_LIST = [L3D_GEO_SC_SHRT, 
                         L3D_GEO_BCC_SHRT, 
                         L3D_GEO_FCC_SHRT]
-L3D_PATH_DICT = {g: f"{L3D_PHTABB}{g}/" for a,g in 
-                        zip(L3D_GEO_SHRT_LIST, L3D_GEO_LIST)}
+L3D_GEO_DICT = {a: g for a,g in 
+                 zip(L3D_GEO_SHRT_LIST+L3D_GEO_LIST, L3D_GEO_LIST*2)}
+L3D_PATH_DICT = {a: f"{L3D_PHTABB}{g}/" for a,g in 
+                 zip(L3D_GEO_SHRT_LIST+L3D_GEO_LIST, L3D_GEO_LIST*2)}
 
 DEFAULT_RECURSION_LIMIT = 1024**2
 DEFAULT_ENTROPY_STEPS = 1000
