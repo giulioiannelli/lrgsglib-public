@@ -15,7 +15,6 @@ import pickle as pk
 import scipy.sparse as scsp
 #
 from collections import Counter
-from itertools import product
 from matplotlib.ticker import ScalarFormatter
 from numpy import inf, ndarray
 from numpy.linalg import eigvals, eigvalsh

@@ -9,6 +9,7 @@ import networkx as nx
 
 from collections.abc import Iterable
 from cycler import cycler
+from itertools import product
 from networkx.classes.graph import Graph
 from numpy import ndarray
 from os import chdir, getcwd

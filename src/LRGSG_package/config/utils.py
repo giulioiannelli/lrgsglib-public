@@ -800,3 +800,145 @@ def get_first_int_in_str(s):
     """
     match = re.search(r'\d+', s)
     return int(match.group()) if match else None
+
+
+from itertools import product
+
+def cProd_Iter(dim: Union[int, Tuple]) -> iter:
+    """
+    Generates the Cartesian product for an n-dimensional space.
+
+    This function creates an iterable over all possible combinations of coordinates
+    in an n-dimensional grid, defined by the dimensions specified in the input tuple.
+    Each element in the 'dim' tuple represents the size of the grid along that dimension.
+    The Cartesian product is generated using a sequence of range objects, one for each
+    dimension, thereby producing a sequence of tuples that represent points in the
+    n-dimensional space.
+
+    Parameters
+    ----------
+    dim : tuple of int
+        A tuple where each element specifies the size of the grid along a particular
+        dimension. For example, (2, 3) represents a 2D grid with dimensions 2x3.
+
+    Returns
+    -------
+    iterator
+        An iterator over tuples, where each tuple represents a point in the
+        n-dimensional space defined by 'dim'. Each tuple contains integers,
+        with the i-th integer representing the coordinate along the i-th dimension.
+
+    Examples
+    --------
+    >>> list(cartesian_product((2, 3)))
+    [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)]
+
+    >>> list(cartesian_product((1, 2, 3)))
+    [(0, 0, 0), (0, 0, 1), (0, 0, 2), (0, 1, 0), (0, 1, 1), (0, 1, 2)]
+
+    Notes
+    -----
+    - The order of the tuples in the output iterator follows the lexicographical order
+      based on the input dimensions. This means smaller coordinates come before larger ones.
+    - This function is particularly useful for iterating over multi-dimensional arrays
+      or grids, where you need to visit each cell or point in the space.
+    - The implementation relies on itertools.product, which is efficient and avoids
+      explicitly constructing the grid in memory, making it suitable for large dimensions.
+
+    See Also
+    --------
+    itertools.product : Cartesian product of input iterables.
+    """
+    return product(*[range(d) for d in dim])
+
+def cProdSel_Iter(dim: Union[int, Tuple], selected_indices: Union[List, Tuple]) -> iter:
+    """
+    Generates the Cartesian product for selected dimensions in an n-dimensional space.
+
+    This function creates an iterable over all possible combinations of coordinates
+    in the specified dimensions of an n-dimensional grid. It allows for focusing on
+    a subset of all available dimensions, which is specified by the selected_indices.
+
+    Parameters
+    ----------
+    dim : tuple of int
+        A tuple where each element specifies the size of the grid along a particular
+        dimension. For example, (2, 3, 4) represents a 3D grid with dimensions 2x3x4.
+    selected_indices : list or tuple of int
+        Indices of the dimensions to include in the Cartesian product. For example,
+        (1, 2) selects the second and third dimensions from 'dim'.
+
+    Returns
+    -------
+    iterator
+        An iterator over tuples, where each tuple represents a point in the
+        specified dimensions of the n-dimensional space. Each tuple contains integers,
+        with the i-th integer representing the coordinate along the selected i-th dimension.
+
+    Examples
+    --------
+    >>> list(cartesian_product_selected((2, 3, 4), (0, 2)))
+    [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2), (1, 3)]
+
+    >>> list(cartesian_product_selected((2, 3, 4, 5), (1, 3)))
+    [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (2, 0), (2, 1), (2, 2), (2, 3), (2, 4)]
+
+    Notes
+    -----
+    - The function is useful for iterating over a selected subset of dimensions in a multi-dimensional space.
+    - By allowing specification of dimensions of interest, it provides flexibility for applications that do not require
+      the full Cartesian product of all dimensions.
+    """
+    # Generate ranges for selected dimensions
+    ranges = [range(dim[i]) for i in selected_indices]
+    
+    # Return Cartesian product of selected dimensions
+    return product(*ranges)
+
+def cProd_Iter_adj(dim: Union[int, Tuple], range_adjustment: Union[int, List] = 0) -> iter:
+    """
+    Generates the Cartesian product for an n-dimensional space with adjustable ranges.
+
+    This function creates an iterable over all possible combinations of coordinates
+    in an n-dimensional grid, defined by the dimensions specified in the input tuple,
+    adjusted by the range_adjustment which can be a single integer or a list of integers.
+
+    Parameters
+    ----------
+    dim : tuple of int
+        A tuple where each element specifies the size of the grid along a particular
+        dimension. For example, (2, 3) represents a 2D grid with dimensions 2x3.
+    range_adjustment : int or list of int, optional
+        An integer to adjust all dimensions equally, or a list of integers to adjust
+        each dimension individually. The default value is 0, which means no adjustment.
+
+    Returns
+    -------
+    iterator
+        An iterator over tuples, where each tuple represents a point in the
+        adjusted n-dimensional space defined by 'dim' and 'range_adjustment'.
+        Each tuple contains integers, with the i-th integer representing the
+        coordinate along the i-th dimension.
+
+    Examples
+    --------
+    >>> list(cProd_Iter((2, 3), 1))
+    [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2), (1, 3), (2, 0), (2, 1), (2, 2), (2, 3)]
+
+    >>> list(cProd_Iter((1, 2), [1, 2]))
+    [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2), (1, 3)]
+
+    Notes
+    -----
+    The `range_adjustment` allows for flexible configuration of the generated space,
+    accommodating scenarios that require padding or extending the dimensions.
+    """
+    # Handle both int and list types for range_adjustment
+    if isinstance(range_adjustment, int):
+        adjusted_ranges = [range(d + range_adjustment) for d in dim]
+    elif isinstance(range_adjustment, list):
+        adjusted_ranges = [range(d + adj) for d, adj in zip(dim, range_adjustment)]
+    else:
+        raise ValueError("range_adjustment must be an int or a list of ints")
+
+    return product(*adjusted_ranges)

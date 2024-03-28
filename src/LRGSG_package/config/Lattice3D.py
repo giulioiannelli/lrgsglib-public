@@ -57,12 +57,16 @@ class Lattice3D(SignedGraph):
         stdFnameSFFX: str = DEFLattice3D_stdFnsfx,
         sgpath: str = DEFLattice3D_sgpath,
         with_positions: bool = False,
+        theta: float = np.pi/2,
+        phi: float = np.pi/2,
         **kwargs,
     ) -> None:
         self.dim = sorted(dim, reverse=True)
         self.diml = list(dim)
         self.pbc = pbc
         self.geo = geo
+        self.theta = theta
+        self.phi = phi
         self.fbc_val = fbc_val
         self.__init_stdFname__(stdFnameSFFX)
         _ = '['+('{},'*(len(dim)-1)+'{}').format(*dim)+']'
@@ -89,66 +93,109 @@ class Lattice3D(SignedGraph):
             self.syshapeStr = '_'.join(["L{i}=side" for i, side in enumerate(self.dim)])        
         self.syshapePth = f"{self.syshapeStr}/"
         
-        self.G = nxfunc()
+        self.G = nxfunc(self.dim)
         if self.with_positions:
             self._set_positions()
 
     def _project_3d_to_2d(self, x, y, z):
-        cos_angle = np.cos(np.pi)
-        sin_angle = np.sin(np.pi)
-        x2 = cos_angle * x - cos_angle * y
-        y2 = sin_angle * x + sin_angle * y - z
+        # Rotation matrix around the y-axis (theta)
+        R_theta = np.array([
+            [np.cos(self.theta), 0, np.sin(self.theta)],
+            [0, 1, 0],
+            [-np.sin(self.theta), 0, np.cos(self.theta)]
+        ])
+        
+        # Rotation matrix around the x-axis (phi)
+        R_phi = np.array([
+            [1, 0, 0],
+            [0, np.cos(self.phi), -np.sin(self.phi)],
+            [0, np.sin(self.phi), np.cos(self.phi)]
+        ])
+        
+        # Initial position vector
+        position = np.array([x, y, z])
+        
+        # Apply rotations
+        position_rotated = R_phi @ R_theta @ position  # Order matters
+        
+        # Project onto 2D plane (ignore z after rotation)
+        x2, y2 = position_rotated[0], position_rotated[1]
+        
         return x2, y2
 
-    def _generate_cubic_lattice(self):
-        G = Graph()
-        for x in range(self.dim[0]):
-            for y in range(self.dim[1]):
-                for z in range(self.dim[2]):
-                    G.add_node((x, y, z))
-                    for dx, dy, dz in [(0, 0, 1), (0, 1, 0), (1, 0, 0)]:
-                        neighbor = (x + dx, y + dy, z + dz)
-                        if neighbor in G.nodes():
-                            G.add_edge((x, y, z), neighbor)
-        if self.pbc:
-            for x in range(self.dim[0]):
-                for y in range(self.dim[1]):
-                    G.add_edge((x, y, 0), (x, y, self.dim[2]-1))
-            for x in range(self.dim[0]):
-                for z in range(self.dim[2]):
-                    G.add_edge((x, 0, z), (x, self.dim[1]-1, z))
-            for y in range(self.dim[1]):
-                for z in range(self.dim[2]):
-                    G.add_edge((0, y, z), (self.dim[0]-1, y, z))
-        return G
     def _set_positions(self):
         pos = {node: self._project_3d_to_2d(*node) for node in self.G.nodes()}
         set_node_attributes(self.G, pos, 'pos')
 
-    def _generate_bcc_lattice(self):
+    def _generate_cubic_lattice(self, dim):
+        G = Graph()
+        e_i = [tuple(1 if i == j else 0 for j in range(len(dim)))
+               for i in range(len(dim))]
+        nodes = list(cProd_Iter(dim))
+        G.add_nodes_from(nodes)
+
+        edges = [(pt, pte) for pt in nodes for drt in e_i
+            if (pte := tuple(d + p for d, p in zip(drt, pt))) in G.nodes()]
+        G.add_edges_from(edges)
+        
+        if self.pbc:
+            G.add_edges_from([((x, y, 0), (x, y, dim[2]-1)) 
+                              for x, y in cProdSel_Iter(dim, (0, 1))])
+            G.add_edges_from([((x, 0, z), (x, dim[1]-1, z)) 
+                              for x, z in cProdSel_Iter(dim, (0, 2))])
+            G.add_edges_from([((0, y, z), (dim[0]-1, y, z))
+                              for y, z in cProdSel_Iter(dim, (1, 2))])
+        return G
+
+    def _generate_bcc_lattice(self, dim):
         G = Graph()
         offsets = [(0, 0, 0), (0.5, 0.5, 0.5)]
-        for x in range(self.dim[0]):
-            for y in range(self.dim[1]):
-                for z in range(self.dim[2]):
-                    for dx, dy, dz in offsets:
-                        nx, ny, nz = x + dx, y + dy, z + dz
-                        G.add_node((nx, ny, nz))
-                        for ddx, ddy, ddz in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (-1, 0, 0), (0, -1, 0), (0, 0, -1)]:
-                            neighbor = (nx + ddx, ny + ddy, nz + ddz)
-                            if neighbor in G.nodes():
-                                G.add_edge((nx, ny, nz), neighbor)
+        range_adjust = 0 if self.pbc else -1
+        nodes = list(cProd_Iter(dim)) + \
+                [(x + 0.5, y + 0.5, z + 0.5) 
+                        for x, y, z in cProd_Iter_adj(dim, range_adjust)]
+        G.add_nodes_from(nodes)
+
+        edges = [((x + dx, y + dy, z + dz), (x + ddx + dx, y + ddy + dy, z + ddz + dz))
+                for x, y, z in cProd_Iter(dim)  # Assuming self.cprod includes all relevant nodes
+                for dx, dy, dz in offsets
+                for ddx, ddy, ddz in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+                if (x + ddx + dx, y + ddy + dy, z + ddz + dz) in G.nodes()]
+
+        G.add_edges_from(edges)
+
+        # for x in range(self.dim[0]):
+        #     for y in range(self.dim[1]):
+        #         for z in range(self.dim[2]):
+        #             for dx, dy, dz in offsets:
+        #                 nx, ny, nz = x + dx, y + dy, z + dz
+        #                 for ddx, ddy, ddz in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
+        #                     neighbor = (nx + ddx, ny + ddy, nz + ddz)
+        #                     if neighbor in G.nodes():
+        #                         G.add_edge((nx, ny, nz), neighbor)
         if self.pbc:
             # For BCC lattice PBC
-            for x in range(-1, self.dim[0]):
-                for y in range(-1, self.dim[1]):
-                    G.add_edge((x+0.5, y+0.5, self.dim[2]-0.5), (x+0.5, y+0.5, -0.5))
-            for x in range(-1, self.dim[0]):
-                for z in range(-1, self.dim[2]):
-                    G.add_edge((x+0.5, self.dim[1]-0.5, z+0.5), (x+0.5, -0.5, z+0.5))
-            for y in range(-1, self.dim[1]):
-                for z in range(-1, self.dim[2]):
-                    G.add_edge((self.dim[0]-0.5, y+0.5, z+0.5), (-0.5, y+0.5, z+0.5))
+            G.add_edges_from([((x + ox, y + oy, oz), (x + ox, y + oy, dim[2] - 1 + oz)) 
+                            for ox, oy, oz in offsets
+                            for x, y in cProdSel_Iter(dim, (0, 1))])
+            G.add_edges_from([((x + ox, oy, z + oz), (x + ox, self.dim[1] - 1 + oy, z + oz))
+                              for ox, oy, oz in offsets
+                              for x, z in cProdSel_Iter(dim, (0, 2))])
+            G.add_edges_from([((ox, y + oy, z + oz), (self.dim[0] - 1 + ox, y + oy, z + oz))
+                            for ox, oy, oz in offsets
+                            for y, z in cProdSel_Iter(dim, (1, 2))])
+            # for x in range(self.dim[0]-1):
+            #     for y in range(self.dim[1]-1):
+            #         G.add_edge((x+0.5, y+0.5, 0.5), (x+0.5, y+0.5, self.dim[2]-1+0.5))
+            #         G.add_edge((x, y, 0), (x, y, self.dim[2]-1))
+            # for x in range(self.dim[0]):
+            #     for z in range(self.dim[2]):
+            #         G.add_edge((x+0.5, 0.5, z+0.5), (x+0.5, self.dim[1]-1+0.5, z+0.5))
+            #         G.add_edge((x, 0, z), (x, self.dim[1]-1, z))
+            # for y in range(self.dim[1]):
+            #     for z in range(self.dim[2]):
+            #         G.add_edge((0.5, y+0.5, z+0.5), (self.dim[0]-1+0.5, y+0.5, z+0.5))
+            #         G.add_edge((0, y, z), (self.dim[0]-1, y, z))
         return G
 
     def _generate_fcc_lattice(self):
