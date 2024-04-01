@@ -75,6 +75,7 @@ class Lattice2D(SignedGraph):
             self.syshape = (self.side1, self.side2)
         elif self.geo == L2D_SHRT_GEO_DICT['hex']:
             nxfunc = hexagonal_lattice_graph_FastPatch
+            self.syshape = (self.side1, self.side2)
         #
         if self.side1 == self.side2:
             self.syshapeStr = f"N={self.side1**2}"

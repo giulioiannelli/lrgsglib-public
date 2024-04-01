@@ -109,4 +109,4 @@ elif mode == 'ordParam':
                 pass
             filename = file_path_maker(mpath[mode], napath=avg+sfreq)
             with open(filename, 'wb') as file:
-                np.savetxt(file, data, fmt='%.7g')
+                np.savetxt(file, np.atleast_2d(data), fmt='%.7g')
