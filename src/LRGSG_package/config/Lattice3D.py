@@ -155,6 +155,55 @@ class Lattice3D(SignedGraph):
     def _generate_bcc_lattice(self, dim):
         G = Graph()
         offsets = [(0, 0, 0), (0.5, 0.5, 0.5)]
+        offsets2 = [(0.5, 0.5, 0.5), (0.5, 0.5, -0.5),
+                    (0.5, -0.5, 0.5), (-0.5, 0.5, 0.5),
+                    (0.5, -0.5, -0.5), (-0.5, -0.5, -0.5),
+                    (-0.5, 0.5, -0.5), (-0.5, -0.5, 0.5)]
+        range_adjust = 0 if self.pbc else -1
+        nodes = [(x + ox, y + oy, z+ oz) 
+                            for ox, oy, oz in offsets
+                            for x, y, z in cProd_Iter_adj(dim, range_adjust)]
+        G.add_nodes_from(nodes)
+
+        edges = [((x + dx, y + dy, z + dz), (x + ddx + dx, y + ddy + dy, z + ddz + dz), {'type': 'link'})
+                for x, y, z in cProd_Iter(dim) 
+                for dx, dy, dz in offsets
+                for ddx, ddy, ddz in offsets2
+                if (x + ddx + dx, y + ddy + dy, z + ddz + dz) in G.nodes()]
+
+        G.add_edges_from(edges)
+        edges = [((x + dx, y + dy, z + dz), (x + ddx + dx, y + ddy + dy, z + ddz + dz), {'type': 'box'})
+                for x, y, z in cProd_Iter(dim) 
+                for dx, dy, dz in offsets
+                for ddx, ddy, ddz in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+                if (x + ddx + dx, y + ddy + dy, z + ddz + dz) in G.nodes()]
+
+        G.add_edges_from(edges)
+        if self.pbc:
+            # For BCC lattice PBC
+            G.add_edges_from([((x, y, 0), (x+0.5 , y +0.5, dim[2] - 0.5), {'type': 'link'}) 
+                            for x, y in cProdSel_Iter(dim, (0, 1))])
+            G.add_edges_from([((x, 0, 0), (x+0.5 , dim[1]-0.5, dim[2] - 0.5), {'type': 'link'}) 
+                            for x in range(dim[0])])
+            G.add_edges_from([((0, y, 0), (dim[0]-0.5 , y+0.5, dim[2] - 0.5), {'type': 'link'}) 
+                            for y in range(dim[1])])
+            G.add_edges_from([((0, 0, z), (dim[0]-0.5, dim[1]-0.5, z+0.5), {'type': 'link'}) 
+                            for z in range(dim[2])])
+            G.add_edges_from([((x, 0, z), (x+0.5 , dim[1]-0.5, z+0.5), {'type': 'link'}) 
+                            for x, z in cProdSel_Iter(dim, (0, 2))])
+            G.add_edges_from([((0, y, z), (dim[0]-0.5 , y+0.5, z+0.5), {'type': 'link'}) 
+                            for y, z in cProdSel_Iter(dim, (1, 2))])
+            # G.add_edges_from([((x + ox, oy, z + oz), (x + ox, self.dim[1] - 1 + oy, z + oz))
+            #                   for ox, oy, oz in offsets
+            #                   for x, z in cProdSel_Iter(dim, (0, 2))])
+            # G.add_edges_from([((ox, y + oy, z + oz), (self.dim[0] - 1 + ox, y + oy, z + oz))
+            #                 for ox, oy, oz in offsets
+            #                 for y, z in cProdSel_Iter(dim, (1, 2))])
+        return G
+    
+    def _generate_fcc_lattice(self, dim):
+        G = Graph()
+        offsets = [(0, 0, 0), (0.5, 0.5, 0), (0.5, 0, 0.5), (0, 0.5, 0.5)]
         range_adjust = 0 if self.pbc else -1
         nodes = [(x + ox, y + oy, z+ oz) 
                             for ox, oy, oz in offsets
@@ -180,51 +229,49 @@ class Lattice3D(SignedGraph):
                             for ox, oy, oz in offsets
                             for y, z in cProdSel_Iter(dim, (1, 2))])
         return G
-    
-
-    def _generate_fcc_lattice(self, dim):
-        G = Graph()
+    # def _generate_fcc_lattice(self, dim):
+    #     G = Graph()
         
-        # Offsets for FCC lattice to include face-centered points
-        fcc_offsets = [(0, 0, 0), (0.5, 0.5, 0), (0.5, 0, 0.5), (0, 0.5, 0.5)]
+    #     # Offsets for FCC lattice to include face-centered points
+    #     fcc_offsets = [(0, 0, 0), (0.5, 0.5, 0), (0.5, 0, 0.5), (0, 0.5, 0.5)]
         
-        # Adjusted range to ensure we don't go beyond the lattice dimensions
-        range_adjusted = [range(d) for d in self.dim]
+    #     # Adjusted range to ensure we don't go beyond the lattice dimensions
+    #     range_adjusted = [range(d) for d in self.dim]
 
-        # Generate all nodes, including shifted nodes for FCC structure
-        nodes = [(x + ox, y + oy, z + oz) 
-                 for x, y, z in product(*range_adjusted)
-                 for ox, oy, oz in fcc_offsets]
+    #     # Generate all nodes, including shifted nodes for FCC structure
+    #     nodes = [(x + ox, y + oy, z + oz) 
+    #              for x, y, z in product(*range_adjusted)
+    #              for ox, oy, oz in fcc_offsets]
         
-        # Normalize nodes to ensure they are within bounds (for non-PBC case)
-        # This step also removes duplicates from adding offsets that exceed dimensions
-        normalized_nodes = set()
-        for node in nodes:
-            if not self.pbc:  # Without PBC, ensure nodes are within the lattice bounds
-                nx, ny, nz = node
-                if 0 <= nx < self.dim[0] and 0 <= ny < self.dim[1] and 0 <= nz < self.dim[2]:
-                    normalized_nodes.add(node)
-            else:  # With PBC, we might normalize or wrap the nodes differently
-                normalized_nodes.add(node)
+    #     # Normalize nodes to ensure they are within bounds (for non-PBC case)
+    #     # This step also removes duplicates from adding offsets that exceed dimensions
+    #     normalized_nodes = set()
+    #     for node in nodes:
+    #         if not self.pbc:  # Without PBC, ensure nodes are within the lattice bounds
+    #             nx, ny, nz = node
+    #             if 0 <= nx < self.dim[0] and 0 <= ny < self.dim[1] and 0 <= nz < self.dim[2]:
+    #                 normalized_nodes.add(node)
+    #         else:  # With PBC, we might normalize or wrap the nodes differently
+    #             normalized_nodes.add(node)
 
-        G.add_nodes_from(normalized_nodes)
+    #     G.add_nodes_from(normalized_nodes)
 
-        node_list = list(G.nodes())
-        # Convert node coordinates to a numpy array for vectorized operations
-        coordinates = np.array(node_list)
+    #     node_list = list(G.nodes())
+    #     # Convert node coordinates to a numpy array for vectorized operations
+    #     coordinates = np.array(node_list)
 
-        # Calculate Euclidean distances using broadcasting
-        # The result is a matrix of shape (len(coordinates), len(coordinates))
-        distances = np.sqrt(((coordinates[:, np.newaxis, :] - coordinates[np.newaxis, :, :]) ** 2).sum(axis=2))
-        for i,nd in enumerate(node_list):
-            idx = np.where(distances[i] < 1.)[0]
-            neighs = np.array(node_list, dtype=object)[idx]
-            neighs = [tuple(ne) for ne in neighs]
-            edges = ((nd, ne) for ne in neighs if not G.has_edge(ne, nd) and ne != nd)
-            G.add_edges_from(edges)
-        # Now, G contains all FCC lattice nodes, and you can proceed to add edges based on your criteria.
+    #     # Calculate Euclidean distances using broadcasting
+    #     # The result is a matrix of shape (len(coordinates), len(coordinates))
+    #     distances = np.sqrt(((coordinates[:, np.newaxis, :] - coordinates[np.newaxis, :, :]) ** 2).sum(axis=2))
+    #     for i,nd in enumerate(node_list):
+    #         idx = np.where(distances[i] < 1.)[0]
+    #         neighs = np.array(node_list, dtype=object)[idx]
+    #         neighs = [tuple(ne) for ne in neighs]
+    #         edges = ((nd, ne) for ne in neighs if not G.has_edge(ne, nd) and ne != nd)
+    #         G.add_edges_from(edges)
+    #     # Now, G contains all FCC lattice nodes, and you can proceed to add edges based on your criteria.
 
-        return G
+    #     return G
     # def _generate_fcc_lattice(self, dim):
     #     G = Graph()
         
