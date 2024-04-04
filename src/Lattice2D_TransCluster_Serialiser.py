@@ -25,10 +25,9 @@ elif fullMode.endswith('ordParam'):
             else:
                 return np.linspace(0, 0.35, 100)
         return np.linspace(0, 1, 100)
-    L2D_SINGLE_CELL_LIST = ['rand', 'randXERR', 'randZERR']
-    geometry_cell_dict = {'squared': L2D_SINGLE_CELL_LIST,
-                        'triangular': L2D_SINGLE_CELL_LIST,
-                        'hexagonal': L2D_SINGLE_CELL_LIST}
+    geometry_cell_dict = {'squared': L2D_RAND_CELL_LIST,
+                        'triangular': L2D_RAND_CELL_LIST,
+                        'hexagonal': L2D_RAND_CELL_LIST}
     plist = {geo: {cell: linspacepfunc(geo, cell) for cell in cells}  
             for geo,cells in geometry_cell_dict.items()}
 #
