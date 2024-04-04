@@ -42,7 +42,7 @@ if fullMode.startswith('slanzarv'):
     def slanzarv_str(mode, L, p, geo, c):
         slanzarvopt = "--nomail --jobname "
         slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
-        argstr = f"{progNameShrt}{mode}_{L}_{p:.3g}_{geo[:3]}_{c[4:]}"
+        argstr = f"{progNameShrt}{mode}_{L}_{p:.3g}_{geo[:3]}_{c[3:]}"
         return slanzarvstr + argstr 
 else:
     def slanzarv_str(*_):

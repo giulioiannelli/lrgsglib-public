@@ -1,4 +1,4 @@
-from .nx_objects import *
+from .objects import *
 
 class FullyConnected(SignedGraph):
     def __init__(self, side1: int, anigemb: str = "sle"):

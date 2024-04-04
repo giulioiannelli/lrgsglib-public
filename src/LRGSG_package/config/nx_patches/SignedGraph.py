@@ -1,5 +1,7 @@
-from .nx_objects import *
-
+from .objects import *
+from scipy.sparse import spdiags
+from scipy.sparse import identity as scsp_identity
+from scipy.sparse.linalg import eigsh as scsp_eigsh
 
 class SignedGraph:
     def __init__(
@@ -150,12 +152,12 @@ class SignedGraph:
 
     #
     def degree_matrix(self, A: csr_array) -> csr_array:
-        return csr_array(scsp.spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
+        return csr_array(spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
 
     #
     def absolute_degree_matrix(self, A: csr_array) -> csr_array:
         return csr_array(
-            scsp.spdiags(abs(A).sum(axis=1), 0, *A.shape, format="csr")
+            spdiags(abs(A).sum(axis=1), 0, *A.shape, format="csr")
         )
 
     #
@@ -263,7 +265,7 @@ class SignedGraph:
             )
             self.eigV = self.eigV.T
         if MODE_dynspec == "scipy":
-            self.eigv, self.eigV = scsp.linalg.eigsh(
+            self.eigv, self.eigV = scsp_eigsh.linalg.eigsh(
                 self.sLp.astype(np.float64), k=howmany, which=which
             )
             self.eigV = self.eigV.T
@@ -311,7 +313,7 @@ class SignedGraph:
     #
     def rescaled_signed_laplacian(self, MODE: str = "field"):
         if MODE == "field":
-            self.resLp = self.sLp - self.eigv[0] * scsp.identity(self.N)
+            self.resLp = self.sLp - self.eigv[0] * scsp_identity(self.N)
         elif MODE == "double":
             from scipy.linalg import eigvalsh
 

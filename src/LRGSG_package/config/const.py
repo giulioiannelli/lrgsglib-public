@@ -1,4 +1,4 @@
-from .shared import *
+from ..shared import *
 #
 ColorType = Union[Tuple[int, int, int], Tuple[float, float, float], Tuple[int, int, int, int], Tuple[float, float, float, float], str]
 # extensions

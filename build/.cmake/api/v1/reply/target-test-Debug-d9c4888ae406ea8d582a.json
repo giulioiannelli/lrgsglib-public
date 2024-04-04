@@ -49,7 +49,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -pipe -O2 -DNDEBUG -g"
+					"fragment" : " -O2 -DNDEBUG -g"
 				}
 			],
 			"defines" : 
@@ -79,11 +79,11 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -pipe -O2 -DNDEBUG -g",
+				"fragment" : "-O2 -DNDEBUG -g",
 				"role" : "flags"
 			},
 			{
-				"fragment" : "-Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now   -rdynamic",
+				"fragment" : "-rdynamic",
 				"role" : "flags"
 			},
 			{

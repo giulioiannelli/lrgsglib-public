@@ -60,11 +60,6 @@ parser.add_argument(
     help=HELP_exc,
     action=argparse.BooleanOptionalAction,
 )
-# parser.add_argument(
-#     "--slanzarv",
-#     help=HELP_slanzarv,
-#     action=argparse.BooleanOptionalAction,
-# )
 parser.add_argument(
     "-mMB", "--slanzarv_minMB",
     help=HELP_mMB,

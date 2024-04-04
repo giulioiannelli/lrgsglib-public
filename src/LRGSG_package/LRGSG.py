@@ -33,9 +33,10 @@ from subprocess import call
 from tqdm import tqdm
 #
 #
-from .config.nx_patches import *
-from .config.nx_objects import *
+from .config.nx_patches.funcs import *
+from .config.nx_patches.objects import *
 from .config.dyns import *
+from .config.stocproc import *
 from .config.const import *
 from .config.errwar import *
 from .config.plotlib import *

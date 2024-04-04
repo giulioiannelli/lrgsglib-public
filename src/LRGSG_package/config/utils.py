@@ -1,4 +1,4 @@
-from .shared import *
+from ..shared import *
 from .const import *
 from .errwar import *
 #
