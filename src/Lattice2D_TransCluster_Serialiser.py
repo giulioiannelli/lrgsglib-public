@@ -13,7 +13,7 @@ printBool = args.print
 #
 if fullMode.endswith('pCluster'):
     List = [16, 32, 64, 96, 128, 192, 256, 512]
-    geo = args.g
+    geo = args.geometry
     cell = args.cell_type
     plist = np.linspace(0.09, .2, num=20)
 elif fullMode.endswith('ordParam'):
