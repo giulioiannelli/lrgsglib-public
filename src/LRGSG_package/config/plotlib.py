@@ -1,5 +1,5 @@
 #
-from .shared import *
+from ..shared import *
 from .const import *
 from .utils import *
 from .errwar import *

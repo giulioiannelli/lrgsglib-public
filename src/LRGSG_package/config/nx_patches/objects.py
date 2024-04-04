@@ -1,10 +1,9 @@
 import os
 #
-from .const import *
-from .errwar import *
-from .plotlib import *
-from .utils import *
-from .nx_patches import *
+from ..const import *
+from ..errwar import *
+from ..plotlib import *
+from ..utils import *
 #
 from .SignedGraph import SignedGraph
 from .Lattice2D import Lattice2D

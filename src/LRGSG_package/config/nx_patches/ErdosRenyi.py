@@ -1,4 +1,4 @@
-from .nx_objects import *
+from .objects import *
 
 class ErdosRenyi(SignedGraph):
     def __init__(self, n, p, sgpath: str = "", stdFname: str = "", **kwargs):

@@ -43,7 +43,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -pipe -O2 -DNDEBUG -g"
+					"fragment" : " -O2 -DNDEBUG -g"
 				}
 			],
 			"defines" : 
