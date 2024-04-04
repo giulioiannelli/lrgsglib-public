@@ -59,7 +59,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-g",
-    "--geometry",
+    "--geo",
     default=DEFAULT_GEO,
     help=HELP_geo,
     type=str,
