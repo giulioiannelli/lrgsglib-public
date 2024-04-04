@@ -55,6 +55,7 @@ L2D_GEO_SHRT_LIST = [L2D_GEO_TRI_SHRT,
                         L2D_GEO_SQR_SHRT, 
                         L2D_GEO_HEX_SHRT]
 L2D_SINGLE_CELL_LIST = ['single', 'singleXERR', 'singleZERR']
+L2D_RAND_CELL_LIST = ['rand', 'randXERR', 'randZERR']
 #
 L2D_P_C_DICT = {g: p for g,p in zip(L2D_GEO_LIST, L2D_P_C_LIST)}
 L2D_PATH_DICT = {g: f"{L2D_PHTABB}{g}/" for a,g in 
