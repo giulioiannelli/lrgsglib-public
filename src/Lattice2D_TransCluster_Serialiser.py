@@ -12,16 +12,10 @@ execBool = args.exec
 printBool = args.print
 #
 if fullMode.endswith('pCluster'):
-    List = [64, 96, 128, 192, 256, 512, 724]
+    List = [16, 32, 64, 96, 128, 192, 256, 512]
     geo = args.geo
     cell = args.cell
-    plist = np.concatenate(
-        (
-            np.linspace(max(List)**(-1.25), .2, num=20),
-            np.linspace(0.2, 0.5, num=5),
-            np.linspace(0.5, 1, num=5)
-        )
-    )
+    plist = np.linspace(0.09, .2, num=20)
 elif fullMode.endswith('ordParam'):
     List = [8, 16, 32, 48, 64, 96, 128]
     def linspacepfunc(geo, cell):
