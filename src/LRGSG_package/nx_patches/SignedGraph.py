@@ -51,7 +51,7 @@ class SignedGraph:
             pass
 
     def __init_graph_fromfile__(self):
-        return pickle.load(open(f"{self.graphFname}{PKL}", "rb"))
+        return pk.load(open(f"{self.graphFname}{PKL}", "rb"))
 
     #
     def __init_paths__(
@@ -454,10 +454,10 @@ class SignedGraph:
     #
     def export_graph(self, MODE: str = "pickle"):
         if MODE == "pickle":
-            pickle.dump(
+            pk.dump(
                 self.G,
                 open(f"{self.graphFname}.pkl", "wb"),
-                pickle.HIGHEST_PROTOCOL,
+                pk.HIGHEST_PROTOCOL,
             )
         elif MODE == "gml":
             nx.write_gml(self.G, f"{self.graphFname}.gml")
@@ -590,7 +590,7 @@ class SignedGraph_DEV(Graph):
     def __init_graph_fromfile__(self):
         try:
             with open(f"{self.graphfname}.pkl", "rb") as file:
-                loaded_obj = pickle.load(file)
+                loaded_obj = pk.load(file)
                 for attr_name in loaded_obj.__dict__:
                     setattr(self, attr_name, getattr(loaded_obj, attr_name))
         except FileNotFoundError:

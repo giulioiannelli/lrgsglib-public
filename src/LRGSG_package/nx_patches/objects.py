@@ -1,9 +1,9 @@
 import os
 #
-from ..const import *
-from ..errwar import *
-from ..plotlib import *
-from ..utils import *
+from ..config.const import *
+from ..config.errwar import *
+from ..config.plotlib import *
+from ..config.utils import *
 #
 from .SignedGraph import SignedGraph
 from .Lattice2D import Lattice2D

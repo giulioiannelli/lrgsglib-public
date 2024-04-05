@@ -2,8 +2,8 @@ from random import sample
 from subprocess import call
 from tqdm import tqdm
 
-from .nx_patches.funcs import *
-from .nx_patches.objects import *
+from ..nx_patches.funcs import *
+from ..nx_patches.objects import *
 from .utils import *
 
 

@@ -269,7 +269,7 @@ def line(x, a, b):
     return a * x + b
 
 #
-def dv(f_x: ndarray, x: ndarray = None) -> ndarray:
+def dv(f_x: NDArray, x: NDArray = None) -> NDArray:
     """
     Compute the derivative of an array with respect to another array.
 
