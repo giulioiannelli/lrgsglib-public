@@ -62,8 +62,8 @@ if os.path.exists(filename):
 #
 if mode == 'pCluster':
     for avg in range(navg):
-        l = Lattice3D(side, pflip=p, geo=geo)
-        l.flip_sel_edges(geometry_func(l))
+        l = Lattice3D(dim=(side for _ in range(3)), pflip=p, geo=geo)
+        l.flip_random_fract_edges()
         #
         dist_dict = l.cluster_distribution_list()
         merged_dict += Counter(dist_dict)
