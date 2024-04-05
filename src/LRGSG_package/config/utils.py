@@ -2,6 +2,9 @@ from ..shared import *
 from .const import *
 from .errwar import *
 #
+def do_nothing(*args, **kwargs):
+    pass
+#
 def sym_log_func_unsafe(x, a, b, c, d):
     """Return values from a general log function with safety checks."""
     # Ensure safe computation by adjusting values close to d

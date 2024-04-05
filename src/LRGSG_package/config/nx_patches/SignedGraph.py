@@ -237,7 +237,7 @@ class SignedGraph:
         self.flip_sel_edges(neg_weights_dict=1, on_graph=on_graph)
 
     #
-    def flip_random_fract_edges(self, on_graph="H"):
+    def flip_random_fract_edges(self, on_graph: str = "G"):
         """Flips a fraction p of edges (+1 to -1) of a graph G."""
         #
         try:
@@ -265,7 +265,7 @@ class SignedGraph:
             )
             self.eigV = self.eigV.T
         if MODE_dynspec == "scipy":
-            self.eigv, self.eigV = scsp_eigsh.linalg.eigsh(
+            self.eigv, self.eigV = scsp_eigsh(
                 self.sLp.astype(np.float64), k=howmany, which=which
             )
             self.eigV = self.eigV.T

@@ -21,3 +21,6 @@ classifiers = [
 [project.urls]
 "Homepage" = "hhttps://github.com/pvgongora/LRG-Signed"
 "Bug Tracker" = "https://github.com/pvgongora/LRG-Signed/issues"
+
+[tool.black]
+line-length = 80

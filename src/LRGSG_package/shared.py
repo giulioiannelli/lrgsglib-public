@@ -8,6 +8,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 #
+from collections import Counter
 from collections.abc import Iterable
 from cycler import cycler
 from itertools import product
