@@ -1,42 +1,17 @@
+from .shared import *
 #
-import argparse
-import glob
-import powerlaw
-import random
-import re
-import os
-import sys
 #
-import networkx as nx
-import numpy as np
-import pandas as pd
-import pickle as pk
-#
-import scipy.sparse as scsp
-#
-from collections import Counter
-from matplotlib.ticker import ScalarFormatter
-from numpy import inf, ndarray
-from numpy.linalg import eigvals, eigvalsh
-from numpy.typing import NDArray
-from scipy import stats
-from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
-from scipy.interpolate import make_interp_spline
 from scipy.linalg import expm, fractional_matrix_power
 from scipy.ndimage import gaussian_filter1d, gaussian_filter
-from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema, medfilt
-from scipy.sparse.linalg import eigs, eigsh, ArpackNoConvergence
 from scipy.spatial.distance import squareform
-from subprocess import call
-from tqdm import tqdm
 #
 #
-from .config.nx_patches.funcs import *
-from .config.nx_patches.objects import *
+from .nx_patches.funcs import *
+from .nx_patches.objects import *
 from .config.dyns import *
-from .config.stocproc import *
+from .stocproc.stocproc import *
 from .config.const import *
 from .config.errwar import *
 from .config.plotlib import *
@@ -49,11 +24,9 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 #     "np",
 #     "nx",
 #     "plt",
-#     "tqdm",
-#     "flip_random_fract_edges",
+#     "powerlaw",
 #     "SignedLaplacianAnalysis",
 #     "IsingDynamics",
-#     "lsp_read_values",
 #     "FullyConnected",
 #     "Lattice2D",
 # ]
@@ -75,7 +48,7 @@ class SignedLaplacianAnalysis:
     def __init__(
         self,
         sg: SignedGraph,
-        taustep: int = DEFAULT_ENTROPY_STEPS,
+        taustep: int = LRSG_ENTROPY_STEP,
         taulex: float = -2,
         tauhex: float = 5,
         maxThresh: float = DEFAULT_MAX_THRESHOLD,
@@ -653,7 +626,7 @@ def get_graph_lspectrum(G, is_signed=False):
         A = nx.adjacency_matrix(G).toarray()
         D = np.diag(np.abs(A).sum(axis=1))
         L = D - A
-        w = eigvals(L)
+        w = np.eigvals(L)
     else:
         L = nx.laplacian_matrix(G).todense()
         w = nx.laplacian_spectrum(G)
@@ -667,7 +640,7 @@ def get_graph_lspectrum_rw(G, is_signed=False):
         D, -0.5
     ) @ A @ fractional_matrix_power(D, -0.5)
     if is_signed:
-        w = eigvals(L)
+        w = np.eigvals(L)
     else:
         w = nx.laplacian_spectrum(G)
     return L, w

@@ -1,8 +1,8 @@
 from ..shared import *
-from .const import *
-from .utils import *
-from .nx_patches.funcs import *
-from .nx_patches.objects import *
+from ..config.const import *
+from ..config.utils import *
+from ..nx_patches.funcs import *
+from ..nx_patches.objects import *
 
 
 class BinStocProc:

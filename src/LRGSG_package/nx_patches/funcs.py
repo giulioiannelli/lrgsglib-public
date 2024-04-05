@@ -1,7 +1,7 @@
 import scipy.sparse as scsp
 #
-from ..const import *
-from ..utils import *
+from ..config.const import *
+from ..config.utils import *
 from networkx.drawing.layout import _process_params, rescale_layout
 #
 def get_kth_order_neighbours(G: nx.Graph, node: int, order: int = 1) -> list:

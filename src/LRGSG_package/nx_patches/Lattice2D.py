@@ -1,5 +1,5 @@
-from ..const import *
-from ..plotlib import imshow_colorbar_caxdivider
+from ..config.const import *
+from ..config.plotlib import imshow_colorbar_caxdivider
 from .funcs import *
 from .SignedGraph import SignedGraph
 

@@ -76,7 +76,7 @@ if mode == 'pCluster':
                 pass
             filename = file_path_maker(mpath[mode], napath=avg+sfreq)
             with open(filename, 'wb') as file:
-                pickle.dump(merged_dict, file)
+                pk.dump(merged_dict, file)
 elif mode == 'ordParam':
     neglinks = 0
     for cont, avg in enumerate(range(navg)):
