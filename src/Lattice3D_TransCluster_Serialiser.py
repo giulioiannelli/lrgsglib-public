@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 s = [5, 10, 20, 30, 40, 50]
-p = np.linspace(0.2, 0.3, num=10)
+p = np.linspace(0.15, 0.25, num=10)
 printb = True
 
 for side in s:
