@@ -105,6 +105,46 @@ def find_matching_files(search_dir: str, pattern_str: str) -> List[str]:
     matching_files = [fname for fname in all_files if pattern.match(fname)]
     return matching_files
 
+def extract_values_from_filenames(file_names: List[str], value_pattern: str, sort: bool = True) -> np.ndarray:
+    """
+    Extracts numeric values from a list of file names based on a specified regular expression pattern.
+    
+    Parameters
+    ----------
+    file_names : List[str]
+        A list of file names from which to extract the values.
+    value_pattern : str
+        The regular expression pattern used to extract numeric values from the file names. The pattern
+        should contain a capturing group for the numeric value.
+    sort : bool, optional
+        Specifies whether to sort the extracted values. Default is True.
+        
+    Returns
+    -------
+    numpy.ndarray
+        An array of extracted numeric values from the file names. If `sort` is True, this array will be
+        sorted in ascending order.
+        
+    Examples
+    --------
+    >>> file_names = ["data_p=1.5.pkl", "experiment_p=2.0.pkl", "results_p=0.5.pkl"]
+    >>> value_pattern = r"p=([\d.]+)"
+    >>> extract_values_from_filenames(file_names, value_pattern)
+    array([0.5, 1.5, 2.0])
+    
+    This function extracts the p-values from the provided file names and returns them sorted in ascending order.
+    """
+    values = []
+    for file_name in file_names:
+        match = re.search(value_pattern, file_name)
+        if match:
+            value = float(match.group(1).rstrip('.'))
+            values.append(value)
+    # Sort the values if needed
+    if sort:
+        values.sort()
+    return np.array(values)
+
 def flatten(xs):
     """
     Recursively flattens a nested iterable into a flat iterable.
@@ -163,6 +203,46 @@ def move_to_rootf(print_tf: bool = False):
         chdir('../')
     if print_tf:
         print('cwd:', getcwd())
+
+def extract_and_sort_values(path: str, search_pattern: str, value_pattern: str = None, sort: bool = True) -> np.ndarray:
+    """
+    Searches for files in a given directory that match a specified pattern, extracts numerical values from
+    these file names based on another pattern (assumed to be the same as search pattern if not provided), 
+    and optionally sorts these values. Raises an error if value_pattern does not contain a capturing group.
+    
+    Parameters
+    ----------
+    path : str
+        The directory path to search for files.
+    search_pattern : str
+        The regular expression pattern to match file names for the search.
+    value_pattern : str, optional
+        The regular expression pattern used to extract numeric values from the matched file names. If None, 
+        search_pattern is used. This pattern must contain at least one capturing group.
+    sort : bool, optional
+        Specifies whether to sort the extracted values. Default is True.
+        
+    Returns
+    -------
+    numpy.ndarray
+        An array of extracted numeric values from the matched file names. If `sort` is True, this array will be
+        sorted in ascending order.
+        
+    Raises
+    ------
+    ValueError
+        If value_pattern does not contain a capturing group.
+    """
+    if value_pattern is None:
+        value_pattern = search_pattern
+
+    # Check if the value_pattern contains at least one capturing group
+    if not re.search(r"\((?!\?:).+?\)", value_pattern):
+        raise ValueError("value_pattern must contain at least one capturing group.")
+    
+    file_names = find_matching_files(path, search_pattern)
+    return extract_values_from_filenames(file_names, value_pattern, sort)
+
 
 def boolean_overlap_fraction(boolist1, boolist2):
     """

@@ -368,7 +368,7 @@ def scheme_Lattice2DSquared(
     Example:
     --------
     fig, ax = plt.subplots()
-    plot_square_lattice(ax, size=5, pec='green', cpec='magenta')
+    scheme_Lattice2DSquared(ax, size=5, pec='green', cpec='magenta')
     plt.show()
 
     This will plot a 5x5 lattice with green and magenta lines, default node style, and default external line style.
@@ -647,7 +647,9 @@ def scheme_Lattice2DSquared(
         customizable through keyword arguments. This allows for a wide range of visual
         styles and representations to suit different requirements or preferences.
     """
-    if kwargsExtl == PLT_SL2DSQ_KWNODE:
+    if side1 != PLT_SL2DSQ_SIDE1 and side2 == PLT_SL2DSQ_SIDE1:
+        side2 = side1
+    if kwargsExtl == PLT_SL2DSQ_KWEXTL:
         kwargsExtl.update(dict(c=pec))
     x, y = np.meshgrid(np.arange(side1), np.arange(side2), indexing='ij')
     #

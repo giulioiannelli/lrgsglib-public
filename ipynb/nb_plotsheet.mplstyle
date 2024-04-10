@@ -710,7 +710,7 @@ image.origin:          lower        # {lower, upper}
                                 # interactive saves, unless set to the empty string (i.e.
                                 # the current directory); use '.' to start at the current
                                 # directory but update after interactive saves
-#savefig.transparent: False     # whether figures are saved with a transparent
+savefig.transparent: True     # whether figures are saved with a transparent
                                 # background by default
 #savefig.orientation: portrait  # orientation of saved figure, for PostScript output only
 
