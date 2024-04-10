@@ -27,7 +27,7 @@ PLT_SL2DSQ_SIDE2 = 7
 PLT_SL2DSQ_UNIDS = 1.
 PLT_SL2DSQ_LNEXTL = .75
 PLT_SL2DSQ_KWNODE = dict(marker='o', ms=20, mec='k', mfc='w')
-PLT_SL2DSQ_KWEXTL = dict(marker=None, ls=':', zorder=0)
+PLT_SL2DSQ_KWEXTL = dict(marker='', ls=':', zorder=0)
 PLT_SL2DSQ_KWLINE = dict(lw=3)
 PLT_SL2DSQ_PEC = cblu
 PLT_SL2DSQ_CPEC = cred
