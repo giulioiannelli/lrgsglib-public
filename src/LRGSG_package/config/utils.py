@@ -945,3 +945,103 @@ def cProd_Iter_adj(dim: Union[int, Tuple], range_adjustment: Union[int, List] = 
         raise ValueError("range_adjustment must be an int or a list of ints")
 
     return product(*adjusted_ranges)
+
+
+
+def read_files_to_2d_array(folder_path, keyword):
+    """
+    Read files from a folder that contain a specific keyword in their name and append each file's contents to a 2D array.
+
+    Parameters
+    ----------
+    folder_path : str
+        Path to the folder containing the files.
+    keyword : str
+        String that must be part of the file's name to be processed.
+
+    Returns
+    -------
+    numpy.ndarray
+        A 2D array containing the contents of each processed file, with the data type of the array elements as float.
+    """
+    # Initialize the 2D array
+    data_2d_array = []
+    
+    # List all files in the given folder
+    for file_name in os.listdir(folder_path):
+        # Check if the file name contains the keyword
+        if keyword in file_name.split('_'):
+            # Construct full file path
+            file_path = os.path.join(folder_path, file_name)
+            # Open and read the file
+            with open(file_path, 'r') as file:
+                # Assuming each line of a file represents a separate data entry
+                file_contents = [line.strip() for line in file.readlines()]
+                data_2d_array.append(file_contents)
+    
+    return np.array(data_2d_array).astype(float)
+
+
+def find_shared_p_values(pattern: str, pathdir: str, extension: str = '.pkl') -> List[Tuple[float, int]]:
+    """
+    Identifies and counts p-values found in file paths that appear in at least two different subdirectories,
+    considering files with a specific extension.
+    
+    This function searches for files with the given extension within subdirectories of a specified path, 
+    extracts p-values based on a provided pattern, and counts the occurrences across different subdirectories. 
+    It returns a sorted list of unique p-values that are present in two or more subdirectories, along with 
+    their occurrence count.
+
+    Parameters
+    ----------
+    pattern : str
+        The regular expression pattern used to extract p-values from file paths. 
+        The pattern should contain a capturing group for the p-value.
+    pathdir : str
+        The root directory path under which to search for files with the specified extension. 
+        This path is expected to contain subdirectories where the files are located.
+    extension : str, optional
+        The file extension to look for (default is '.pkl').
+
+    Returns
+    -------
+    list of tuple
+        A sorted list of tuples, where each tuple contains a p-value and the count of subdirectories 
+        in which the p-value is found. The list is sorted by p-value in ascending order.
+        
+    Examples
+    --------
+    >>> find_shared_p_values(r"p=([\d.]+)", "/path/to/data/")
+    [(1.0, 2), (2.5, 3)]
+    
+    This example indicates that p-value 1.0 was found in 2 subdirectories, and p-value 2.5 was found in 3 subdirectories.
+    """
+    
+    # Dictionary to hold sets of subdirectories for each found p value
+    p_values_dirs = defaultdict(set)
+
+    # Use glob to iterate over all files with the specified extension in subfolders
+    for filepath in glob.glob(f'{pathdir}*/*{extension}'):
+        match = re.search(pattern, filepath)
+        if match:
+            # Extract the p value
+            p_value = float(match.group(1))
+            # Extract subdirectory from the filepath
+            # Adjust the split index based on your path structure
+            subdirectory = filepath.split('/')[4]
+            # Add the subdirectory to the set for this p value
+            p_values_dirs[p_value].add(subdirectory)
+
+    # Prepare a list to hold p values and the number of sharing subdirectories
+    p_values_shared_count = []
+
+    # Filter and count p values that appear in at least two different subdirectories
+    for p_value, dirs in p_values_dirs.items():
+        num_shared = len(dirs)
+        if num_shared >= 2:
+            p_values_shared_count.append((p_value, num_shared))
+
+    # Sort the list by p value
+    p_values_shared_count.sort()
+    
+    return p_values_shared_count
