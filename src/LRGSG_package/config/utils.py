@@ -15,6 +15,26 @@ def sym_log_func(x, a, b, c, d):
     safe_x = np.where(np.abs(x) > d, np.abs(x), d + 1e-10)
     return a * np.log(b * (safe_x - d)) + c
 
+def sign_with_threshold(arr, threshold=1e-17):
+    """
+    Apply the sign function to an array with a threshold for zero.
+
+    Parameters:
+    - arr: NumPy array, the input array.
+    - threshold: float, values with absolute value below this are set to 0.
+
+    Returns:
+    - A NumPy array where each entry is the sign of the input,
+      with values below the threshold set to 0.
+    """
+    # Create a mask for values below the threshold
+    mask = np.abs(arr) < threshold
+    # Apply the mask to set these values to 0
+    arr[mask] = 0
+    # Use np.sign on the modified array
+    return np.sign(arr)
+
+
 def adjust_to_even(x):
     """
     Rounds the input number to the nearest even integer.
@@ -178,7 +198,7 @@ def flatten(xs):
         else:
             yield x
 
-def move_to_rootf(print_tf: bool = False):
+def move_to_rootf(print_tf: bool = True):
     """
     Move to the root directory of the current working directory.
 
@@ -186,7 +206,7 @@ def move_to_rootf(print_tf: bool = False):
     -----------
     print_tf : bool, optional
         If True, print the current working directory after moving to the root.
-        Default is False.
+        Default is True.
 
     Notes:
     ------
@@ -1125,3 +1145,29 @@ def find_shared_p_values(pattern: str, pathdir: str, extension: str = '.pkl') ->
     p_values_shared_count.sort()
     
     return p_values_shared_count
+
+
+def remove_empty_dirs(path: str):
+    """
+    Remove all empty subdirectories within a given directory path.
+
+    This function walks through the directory tree, starting from the bottom. It attempts to remove each directory
+    if it is empty. If a directory is not empty or another error occurs (e.g., insufficient permissions), the error
+    is caught and printed, but does not interrupt the process.
+
+    Parameters:
+    - path (str): The path to the directory from which empty subdirectories should be removed.
+
+    Returns:
+    None. Outputs to the console the path of each directory that is removed, or any errors encountered.
+    """
+    import os
+
+    for root, dirs, files in os.walk(path, topdown=False):
+        for dir in dirs:
+            dir_path = os.path.join(root, dir)
+            try:
+                os.rmdir(dir_path)
+                print(f"Removed empty directory: {dir_path}")
+            except OSError as e:
+                print(e)
