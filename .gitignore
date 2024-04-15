@@ -16,5 +16,7 @@ data/plot/*/
 *.bin
 *.png
 *.mp4
+*.pkl
+*.pyc
 *.pickle
 .DS_Store
