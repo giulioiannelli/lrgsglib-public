@@ -257,16 +257,19 @@ class SignedGraph:
 
     #
     def compute_k_eigvV(
-        self, howmany: int = 1, MODE_dynspec: str = "scipy", which: str = "SM", typf: type = np.float32
+        self, howmany: int = 1, MODE_dynspec: str = "scipy", which: str = "SM", typf: type = np.float64
     ):
         if MODE_dynspec == "numpy" or howmany == self.N:
             self.eigv, self.eigV = np.linalg.eigh(
                 self.sLp.astype(typf).todense()
             )
             self.eigV = self.eigV.T
-        if MODE_dynspec == "scipy":
+        if MODE_dynspec.startswith("scipy"):
+            scsp_eigshMode = MODE_dynspec.split('_')[:-1]
+            if len(scsp_eigshMode) == 1:
+                scsp_eigshMode = 'normal'
             self.eigv, self.eigV = scsp_eigsh(
-                self.sLp.astype(typf), k=howmany, which=which
+                self.sLp.astype(typf), k=howmany, which=which, sigma=0, mode=scsp_eigshMode
             )
             self.eigV = self.eigV.T
 
