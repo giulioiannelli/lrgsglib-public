@@ -3,10 +3,12 @@ from scipy.sparse import spdiags
 from scipy.sparse import identity as scsp_identity
 from scipy.sparse.linalg import eigsh as scsp_eigsh
 
+
 class SignedGraph:
     sgpath = "custom_graph"
     syshapePth = ""
     stdFname = ""
+
     def __init__(
         self,
         G: Graph,
@@ -47,9 +49,9 @@ class SignedGraph:
     #
     def __init_graph_reprdict__(self):
         self.GraphReprDict = {}
-        self.GraphReprDict['G'] = self.G
+        self.GraphReprDict["G"] = self.G
         try:
-            self.GraphReprDict['H'] = self.H
+            self.GraphReprDict["H"] = self.H
         except KeyError:
             pass
 
@@ -132,11 +134,12 @@ class SignedGraph:
             self.upd_H_graph()
             self.nflip = self.Ne_n
             self.pflip = self.nflip / self.Ne
-            self.rEdgeFlip['H'] = np.where(
+            self.rEdgeFlip["H"] = np.where(
                 np.array(self.Adj.todense()).flatten() < 0
             )
-            self.rEdgeFlip['G'] = np.array([self.invedge_map[reH] 
-                                      for reH in self.rEdgeFlip['H']])
+            self.rEdgeFlip["G"] = np.array(
+                [self.invedge_map[reH] for reH in self.rEdgeFlip["H"]]
+            )
 
         else:
             self.nflip = int(self.pflip * self.Ne)
@@ -145,10 +148,12 @@ class SignedGraph:
         self.upd_G_graph()
         self.upd_graph_matrices()
         if not self.import_on:
-            self.rEdgeFlip['H'] = random.sample(self.esetH, self.nflip)            
-            self.rEdgeFlip['G'] = random.sample(self.esetG, self.nflip)
+            self.rEdgeFlip["H"] = random.sample(self.esetH, self.nflip)
+            self.rEdgeFlip["G"] = random.sample(self.esetG, self.nflip)
+
     def degree_update(self, on_graph: str = SG_GRAPH_REPR):
         self.degrees = list(dict(self.GraphReprDict[on_graph].degree).values())
+
     #
     def adjacency_matrix(self, weight: str = "weight"):
         return nx.to_scipy_sparse_array(self.H, weight=weight, format="csr")
@@ -159,9 +164,7 @@ class SignedGraph:
 
     #
     def absolute_degree_matrix(self, A: csr_array) -> csr_array:
-        return csr_array(
-            spdiags(abs(A).sum(axis=1), 0, *A.shape, format="csr")
-        )
+        return csr_array(spdiags(abs(A).sum(axis=1), 0, *A.shape, format="csr"))
 
     #
     def laplacian_matrix(self) -> csr_array:
@@ -203,12 +206,16 @@ class SignedGraph:
         self.sLp = self.signed_laplacian()
 
     #
-    def flip_sel_edges(self, links: List = [], on_graph = 'G'):
+    def flip_sel_edges(self, links: List = [], on_graph="G"):
         """Flips specific edges of a graph G."""
         #
         neg_weights_dict = {}
         if links:
-            neg_weights_dict = {(u, v): -1 * self.GraphReprDict[on_graph].get_edge_data(u, v)['weight'] for u, v in links}
+            neg_weights_dict = {
+                (u, v): -1
+                * self.GraphReprDict[on_graph].get_edge_data(u, v)["weight"]
+                for u, v in links
+            }
         nx.set_edge_attributes(
             self.GraphReprDict[on_graph], values=neg_weights_dict, name="weight"
         )
@@ -247,9 +254,7 @@ class SignedGraph:
             self.check_pflip()
         except NflipError:
             return None
-        self.flip_sel_edges(
-            self.rEdgeFlip[on_graph]
-        )
+        self.flip_sel_edges(self.rEdgeFlip[on_graph])
 
     #
     def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
@@ -260,7 +265,11 @@ class SignedGraph:
 
     #
     def compute_k_eigvV(
-        self, howmany: int = 1, MODE_dynspec: str = "scipy", which: str = "SM", typf: type = np.float64
+        self,
+        howmany: int = 1,
+        MODE_dynspec: str = "scipy",
+        which: str = "SM",
+        typf: type = np.float64,
     ):
         if MODE_dynspec == "numpy" or howmany == self.N:
             self.eigv, self.eigV = np.linalg.eigh(
@@ -268,11 +277,18 @@ class SignedGraph:
             )
             self.eigV = self.eigV.T
         if MODE_dynspec.startswith("scipy"):
-            scsp_eigshMode = MODE_dynspec.split('_')[-1]
-            if len(scsp_eigshMode) == 1:
-                scsp_eigshMode = 'normal'
+            # scsp_eigshMode = MODE_dynspec.split('_')
+            # if len(scsp_eigshMode) == 1:
+            #     scsp_eigshMode = 'normal'
+            #     sigma = None
+            # else:
+            #     scsp_eigshMode = scsp_eigshMode[-1]
+            #     sigma = 0
+            # self.eigv, self.eigV = scsp_eigsh(
+            #     self.sLp.astype(typf), k=howmany, which=which, sigma=sigma, mode=scsp_eigshMode
+            # )
             self.eigv, self.eigV = scsp_eigsh(
-                self.sLp.astype(typf), k=howmany, which=which, sigma=0, mode=scsp_eigshMode
+                self.sLp.astype(typf), k=howmany, which=which, mode="caley"
             )
             self.eigV = self.eigV.T
 
@@ -412,25 +428,30 @@ class SignedGraph:
     #             distribution[size] = distribution.get(size, 0) + 1
     #     return distribution
     #
-    
+
     def graph_neighbors(self, node, on_graph: str = SG_GRAPH_REPR):
         graph = self.GraphReprDict[on_graph]
         return list(graph.neighbors(node))
-    
+
     def get_node_attr(self, attr, on_graph: str = SG_GRAPH_REPR):
         node_attr = nx.get_node_attributes(self.GraphReprDict[on_graph], attr)
-        node_attrs = [node_attr[node] for node in self.GraphReprDict[on_graph].nodes()]
+        node_attrs = [
+            node_attr[node] for node in self.GraphReprDict[on_graph].nodes()
+        ]
         return node_attrs
 
     def load_eigV_on_graph(self, which: int = 0, on_graph: str = SG_GRAPH_REPR):
         try:
             eigV = self.eigV[which]
         except (IndexError, AttributeError):
-            self.compute_k_eigvV(howmany=which+1)
+            self.compute_k_eigvV(howmany=which + 1)
             eigV = self.eigV[which]
-        eigVNodeAttr = {nd: v for v, nd in 
-                        zip(eigV, self.GraphReprDict[on_graph].nodes)}
-        nx.set_node_attributes(self.GraphReprDict[on_graph], eigVNodeAttr, f"eigV{which}")
+        eigVNodeAttr = {
+            nd: v for v, nd in zip(eigV, self.GraphReprDict[on_graph].nodes)
+        }
+        nx.set_node_attributes(
+            self.GraphReprDict[on_graph], eigVNodeAttr, f"eigV{which}"
+        )
 
     def cluster_distribution_list(self, which: int = 0):
         node_values = flip_to_positive_majority(self.bin_eigV(which=which))
@@ -487,8 +508,14 @@ class SignedGraph:
                 # write each item on a new line
                 fp.write("%s %s %s\n" % item)
             print("Done")
+
     #
-    def get_edge_color(self, on_graph: str = 'G', pec: ColorType = 'blue', nec: ColorType = 'red'):
+    def get_edge_color(
+        self,
+        on_graph: str = "G",
+        pec: ColorType = "blue",
+        nec: ColorType = "red",
+    ):
         def map_values(value):
             if value == -1:
                 return nec
@@ -496,12 +523,14 @@ class SignedGraph:
                 return pec
             else:
                 return value
-        arr = nx.get_edge_attributes(self.GraphReprDict[on_graph], 'weight')
+
+        arr = nx.get_edge_attributes(self.GraphReprDict[on_graph], "weight")
         return list(map(map_values, arr.values()))
         # return list(map(lambda x: pec if x == 1 else nec, nx.get_edge_attributes(self.GraphReprDict[on_graph], 'weight').values()))
+
     #
-    def get_node_pos(self, on_graph: str = 'G'):
-        return nx.get_node_attributes(self.GraphReprDict[on_graph], 'pos')
+    def get_node_pos(self, on_graph: str = "G"):
+        return nx.get_node_attributes(self.GraphReprDict[on_graph], "pos")
 
 
 """
