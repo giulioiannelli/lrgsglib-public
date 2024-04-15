@@ -330,9 +330,11 @@ def lsp_read_values(folder_path, fpattern="Sm1_avg_p", sort=True):
 
 
 
-
-
-
+def eigV_for_lattice2D(side, mode='scipy', **kwargs):
+    l = Lattice2D(side, **kwargs)
+    l.flip_random_fract_edges()
+    l.compute_k_eigvV(MODE_dynspec=mode)
+    return flip_to_positive_majority(l.eigV[0])
 
 
 
@@ -826,18 +828,8 @@ def flip_random_fract_edges(G: Graph, p: float):
     nx.set_edge_attributes(G, values=neg_weights, name="weight")
 
 
-#
-def flip_one_2dgraph(G, coord1, coord2):
-    neg_weights = {(coord1, coord2): -1}
-    #
-    nx.set_edge_attributes(G, values=neg_weights, name="weight")
-
-
-#
-lambdaPath_l2d = lambda geometry: f"l2d_{geometry}/"
-pltPath_l2d = lambda geometry: f"data/plot/{lambdaPath_l2d(geometry)}"
-datPath_l2d = lambda geometry: f"data/{lambdaPath_l2d(geometry)}"
-setPath_ERp = "conf/ERp/"
-pltPath_Sm1C = "plot/Sm1_and_C/"
-#
-pflip_fmt = ".3g"
+def eigV_for_lattice2D(side, mode='scipy', **kwargs):
+    l = Lattice2D(side, **kwargs)
+    l.flip_random_fract_edges()
+    l.compute_k_eigvV(MODE_dynspec=mode)
+    return flip_to_positive_majority(l.eigV[0])
