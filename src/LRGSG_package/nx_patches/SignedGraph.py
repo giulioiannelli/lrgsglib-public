@@ -4,6 +4,9 @@ from scipy.sparse import identity as scsp_identity
 from scipy.sparse.linalg import eigsh as scsp_eigsh
 
 class SignedGraph:
+    sgpath = "custom_graph"
+    syshapePth = ""
+    stdFname = ""
     def __init__(
         self,
         G: Graph,
@@ -13,7 +16,7 @@ class SignedGraph:
         expOutdir: str = "",
         dataOutdir: str = "",
         plotOutdir: str = "",
-        initNwDict: bool = True,
+        initNwDict: bool = False,
     ):
         self.__init_paths__(
             dataOutdir=dataOutdir, plotOutdir=plotOutdir, expOutdir=expOutdir
@@ -265,7 +268,7 @@ class SignedGraph:
             )
             self.eigV = self.eigV.T
         if MODE_dynspec.startswith("scipy"):
-            scsp_eigshMode = MODE_dynspec.split('_')[:-1]
+            scsp_eigshMode = MODE_dynspec.split('_')[-1]
             if len(scsp_eigshMode) == 1:
                 scsp_eigshMode = 'normal'
             self.eigv, self.eigV = scsp_eigsh(
