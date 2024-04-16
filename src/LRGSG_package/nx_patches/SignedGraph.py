@@ -256,12 +256,12 @@ class SignedGraph:
             return None
         self.flip_sel_edges(self.rEdgeFlip[on_graph])
 
-    #
-    def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
-        if MODE_lapspec == "networkx":
-            self.slspectrum = nx.laplacian_spectrum(self.system.G)
-        elif MODE_lapspec == "numpy":
-            self.slspectrum = np.linalg.eigvalsh(self.sLp.toarray())
+    # #
+    # def compute_laplacian_spectrum(self, MODE_lapspec: str = "numpy") -> None:
+    #     if MODE_lapspec == "networkx":
+    #         self.slspectrum = nx.laplacian_spectrum(self.system.G)
+    #     elif MODE_lapspec == "numpy":
+    #         self.slspectrum = np.linalg.eigvalsh(self.sLp.toarray())
 
     #
     def compute_k_eigvV(
