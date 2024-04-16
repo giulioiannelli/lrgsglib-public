@@ -18,5 +18,6 @@ data/plot/*/
 *.mp4
 *.pkl
 *.pyc
+*.cpython-39.pyc
 *.pickle
 .DS_Store
