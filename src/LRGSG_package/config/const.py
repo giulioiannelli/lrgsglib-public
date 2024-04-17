@@ -23,6 +23,7 @@ DIR_ISING = "ising/"
 DIR_VOTER = "voter/"
 DIR_LRGSG = "lrgsg/"
 DIR_PHTRA = "phtra/"
+DIR_SPECT = "spect/"
 #
 BSP_VAL = [-1, +1]
 BSP_STORE_MODE = ""

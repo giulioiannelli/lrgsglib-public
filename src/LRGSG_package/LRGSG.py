@@ -835,7 +835,7 @@ def eigV_for_lattice2D(side, mode='scipy', howmany=1, **kwargs) -> NDArray:
     return l.eigV
 
 def adjust_eigV_for_lattice2D(leigV: NDArray) -> NDArray:
-    for i,leV in leigV:
+    for i,leV in enumerate(leigV):
         leigV[i] = flip_to_positive_majority(leV)
     return leigV
 

@@ -74,6 +74,7 @@ class SignedGraph:
         self.DEFAULT_VOTERDIR = self.datPath + DIR_VOTER
         self.DEFAULT_LRGSGDIR = self.datPath + DIR_LRGSG
         self.DEFAULT_PHTRADIR = self.datPath + DIR_PHTRA
+        self.DEFAULT_SPECTDIR = self.datPath + DIR_SPECT
         #
         self.expOutdir = (
             expOutdir
@@ -85,6 +86,7 @@ class SignedGraph:
         self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePth}"
         self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePth}"
         self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePth}"
+        self.spectpath = f"{self.DEFAULT_SPECTDIR}{self.syshapePth}"
 
     #
     def __make_dirs__(self):
@@ -92,8 +94,9 @@ class SignedGraph:
             self.expOutdir,
             self.isingpath,
             self.voterpath,
-            self.lrgsgpath,
             self.phtrapath,
+            self.lrgsgpath,
+            self.spectpath
         ]:
             os.makedirs(_, exist_ok=True)
 
