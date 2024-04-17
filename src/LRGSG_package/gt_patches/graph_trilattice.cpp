@@ -1,4 +1,4 @@
-#include <graph_tool/graph.hh>
+#include "graph-tool/src/graph/graph.hh"
 
 void create_triangular_lattice(graph_tool::GraphInterface& gi, size_t width, size_t height)
 {
