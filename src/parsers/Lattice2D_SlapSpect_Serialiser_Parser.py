@@ -1,26 +1,38 @@
 from LRGSG_package.LRGSG import *
 #
 description = """
-    Computational resourses regarding the Signed Laplacian spectrum of 2D 
-    lattices.
+    Serialiser for Lattice2D_SlaplSpect.py
 """
-phelp_L = """
-    Size of the square lattice.
-"""
-phelp_p = """
-    Edge flipping probability.
-"""
-#
+# Default values for the optional parameters
 DEFAULT_BINSC = 500
-DEFAULT_CELL = 'rand'
 DEFAULT_EIGMODE = 'scipy'
-DEFAULT_GEO = 'squared'
-DEFAULT_MODE = ''
-DEFAULT_NAVG = 1000
-DEFAULT_PERIOD = 100
+DEFAULT_NAVG = 10**4
+DEFAULT_PERIOD = DEFAULT_NAVG//20
 DEFAULT_WORKDIR = ''
 DEFAULT_HOWMANY = 1
+DEFAULT_GEO = 'squared'
+DEFAULT_CELL = 'rand'
+DEFAULT_MODE = 'slanzarv_eigDistr'
 #
+DEFAULT_PRINT = False
+DEFAULT_EXEC = False
+DEFAULT_mMB = 2**10
+DEFAULT_MMB = 2**14
+# Helpers for argparse descriptions
+phelp_print = f"""
+    Option to print the output of the Serialiser. | default={DEFAULT_PRINT}
+"""
+phelp_exc = f"""
+    Option to exec the output of the Serialiser. | default={DEFAULT_EXEC}
+"""
+phelp_mMB = f"""
+    Minimum MB quantity to be allocated for the single process 
+    | default={DEFAULT_mMB}
+"""
+phelp_MMB = f"""
+    Maximum MB quantity to be allocated for the single process 
+    | default={DEFAULT_MMB}
+"""
 phelp_binsc = f"""
     Number of bins for the distribution sampling | default={DEFAULT_BINSC}
 """
@@ -38,7 +50,7 @@ phelp_howmany = f"""
     Number of eigenvalues to compute | default={DEFAULT_HOWMANY}
 """
 phelp_mode = f"""
-    Mode, YTD | default='{DEFAULT_MODE}'
+    Mode, (eigDistr, slanzarv_eigDistr) | default='{DEFAULT_MODE}'
 """
 phelp_navg = f"""
     Number of averages to compute | default={DEFAULT_NAVG}
@@ -49,10 +61,6 @@ phelp_period = f"""
 phelp_workDir = f"""
     Working directory | default='{DEFAULT_WORKDIR}'
 """
-#
-parsDict = {'L': {'help': phelp_L, 'type': int},
-            'p': {'help': phelp_p, 'type': float}
-            }
 #
 parsDictOpt = {'mode': {'names': ['-m', '--mode'], 
                         'help': phelp_mode, 
@@ -89,20 +97,29 @@ parsDictOpt = {'mode': {'names': ['-m', '--mode'],
                 'workDir': {'names': ['-wd', '--workDir'],
                         'help': phelp_workDir,
                         'type': str,
-                        'default': DEFAULT_WORKDIR}
-            }
-#
-
-#
-parser = argparse.ArgumentParser(description=description.strip())
-# Mandatory arguments
-def parsDict_get(var, key):
-    return parsDict[var].get(key, None)
-for v in parsDict.keys():
-    parser.add_argument(v,
-        help=parsDict_get(v, 'help'),
-        type=parsDict_get(v, 'type'),
-    )
+                        'default': DEFAULT_WORKDIR},
+                'mMB': {'names': ['-mMB', '--slanzarv_minMB'],               
+                        'help': phelp_mMB,
+                        'type': int,
+                        'default': DEFAULT_mMB},
+                'MMB': {'names': ['-MMB', '--slanzarv_maxMB'],
+                        'help': phelp_MMB,
+                        'type': int,
+                        'default': DEFAULT_MMB}  
+                        }
+parsDictAct = {'exec': {'names': ['-e', '--exec'],
+                        'help': phelp_exc,
+                        'action': argparse.BooleanOptionalAction,
+                        'default': DEFAULT_EXEC},
+                'print': {'names': ['-p', '--print'],                 
+                        'help': phelp_print,
+                        'action': argparse.BooleanOptionalAction,
+                        'default': DEFAULT_PRINT}
+                        }
+Lattice2D_SlaplSpect_progName = "Lattice2D_SlaplSpect"
+Lattice2D_SlaplSpect_progNameShrt = "L2DSS"
+# Setup the argument parser
+parser = argparse.ArgumentParser(description=description)
 # Optional parameters
 def parsDict_get(var, key):
     return parsDictOpt[var].get(key, None)
@@ -111,4 +128,13 @@ for ov in parsDictOpt.keys():
         default=parsDict_get(ov, 'default'),
         help=parsDict_get(ov, 'help'),
         type=parsDict_get(ov, 'type'),
+    )
+# Optional parameters
+def parsDict_get(var, key):
+    return parsDictAct[var].get(key, None)
+for ov in parsDictAct.keys():
+    parser.add_argument(*parsDict_get(ov, 'names'),
+        default=parsDict_get(ov, 'default'),
+        help=parsDict_get(ov, 'help'),
+        action=parsDict_get(ov, 'action')
     )

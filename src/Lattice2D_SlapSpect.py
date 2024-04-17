@@ -1,21 +1,26 @@
 from parsers.Lattice2D_SlapSpect_Parser import *
 #
-geo = 'squared'
-nAvg = 500
-bins_count = 500
-period = 20
-workDir = "data/plot/dev_tool_Lattice2D/"
-mode = 'scipy'
-side = 18
-pflip = 0.01
-howmany = 1
-fnameBase = f"dist_{side}_{pflip:.3g}_{mode}"
-fname = f"{workDir}{fnameBase}_{nAvg}.pkl"
+args = parser.parse_args()
 #
-os.makedirs(workDir, exist_ok=True)
+side = args.L
+p = args.p
+geo = args.geometry
+cell = args.cell_type
+mode = args.mode
+eigmode = args.eigen_mode
+navg = args.number_of_averages
+period = args.period
+bins_count = args.bins_count
+howmany = args.howmany
 #
-initial_eig = np.abs(eigV_for_lattice2D_ptch(side, pflip=pflip, geo=geo, 
-                                             mode=mode, howmany=howmany))
+l = Lattice2D(side1=side, pflip=p, geo=geo, sgpath=args.workDir)
+workDir = l.spectpath
+fnameBase = f"dist{howmany}_{p:.3g}_{eigmode}"
+fname = f"{workDir}{fnameBase}_{navg}.pkl"
+#
+#
+initial_eig = np.abs(eigV_for_lattice2D_ptch(side=side, pflip=p, geo=geo, 
+                                             mode=eigmode, howmany=howmany))
 bins, bin_centers = create_symmetric_log_bins(np.min(initial_eig), 
                                               np.max(initial_eig), 
                                               bins_count)
@@ -27,13 +32,13 @@ if not os.path.exists(fname):
     if fnameExists:
         nAvgDone = int(os.path.splitext(fnameExists[0].split('_')[-1])[0])
         fnameOld = fnameExists[0]
-    nAvgNeed = nAvg - nAvgDone
+    nAvgNeed = navg - nAvgDone
     for current_period in range((nAvgNeed // period) + bool(nAvgNeed % period)):
         batch_size = min(nAvgNeed - current_period * period, period)
         eig_values = [[] for i in range(howmany)]
         for _ in range(batch_size):
-            eigV = eigV_for_lattice2D_ptch(side, pflip=pflip, geo=geo, 
-                                                mode=mode, howmany=howmany)
+            eigV = eigV_for_lattice2D_ptch(side=side, pflip=p, geo=geo, 
+                                                mode=eigmode, howmany=howmany)
             for i in range(howmany):
                 eig_values[i].append(eigV[i])
         eig_values = [np.concatenate(i) for i in eig_values]
@@ -45,12 +50,12 @@ if not os.path.exists(fname):
         except FileNotFoundError:
             pass
         with open(fnameNew, "wb") as f:
-            pk.dump(dict(bin_counter), f)
+            pk.dump(bin_counter, f)
         fnameOld = fnameNew
 
     # At the end, save the final state if needed
     if nAvgNeed % period:
-        fnameNew = f"{workDir}{fnameBase}_{nAvg}.pkl"
+        fnameNew = f"{workDir}{fnameBase}_{navg}.pkl"
         os.rename(fnameOld, fnameNew)
         with open(fnameNew, "wb") as f:
-            pk.dump(dict(bin_counter), f)
+            pk.dump(bin_counter, f)

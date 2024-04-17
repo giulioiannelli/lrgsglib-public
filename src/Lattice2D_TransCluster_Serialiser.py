@@ -1,4 +1,3 @@
-from LRGSG_package.LRGSG import *
 from parsers.Lattice2D_TransCluster_Serialiser_Parser import *
 #
 args = parser.parse_args()
