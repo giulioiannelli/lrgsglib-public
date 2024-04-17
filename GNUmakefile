@@ -71,6 +71,10 @@ RM_FR  = rm -fr
 clean:
 	${RM_FR} ${FILES.o} ${FILES.o} ${DEBRIS}
 
+SUBDIR = src/LRGSG_package/gt_patches/cpp
 
+all:
+	$(MAKE) -C $(SUBDIR)
 
-
+clean:
+		$(MAKE) -C $(SUBDIR) clean
