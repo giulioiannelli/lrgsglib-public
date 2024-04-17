@@ -18,8 +18,8 @@ class Lattice2D(SignedGraph):
         with_positions: bool = L2D_WITH_POS,
         **kwargs,
     ) -> None:
-        self.__init_side__(side1, side2)
         self.pbc = pbc
+        self.__init_side__(side1, side2)
         self.__init_geo__(geo)
         self.fbc_val = fbc_val
         #
