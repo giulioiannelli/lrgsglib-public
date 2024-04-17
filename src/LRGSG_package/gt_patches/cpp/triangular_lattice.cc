@@ -15,7 +15,7 @@ void triangular_lattice_bind(GraphInterface& gi, int width, int height)
 }
 
 // Define the Python module that exposes the triangular lattice creation function
-BOOST_PYTHON_MODULE(libtriangular_lattice)
+BOOST_PYTHON_MODULE(triangular_lattice)
 {
     using namespace boost::python;
     def("create_triangular_lattice", triangular_lattice_bind);
