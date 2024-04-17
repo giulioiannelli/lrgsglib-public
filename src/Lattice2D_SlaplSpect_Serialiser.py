@@ -1,4 +1,4 @@
-from parsers.Lattice2D_SlapSpect_Serialiser_Parser import *
+from parsers.Lattice2D_SlaplSpect_Serialiser_Parser import *
 
 #
 

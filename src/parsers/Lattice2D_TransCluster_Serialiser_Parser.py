@@ -14,14 +14,11 @@ DEFAULT_mMB = 2**10
 DEFAULT_MMB = 2**14
 # Helpers for argparse descriptions
 HELP_print = f"""
-    Option to print the output of the Serialiser. | default={DEFAULT_PRINT}
+    Option to print the output of the Serialiser.
 """
 HELP_exc = f"""
-    Option to exec the output of the Serialiser. | default={DEFAULT_EXEC}
+    Option to exec the output of the Serialiser.
 """
-# HELP_slanzarv = f"""
-#     Option to exec the output of the Serialiser. | default={DEFAULT_EXEC}
-# """
 HELP_mMB = f"""
     Minimum MB quantity to be allocated for the single process | default={DEFAULT_mMB}
 """

@@ -1,4 +1,4 @@
-from parsers.Lattice2D_SlapSpect_Parser import *
+from parsers.Lattice2D_SlaplSpect_Parser import *
 #
 args = parser.parse_args()
 #
