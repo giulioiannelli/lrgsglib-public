@@ -1,4 +1,4 @@
-from parsers.Lattice2D_SlaplSpect_Serialiser_Parser import *
+from parsers.L2D_SlaplSpect_Serialiser import *
 #
 args = parser.parse_args()
 #
@@ -11,8 +11,8 @@ T = args.period
 bins_count = args.bins_count
 howmany = args.howmany
 #
-progName = Lattice2D_SlaplSpect_progName
-progNameShrt = Lattice2D_SlaplSpect_progNameShrt
+progName = L2D_SlaplSpect_progName
+progNameShrt = L2D_SlaplSpect_progNameShrt
 progMode = args.mode.split("_")[-1]
 execBool = args.exec
 printBool = args.print

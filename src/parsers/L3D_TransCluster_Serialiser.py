@@ -41,8 +41,8 @@ HELP_o = f"""
     Suffix for the output file name (optional) | default='{DEFAULT_OUT_SUFFIX}'
 """
 
-Lattice2D_TransCluster_progName = "Lattice2D_TransCluster"
-Lattice2D_TransCluster_progNameShrt = "L2D"
+L2D_TransCluster_progName = "L2D_TransCluster"
+L2D_TransCluster_progNameShrt = "L2D"
 # Setup the argument parser
 parser = argparse.ArgumentParser(description=description)
 # Required parameters
