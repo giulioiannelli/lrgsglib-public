@@ -1,4 +1,4 @@
-from parsers.Lattice3D_TransCluster_Parser import *
+from parsers.L2D_TransCluster_Parser import *
 #
 args = parser.parse_args()
 #
@@ -13,17 +13,17 @@ outsx = args.out_suffix
 #
 if cell in ['rand', 'randZERR', 'randXERR'] or cell.startswith('ball'):
     if cell == 'rand':
-        def geometry_func(lattice: Lattice3D):
+        def geometry_func(lattice: Lattice2D):
             return lattice.nwDict[cell]['G']
     elif cell == 'randZERR':
-        def geometry_func(lattice: Lattice3D):
+        def geometry_func(lattice: Lattice2D):
             return lattice.nwDict[cell]['G']
     elif cell == 'randXERR':
-        def geometry_func(lattice: Lattice3D):
+        def geometry_func(lattice: Lattice2D):
             return lattice.nwDict[cell]['G']
     elif cell.startswith('ball'):
         radius = get_first_int_in_str(cell)
-        def geometry_func(lattice: Lattice3D):
+        def geometry_func(lattice: Lattice2D):
             return lattice.nwDict.get_links_rball(radius)
 else:
     raise ValueError("Invalid cell specified")
@@ -49,7 +49,7 @@ def file_path_maker(mpath, ppath = p,
         spath = "_"+spath
     return f'{mpath}{mode}_p={ppath:.3g}_{ctpath}_na={napath}{spath}{extout}'
 #
-lattice = Lattice3D(dim=(side for _ in range(3)), pflip=p, geo=geo, 
+lattice = Lattice2D(side, pflip=p, geo=geo, 
                     initNwDict=False, 
                     with_positions=False)
 mpath = {'pCluster': lattice.lrgsgpath, 
@@ -62,8 +62,8 @@ if os.path.exists(filename):
 #
 if mode == 'pCluster':
     for avg in range(navg):
-        l = Lattice3D(dim=(side for _ in range(3)), pflip=p, geo=geo)
-        l.flip_random_fract_edges()
+        l = Lattice2D(side, pflip=p, geo=geo)
+        l.flip_sel_edges(geometry_func(l))
         #
         dist_dict = l.cluster_distribution_list()
         merged_dict += Counter(dist_dict)
@@ -76,12 +76,12 @@ if mode == 'pCluster':
                 pass
             filename = file_path_maker(mpath[mode], napath=avg+sfreq)
             with open(filename, 'wb') as file:
-                pickle.dump(merged_dict, file)
+                pk.dump(merged_dict, file)
 elif mode == 'ordParam':
     neglinks = 0
     for cont, avg in enumerate(range(navg)):
         avg1 = avg+1
-        l = Lattice3D(side, pflip=p, geo=geo)
+        l = Lattice2D(side, pflip=p, geo=geo)
         l.flip_sel_edges(geometry_func(l))
         #
         l.calc_fluct_Pinf()
@@ -109,4 +109,4 @@ elif mode == 'ordParam':
                 pass
             filename = file_path_maker(mpath[mode], napath=avg+sfreq)
             with open(filename, 'wb') as file:
-                np.savetxt(file, data, fmt='%.7g')
+                np.savetxt(file, np.atleast_2d(data), fmt='%.7g')

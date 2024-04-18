@@ -3,8 +3,8 @@ from LRGSG_package.LRGSG import *
 description = """
     Serialiser for Lattice2D_SlaplSpect.py
 """
-Lattice2D_SlaplSpect_progName = "Lattice2D_SlaplSpect"
-Lattice2D_SlaplSpect_progNameShrt = "L2DSS"
+L2D_SlaplSpect_progName = "L2D_SlaplSpect"
+L2D_SlaplSpect_progNameShrt = "L2DSS"
 # Default values for the optional parameters
 DEFAULT_BINSC = 500
 DEFAULT_EIGMODE = 'scipy'
