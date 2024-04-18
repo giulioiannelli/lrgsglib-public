@@ -9,8 +9,8 @@ class Lattice2D(SignedGraph):
     def __init__(
         self,
         side1: int = L2D_SIDE1,
-        side2: int = L2D_SIDE2,
         geo: str = L2D_GEO,
+        side2: int = L2D_SIDE2,
         pbc: bool = L2D_PBC,
         fbc_val: float = L2D_FBCV,
         stdFnameSFFX: str = L2D_STDFN,

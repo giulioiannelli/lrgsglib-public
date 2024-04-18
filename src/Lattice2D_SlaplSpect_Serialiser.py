@@ -1,7 +1,5 @@
 from parsers.Lattice2D_SlaplSpect_Serialiser_Parser import *
-
 #
-
 args = parser.parse_args()
 #
 geo = args.geometry
@@ -71,9 +69,9 @@ if execBool or printBool:
         def operate(s, *args):
             print(s)
 
-    def exec_str(L, p, geo, cell, navg, mode):
+    def exec_str(L, p, geo, cell, navg, mode, eigmode, T, bins_count, howmany):
         lnchStr = f"python src/{progName}.py"
-        argstr = f"{L} {p:.3g} -g {geo} -c {cell} -n {navg} --mode={mode}"
+        argstr = f"""{L} {p:.3g} -g {geo} -c {cell} -n {navg} --mode={mode} --eigmode={eigmode} --period={T} --bins_count={bins_count} --howmany={howmany}"""
         return f"{slanzarv_str(mode, L, p, geo, cell)} {lnchStr} {argstr}"
 
 else:
@@ -83,5 +81,6 @@ count = 0
 if mode.endswith("eigDistr"):
     for L in List:
         for p in plist:
-            estring = exec_str(L, p, geo, cell, navg, progMode)
+            estring = exec_str(L, p, geo, cell, navg, progMode, eigmode, T, 
+                               bins_count, howmany)
             operate(estring, count)
