@@ -6,10 +6,6 @@ from ..nx_patches.objects import *
 
 
 class BinStocProc:
-    s_t = []
-    s_tList = []
-    s_tCntr = Counter()
-
     def __init__(
         self,
         sg: SignedGraph,
@@ -19,6 +15,9 @@ class BinStocProc:
         storeMode: str = BSP_STORE_MODE,
         storeFreq: int = BSP_STORE_FREQ,
     ):
+        self.s_t = []
+        self.s_tList = []
+        self.s_tCntr = Counter()
         self.sg = sg
         self.initMode = initMode
         if runMode in BSP_RUN_MODES:
@@ -64,6 +63,9 @@ class SignedRW(BinStocProc):
                 self.store_state = self.store_state_seq
         else:
             self.store_state = do_nothing
+        self.node_index = {node: i for i,node in enumerate(self.sg.nodeList)}
+        self.index_node = {i: node for i,node in enumerate(self.sg.nodeList)}
+
 
     def __init_random__(self):
         pos = random.choice(list(self.sg.G.nodes()))
@@ -78,8 +80,12 @@ class SignedRW(BinStocProc):
         self.s_t = self.s_0
 
     def __run_py_1__(self):
-        cnn = random.choice(list(self.sg.G.neighbors(self.s_t[0])))
-        self.s_t = [cnn, self.s_t[1] * self.sg.G[self.s_t[0]][cnn]["weight"]]
+        adj_matrix = self.sg.Adj
+        ndidx = self.node_index[self.s_t[0]]
+        start, end = adj_matrix.indptr[ndidx], adj_matrix.indptr[ndidx+1]
+        neighbors_indices = adj_matrix.indices[start:end]
+        cnn = np.random.choice(neighbors_indices)
+        self.s_t = [self.index_node[cnn], self.s_t[1] * adj_matrix[ndidx, cnn]]
 
     def __run_py_N__(self):
         for t in range(self.sg.N):

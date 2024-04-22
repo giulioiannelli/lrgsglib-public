@@ -130,6 +130,7 @@ class SignedGraph:
     def init_n_nodes_edges(self):
         self.N = self.G.number_of_nodes()
         self.Ne = self.G.number_of_edges()
+        self.nodeList = list(self.G.nodes())
 
     def __init_sgraph__(self):
         self.init_n_nodes_edges()

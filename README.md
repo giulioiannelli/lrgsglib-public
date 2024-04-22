@@ -15,6 +15,8 @@ git clone https://github.com/pvgongora/LRG-Signed
 2. Move to the main folder and create the `LRG-Signed` anaconda enviroment by running:
 ```
 conda env create -f LRG-Signed_env.yml
+# or
+conda install lmfit matplotlib numpy pandas scipy graph-tool networkx powerlaw tqdm -c conda-forge
 ```
 3. Verify that installation was succesfull by means of `conda list`. Activate the `conda` environment before executing scripts:
 ```
@@ -24,6 +26,7 @@ conda activate LRG-Signed
 ```
 pip install --editable .
 ```
+[1]: test
 ## How to use
 ### Signed 2D lattices
 A full description of these scripts can be read off by executing them with the `-h` flag. Note that the script must run from the parent folder (the root folder of the project).
