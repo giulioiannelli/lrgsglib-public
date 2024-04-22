@@ -2,7 +2,6 @@ from LRGSG_package.shared import *
 from LRGSG_package.config.utils import log_binning
 from LRGSG_package.LRGSG import Lattice2D, SignedRW, move_to_rootf
 #
-move_to_rootf()
 plt.style.use("ipynb/nb_plotsheet.mplstyle")
 
 fig, ax = plt.subplots()
@@ -25,4 +24,4 @@ for p in [0.01, 0.05, 0.08, 0.1, 0.2, 0.5]:
     edges, hist = powerlaw.pdf(sequence_lengths)
     bin_centers = (edges[1:]+edges[:-1])/2.0
     ax.loglog(bin_centers, hist)
-fig.savefig("srw_taudist.pdf")
+fig.savefig("test/srw_taudist.pdf")
