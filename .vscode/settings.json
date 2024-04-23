@@ -22,6 +22,6 @@
         "79",
         "--experimental-string-processing"
         ],        
-    "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT",
+    "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/LRG-Signed",
     "CodeGPT.apiKey": "OpenAI"
 }
