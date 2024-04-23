@@ -800,7 +800,45 @@ def flip_to_positive_majority(arr):
         # Flip all elements by multiplying by -1
         arr = arr * -1
     return arr
+def flip_to_positive_majority_adapted(arr: NDArray) -> NDArray:
+    """ Flips the elements of an array to ensure a majority of positive components.
+    
+    This function assesses the balance of positive and negative values in the given numerical array.
+    If the count of negative values exceeds the count of positive values, all elements of the array
+    are multiplied by -1. This operation ensures that the majority of elements in the transformed array
+    are positive. The function is particularly useful in data processing scenarios where the sign of
+    data points affects subsequent analysis or visualization.
 
+    Parameters:
+    -----------
+    arr : ndarray
+        The input array containing numerical data. This array can be a list, tuple, or any array-like
+        object convertible to a NumPy array. The function is optimized for NumPy arrays for performance reasons.
+
+    Returns:
+    --------
+    ndarray
+        An array of the same shape and type as the input, with elements flipped if the original array
+        had a majority of negative components. If the input array already had a majority of positive
+        components, it is returned unchanged.
+
+    Examples:
+    ---------
+    >>> import numpy as np
+    >>> arr = np.array([1, -2, -3, 4, -5])
+    >>> flip_to_positive_majority_adapted(arr)
+    array([-1,  2,  3, -4, 5])
+
+    >>> arr = np.array([-1, 2, 3])
+    >>> flip_to_positive_majority_adapted(arr)
+    array([-1, 2, 3])
+    """
+    num_negatives = np.sum(arr < 0)
+    num_positives = np.sum(arr > 0)
+
+    if num_negatives > num_positives:
+        arr = arr * -1
+    return arr
 
 def shift_with_wrap(image, shift_right, shift_down):
     """
