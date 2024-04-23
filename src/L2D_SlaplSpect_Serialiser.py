@@ -19,10 +19,7 @@ printBool = args.print
 #
 if mode.endswith("eigDistr"):
     List = 2 ** np.arange(4, 10)
-    plist = np.concatenate([
-        np.linspace(0.005, 0.05, num=5),
-        np.linspace(0.05, 0.15, num=10),
-        np.linspace(0.15, 0.5, num=5)])
+    plist = np.linspace(0.06, 0.115, num=10)
 if mode.startswith("slanzarv"):
     if args.slanzarv_minMB == args.slanzarv_maxMB:
 
