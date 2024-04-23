@@ -71,7 +71,7 @@ if execBool or printBool:
 
     def exec_str(L, p, geo, cell, navg, mode, eigmode, T, bins_count, howmany):
         lnchStr = f"python src/{progName}.py"
-        argstr = f"""{L} {p:.3g} -g {geo} -c {cell} -n {navg} --mode={mode} --eigmode={eigmode} --period={T} --bins_count={bins_count} --howmany={howmany}"""
+        argstr = f"""{L} {p:.3g} -g {geo} -c {cell} -n {navg} --mode={mode} --eigen_mode={eigmode} --period={T} --bins_count={bins_count} --howmany={howmany}"""
         return f"{slanzarv_str(mode, L, p, geo, cell)} {lnchStr} {argstr}"
 
 else:
