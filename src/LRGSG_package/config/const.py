@@ -8,7 +8,7 @@ BIN = ".bin"
 MP4 = ".mp4"
 PKL = ".pkl"
 # paths
-PATH_ROOTF = "LRG-Signed"
+PATH_ROOTF = "lrgsglib/"
 # default values
 LB_PFLIP = .0
 UB_PFLIP = 1.

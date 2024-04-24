@@ -5,7 +5,7 @@
     "C_Cpp.default.compilerPath": "/home/opisthofulax/anaconda3/envs/LRG-Signed/bin/gcc",
     "C_Cpp.clang_format_fallbackStyle": "{ ColumnLimit: 80, IndentWidth: 4 }",
     "files.associations": {
-        "Makefile": "c",
+        "Makefile": "makefile",
         "lrsg_utils.h": "c",
         "string.h": "c",
         "lrgsg_customs.h": "c",
