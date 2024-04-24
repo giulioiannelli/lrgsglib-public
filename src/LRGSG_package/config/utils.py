@@ -219,7 +219,7 @@ def move_to_rootf(print_tf: bool = True):
     To move to the root directory of the current working directory and print the path:
     move_to_rootf(print_tf=True)
     """
-    while getcwd()[-len(PATH_ROOTF):] != PATH_ROOTF:
+    while getcwd()[-len(PATH_ROOTF)+1:] != PATH_ROOTF[:-1]:
         chdir('../')
     if print_tf:
         print('cwd:', getcwd())
