@@ -148,7 +148,7 @@ def extract_values_from_filenames(file_names: List[str], value_pattern: str, sor
     Examples
     --------
     >>> file_names = ["data_p=1.5.pkl", "experiment_p=2.0.pkl", "results_p=0.5.pkl"]
-    >>> value_pattern = r"p=([\d.]+)"
+    >>> value_pattern = r"p=([\\d.]+)"
     >>> extract_values_from_filenames(file_names, value_pattern)
     array([0.5, 1.5, 2.0])
     
@@ -1149,7 +1149,7 @@ def find_shared_p_values(pattern: str, pathdir: str, extension: str = '.pkl') ->
         
     Examples
     --------
-    >>> find_shared_p_values(r"p=([\d.]+)", "/path/to/data/")
+    >>> find_shared_p_values(r"p=([\\d.]+)", "/path/to/data/")
     [(1.0, 2), (2.5, 3)]
     
     This example indicates that p-value 1.0 was found in 2 subdirectories, and p-value 2.5 was found in 3 subdirectories.
@@ -1224,3 +1224,117 @@ def bin_eigenvalues(eig_values, bins, bin_centers):
     indices = np.clip(indices, 0, len(bin_centers) - 1)  # Ensure indices are within the valid range
     bin_keys = [bin_centers[index] for index in indices]
     return Counter(bin_keys)
+
+
+
+class UnionFind:
+    """
+    A Union-Find or Disjoint Set Union (DSU) data structure with path compression and union by rank.
+    
+    It provides an efficient way to manage a partition of a set into disjoint subsets and is useful 
+    for dealing with connectivity queries, particularly in graph algorithms.
+
+    Attributes:
+    -----------
+    parent (List[int]): Stores the parent of each element. Initially, each element is its own parent.
+    rank (List[int]): Represents the rank of each element, used to keep the tree flat by attaching 
+                       the root of the smaller tree under the root of the larger tree.
+    """
+
+    def __init__(self, n):
+        """
+        Initializes the UnionFind structure with n elements.
+
+        Parameters:
+        -----------
+        n (int): The number of elements in the Union-Find structure.
+        
+        Returns:
+        --------
+        None
+        """
+        self.parent = list(range(n))
+        self.rank = [0] * n
+
+    def find(self, p):
+        """
+        Finds the representative of the set containing 'p' with path compression.
+        Path compression flattens the structure of the tree whenever `find` is used,
+        so that future operations also benefit from the flatter tree.
+
+        Parameters:
+        -----------
+        p (int): The element whose set representative is to be found.
+        
+        Returns:
+        --------
+        int: The representative of the set containing 'p'.
+        """
+        if self.parent[p] != p:
+            self.parent[p] = self.find(self.parent[p])
+        return self.parent[p]
+
+    def union(self, p, q):
+        """
+        Merges the sets containing 'p' and 'q'. It uses the union by rank strategy,
+        which attaches the tree with less depth (smaller rank) under the root of the deeper tree
+        (larger rank) to keep the tree flat.
+
+        Parameters:
+        -----------
+        p (int): An element of the first set.
+        q (int): An element of the second set.
+        
+        Returns:
+        --------
+        None
+        """
+        rootP = self.find(p)
+        rootQ = self.find(q)
+        if rootP != rootQ:
+            if self.rank[rootP] > self.rank[rootQ]:
+                self.parent[rootQ] = rootP
+            elif self.rank[rootP] < self.rank[rootQ]:
+                self.parent[rootP] = rootQ
+            else:
+                self.parent[rootQ] = rootP
+                self.rank[rootP] += 1
+
+
+def find_largest_cluster_circle2D(circles, radius):
+    """
+    Identifies the largest cluster of overlapping circles given their centers and a common radius.
+
+    Parameters:
+    -----------
+    circles (np.array): A numpy array of tuples where each tuple represents the (x, y) coordinates of a circle's center.
+    radius (float): The radius of each circle.
+
+    Returns:
+    --------
+    list: A list of tuples representing the centers of the circles in the largest cluster.
+
+    Description:
+    ------------
+    The function utilizes a KDTree for efficient spatial queries to detect overlapping circles.
+    It employs a union-find data structure to group and identify clusters of overlapping circles.
+    The function returns the largest cluster found.
+    """
+    from scipy.spatial import KDTree
+    tree = KDTree(circles)
+    uf = UnionFind(len(circles))
+    threshold = 2 * radius
+
+    for i in range(len(circles)):
+        neighbors = tree.query_ball_point(circles[i], r=threshold)
+        for j in neighbors:
+            if i != j:
+                uf.union(i, j)
+
+    clusters = defaultdict(list)
+    for i in range(len(circles)):
+        root = uf.find(i)
+        clusters[root].append(tuple(circles[i]))
+
+    largest_cluster = max(clusters.values(), key=len)
+    return largest_cluster
