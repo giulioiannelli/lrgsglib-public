@@ -444,12 +444,14 @@ class SignedGraph:
         ]
         return node_attrs
 
-    def load_eigV_on_graph(self, which: int = 0, on_graph: str = SG_GRAPH_REPR):
+    def load_eigV_on_graph(self, which: int = 0, on_graph: str = SG_GRAPH_REPR, binarize: bool = False):
         try:
             eigV = self.eigV[which]
         except (IndexError, AttributeError):
             self.compute_k_eigvV(howmany=which + 1)
             eigV = self.eigV[which]
+        if binarize:
+            eigV = flip_to_positive_majority(self.bin_eigV(which=which))
         eigVNodeAttr = {
             nd: v for v, nd in zip(eigV, self.GraphReprDict[on_graph].nodes)
         }
@@ -457,21 +459,20 @@ class SignedGraph:
             self.GraphReprDict[on_graph], eigVNodeAttr, f"eigV{which}"
         )
 
-    def cluster_distribution_list(self, which: int = 0):
-        node_values = flip_to_positive_majority(self.bin_eigV(which=which))
-
-        for i, v in enumerate(node_values):
-            self.H.nodes[i][f"eigV{which}"] = v
-
-        # Create subgraphs for +1 and -1 values
-        G_pos = self.H.copy()
-        G_neg = self.H.copy()
-
-        for node in self.H.nodes(data=True):
-            if node[1][f"eigV{which}"] == -1:
-                G_neg.remove_node(node[0])
+    def group_nodes_by_kv(self, k, val, on_graph: str = SG_GRAPH_REPR):
+        G = self.GraphReprDict[on_graph]
+        G_yes, G_no = G.copy(), G.copy()
+        for node, v in G.nodes(data=k):
+            if v == val:
+                G_yes.remove_node(node)
             else:
-                G_pos.remove_node(node[0])
+                G_no.remove_node(node)
+        return G_yes, G_no
+
+    def cluster_distribution_list(self, which: int = 0):
+        self.load_eigV_on_graph(which=which, on_graph="H", binarize=True)
+        # Create subgraphs for +1 and -1 values
+        G_pos, G_neg = self.group_nodes_by_kv(f"eigV{which}", -1)
         # Find connected components and calculate cluster sizes
         clusters_pos = [len(c) for c in nx.connected_components(G_pos)]
         # clusters_neg = [len(c) for c in nx.connected_components(G_neg)]

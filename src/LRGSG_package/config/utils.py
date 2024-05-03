@@ -219,10 +219,19 @@ def move_to_rootf(print_tf: bool = True):
     To move to the root directory of the current working directory and print the path:
     move_to_rootf(print_tf=True)
     """
-    while getcwd()[-len(PATH_ROOTF)+1:] != PATH_ROOTF[:-1]:
-        chdir('../')
-    if print_tf:
-        print('cwd:', getcwd())
+    pcwd = getcwd()
+    try:
+        while getcwd()[-len(PATH_ROOTF)+1:] != PATH_ROOTF[:-1]:
+            chdir('../')
+            if getcwd() == '/':
+                break
+        if getcwd() == '/':
+            raise FileNotFoundError(f"Root directory '{PATH_ROOTF}' not found.")
+        if print_tf:
+            print("Current working directory:", getcwd())
+    except FileNotFoundError as e:
+        chdir(pcwd)
+        print(e, "\nCurrent working directory:", pcwd)
 
 def extract_and_sort_values(path: str, search_pattern: str, value_pattern: str = None, sort: bool = True) -> np.ndarray:
     """
