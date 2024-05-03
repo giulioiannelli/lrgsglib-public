@@ -51,8 +51,8 @@ class Lattice3D(SignedGraph):
     def __init__(
         self,
         dim: tuple = L3D_DIM,
-        pbc: bool = L3D_PBC,
         geo: str = L3D_GEO,
+        pbc: bool = L3D_PBC,
         fbc_val: float = L3D_FBCV,
         stdFnameSFFX: str = L3D_STDFN,
         sgpath: str = L3D_SGPATH,
@@ -87,6 +87,7 @@ class Lattice3D(SignedGraph):
             nxfunc = self._generate_fcc_lattice
         else:
             raise ValueError(f"Unsupported geometry '{self.geo}'.")
+        self.syshape = self.dim
         if all(x == self.dim[0] for x in self.dim):
             self.syshapeStr = f"N={self.dim[0]**len(self.dim)}"
         else:
