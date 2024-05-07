@@ -69,7 +69,7 @@ else:
         nAvgDone = int(re.search(r'\d+', nAvgDone).group())
         fnameOld = fnameExists
     except:
-        fnameExists = file_path_maker(mpath[mode], napath=0)
+        fnameOld = file_path_maker(mpath[mode], napath=0)
     nAvgNeed = navg - nAvgDone
 #
 #
