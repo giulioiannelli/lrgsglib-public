@@ -444,7 +444,8 @@ class SignedGraph:
         ]
         return node_attrs
 
-    def load_eigV_on_graph(self, which: int = 0, on_graph: str = SG_GRAPH_REPR, binarize: bool = False):
+    def load_eigV_on_graph(self, which: int = 0, on_graph: str = SG_GRAPH_REPR, 
+                           binarize: bool = False):
         try:
             eigV = self.eigV[which]
         except (IndexError, AttributeError):
@@ -469,19 +470,26 @@ class SignedGraph:
                 G_no.remove_node(node)
         return G_yes, G_no
 
-    def cluster_distribution_list(self, which: int = 0):
-        self.load_eigV_on_graph(which=which, on_graph="H", binarize=True)
-        # Create subgraphs for +1 and -1 values
-        G_pos, G_neg = self.group_nodes_by_kv(f"eigV{which}", -1)
-        # Find connected components and calculate cluster sizes
-        clusters_pos = [len(c) for c in nx.connected_components(G_pos)]
-        # clusters_neg = [len(c) for c in nx.connected_components(G_neg)]
-        # Calculate distribution of cluster sizes
-        distribution_pos = {
-            size: clusters_pos.count(size) for size in set(clusters_pos)
+    def cluster_distribution_list(self, which: int = 0, 
+                                  on_graph: str = SG_GRAPH_REPR,
+                                  binarize: bool = True):
+        self.load_eigV_on_graph(which, on_graph, binarize)
+        G_pos, G_neg = self.group_nodes_by_kv(f"eigV{which}", -1, on_graph)
+        clusters = sorted(list(nx.connected_components(G_neg)), 
+                        key=lambda x: len(x), reverse=True)
+        clusterLen = list(map(lambda x: len(x), clusters))
+        distNeg = {
+            size: clusterLen.count(size) for size in set(clusterLen)
         }
-        # distribution_neg = {size: clusters_neg.count(size) for size in set(clusters_neg)}
-        return distribution_pos
+        # self.load_eigV_on_graph(which, on_graph, binarize)
+        # _, G_neg = self.group_nodes_by_kv(f"eigV{which}", -1, on_graph)
+        # clusters = sorted(list(nx.connected_components(G_neg)), 
+        #               key=lambda x: len(x), reverse=True)
+        # clNeg = list(map(lambda x: len(x), clusters))
+        # distNeg = {
+        #     size: clNeg.count(size) for size in set(clNeg)
+        # }
+        return distNeg
 
     #
     def export_graph(self, MODE: str = "pickle"):

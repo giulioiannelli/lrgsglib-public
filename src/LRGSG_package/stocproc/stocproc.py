@@ -63,6 +63,8 @@ class SignedRW(BinStocProc):
                 self.store_state = self.store_state_seq
         else:
             self.store_state = do_nothing
+        self.node_index = {node: i for i,node in enumerate(self.sg.nodeList)}
+        self.index_node = {i: node for i,node in enumerate(self.sg.nodeList)}
 
 
     def __init_random__(self):
