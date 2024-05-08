@@ -40,7 +40,7 @@ elif mode == 'ordParam':
 else:
     raise ValueError("Invalid mode specified")
 #
-def file_path_maker(mpath, ppath = p, 
+def file_path_maker(mpath, mode=mode, ppath = p, 
                     napath = navg, 
                     spath = outsx,
                     ctpath = cell,
@@ -55,31 +55,49 @@ mpath = {'pCluster': lattice.lrgsgpath,
 filename = file_path_maker(mpath[mode])
 if os.path.exists(filename):
     exit(f"File {os.path.split(filename)[1]} already exists.")
+else:
+    nAvgDone = 0
+    try:
+        fnameExists = glob.glob(f"{file_path_maker(mpath[mode], napath='', 
+                                               spath='', extout='')}*")[0]
+        merged_dict = pk.load(open(fnameExists, 'rb'))   
+        if outsx:
+            avgIdx = -2
+        else:
+            avgIdx = -1
+        nAvgDone = os.path.splitext(fnameExists.split('_')[avgIdx])[0]
+        nAvgDone = int(re.search(r'\d+', nAvgDone).group())
+        fnameOld = fnameExists
+    except:
+        fnameOld = file_path_maker(mpath[mode], napath=0)
+    nAvgNeed = navg - nAvgDone
 #
 #
 #
 if mode == 'pCluster':
-    for avg in range(navg):
-        l = Lattice2D(side, pflip=p, geo=geo, initNwDict=True)
-        l.flip_sel_edges(geometry_func(l))
-        #
-        dist_dict = l.cluster_distribution()
-        merged_dict += Counter(dist_dict)
-        #
-        if (avg % sfreq == 0):
-            try:
-                filenameold = file_path_maker(mpath[mode], napath=avg)
-                os.remove(filenameold)
-            except OSError:
-                pass
-            filename = file_path_maker(mpath[mode], napath=avg+sfreq)
-            with open(filename, 'wb') as file:
-                pk.dump(merged_dict, file)
+    period = sfreq
+    for current_period in range((nAvgNeed // period) + bool(nAvgNeed % period)):
+        batch_size = min(nAvgNeed - current_period * period, period)
+        for _ in range(batch_size):
+            l = Lattice2D(side, pflip=p, geo=geo, initNwDict=True)
+            l.flip_sel_edges(geometry_func(l))
+            #
+            dist_dict = l.cluster_distribution()
+            merged_dict += dist_dict
+        navgCurr = nAvgDone + (current_period + 1) * period
+        fnameNew = file_path_maker(mpath[mode], napath=navgCurr)
+        try:
+            os.rename(fnameOld, fnameNew)
+        except FileNotFoundError or OSError:
+            pass
+        with open(fnameNew, "wb") as f:
+            pk.dump(merged_dict, f)
+        fnameOld = fnameNew
 elif mode == 'ordParam':
     neglinks = 0
     for cont, avg in enumerate(range(navg)):
         avg1 = avg+1
-        l = Lattice2D(side, pflip=p, geo=geo)
+        l = Lattice2D(side, pflip=p, geo=geo, initNwDict=True)
         l.flip_sel_edges(geometry_func(l))
         #
         l.calc_fluct_Pinf()
