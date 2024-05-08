@@ -1,13 +1,12 @@
-#
+# exports
 export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
-# create directories
-DIRS := data/
-#
-PATH_SRC  = src/LRGSG_package/
+# directories
+MAKEDIR := data/
+# paths
+PATH_CCORE  = src/LRGSG_package/Ccore/
 PATH_SFMT = src/LRGSG_package/SFMT/
-PATH_GTPTCH = src/LRGSG_package/gt_patches/cpp
+PATH_GTPTCH = src/LRGSG_package/gt_patches/cpp/
 PATH_SH = tools/bash
-
 #
 RBIMSIMULATOR0_PN = IsingSimulator0
 RBIMSIMULATOR1_PN = IsingSimulator1
@@ -15,7 +14,7 @@ VMSIMULATOR_PN = voter_model
 LRGSGSRCC = LRGSG_utils sfmtrng 
 ISINGLRGSRC = ${LRGSGSRCC} LRGSG_rbim
 VOTERLRGSRC = ${LRGSGSRCC} LRGSG_vm
-SFMTSRCC = SFMT
+SFMTSRC = SFMT
 #
 #
 RBIMSIM0.c = $(addsuffix .c, $(RBIMSIMULATOR0_PN))
@@ -24,21 +23,21 @@ VMSIM.c = $(addsuffix .c, $(VMSIMULATOR_PN))
 #
 SRCCFILES.c = $(addsuffix .c, $(ISINGLRGSRC))
 SRCCFILESVM.c = $(addsuffix .c, $(VOTERLRGSRC))
-SFMTFILES.c = $(addsuffix .c, $(SFMTSRCC))
+SFMTFILES.c = $(addsuffix .c, $(SFMTSRC))
 #
 SRCCRS0.c = ${RBIMSIM0.c} ${SRCCFILES.c}
 SRCCRS1.c = ${RBIMSIM1.c} ${SRCCFILES.c}
 SRCCVM1.c = ${VMSIM.c} ${SRCCFILESVM.c}
 #
-PATHSRS0.c := $(addprefix $(PATH_SRC), $(SRCCRS0.c)) $(addprefix $(PATH_SFMT), $(SFMTFILES.c))
-PATHSRS1.c := $(addprefix $(PATH_SRC), $(SRCCRS1.c)) $(addprefix $(PATH_SFMT), $(SFMTFILES.c))
-PATHSRS2.c := $(addprefix $(PATH_SRC), $(SRCCVM1.c)) $(addprefix $(PATH_SFMT), $(SFMTFILES.c))
+PATHSRS0.c := $(addprefix $(PATH_CCORE), $(SRCCRS0.c)) $(addprefix $(PATH_SFMT), $(SFMTFILES.c))
+PATHSRS1.c := $(addprefix $(PATH_CCORE), $(SRCCRS1.c)) $(addprefix $(PATH_SFMT), $(SFMTFILES.c))
+PATHSRS2.c := $(addprefix $(PATH_CCORE), $(SRCCVM1.c)) $(addprefix $(PATH_SFMT), $(SFMTFILES.c))
 #
 # FILES.o = ${FILES.c:.c=.o}
 #
-PROGRAMN0  = $(addprefix $(PATH_SRC), $(RBIMSIMULATOR0_PN))
-PROGRAMN1 = $(addprefix $(PATH_SRC), $(RBIMSIMULATOR1_PN))
-PROGRAMN2 = $(addprefix $(PATH_SRC), $(VMSIMULATOR_PN))
+PROGRAMN0  = $(addprefix $(PATH_CCORE), $(RBIMSIMULATOR0_PN))
+PROGRAMN1 = $(addprefix $(PATH_CCORE), $(RBIMSIMULATOR1_PN))
+PROGRAMN2 = $(addprefix $(PATH_CCORE), $(VMSIMULATOR_PN))
 #
 CC        = gcc
 GFLAGS    = -g
@@ -75,7 +74,7 @@ make_rootf:
 
 # Target that creates necessary directories
 create_dirs:
-	@mkdir -p $(DIRS)
+	@mkdir -p $(MAKEDIR)
 
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
