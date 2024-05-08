@@ -1,4 +1,4 @@
-from parsers.L2D_TransCluster_Serialiser_Parser import *
+from parsers.L2D_TransCluster_Serialiser import *
 #
 args = parser.parse_args()
 #
