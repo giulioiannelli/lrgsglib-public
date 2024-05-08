@@ -83,7 +83,8 @@ L2D_SHRT_GEO_DICT = {a: s for a,s in
 L2D_WARNMSG_GEO = """The selected geometry of the 2D lattice is not available. Setting it to 'squared' for a 2d regular grid."""
 L2D_ERRMSG_GEO = """Invalid side value for hexagonal lattice. In order to implement PBC on hexagonal lattice you need to provide an even value for side1 and side2."""
 
-L3D_DIM = (16, 16, 16)
+L3D_DIM0 = 16
+L3D_DIM = tuple(L3D_DIM0 for _ in range(3))
 L3D_PBC = True
 L3D_FBCV = 1.
 L3D_SGPATH = ""

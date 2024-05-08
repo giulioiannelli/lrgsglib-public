@@ -49,9 +49,7 @@ def file_path_maker(mpath, ppath = p,
         spath = "_"+spath
     return f'{mpath}{mode}_p={ppath:.3g}_{ctpath}_na={napath}{spath}{extout}'
 #
-lattice = Lattice2D(side, pflip=p, geo=geo, 
-                    initNwDict=False, 
-                    with_positions=False)
+lattice = Lattice2D(side, pflip=p, geo=geo)
 mpath = {'pCluster': lattice.lrgsgpath, 
          'ordParam': lattice.phtrapath}
 filename = file_path_maker(mpath[mode])
@@ -62,10 +60,10 @@ if os.path.exists(filename):
 #
 if mode == 'pCluster':
     for avg in range(navg):
-        l = Lattice2D(side, pflip=p, geo=geo)
+        l = Lattice2D(side, pflip=p, geo=geo, initNwDict=True)
         l.flip_sel_edges(geometry_func(l))
         #
-        dist_dict = l.cluster_distribution_list()
+        dist_dict = l.cluster_distribution()
         merged_dict += Counter(dist_dict)
         #
         if (avg % sfreq == 0):
