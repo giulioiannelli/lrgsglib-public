@@ -2,10 +2,6 @@
 export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
 # create directories
 DIRS := data/
-
-# Target that creates necessary directories
-create_dirs:
-	@mkdir -p $(DIRS)
 #
 PATH_SRC  = src/LRGSG_package/
 PATH_SFMT = src/LRGSG_package/SFMT/
@@ -76,6 +72,10 @@ chmod_scripts:
 
 make_rootf:
 	echo "YES" > .isrootf
+
+# Target that creates necessary directories
+create_dirs:
+	@mkdir -p $(DIRS)
 
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
