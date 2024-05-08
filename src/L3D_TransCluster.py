@@ -79,13 +79,12 @@ if mode == 'pCluster':
     for current_period in range((nAvgNeed // period) + bool(nAvgNeed % period)):
         batch_size = min(nAvgNeed - current_period * period, period)
         for _ in range(batch_size):
-            l = Lattice3D(dim=(side for _ in range(3)), pflip=p, geo=geo,
-                          initNwDict=True)
+            l = Lattice3D(side, pflip=p, geo=geo, initNwDict=True)
             l.flip_sel_edges(geometry_func(l))
             #
             dist_dict = l.cluster_distribution()
             merged_dict += dist_dict
-            navgCurr = nAvgDone + (current_period + 1) * period
+        navgCurr = nAvgDone + (current_period + 1) * period
         fnameNew = file_path_maker(mpath[mode], napath=navgCurr)
         try:
             os.rename(fnameOld, fnameNew)
@@ -94,27 +93,11 @@ if mode == 'pCluster':
         with open(fnameNew, "wb") as f:
             pk.dump(merged_dict, f)
         fnameOld = fnameNew
-    # for avg in range(nAvgNeed):
-    #     l = Lattice3D(dim=(side for _ in range(3)), pflip=p, geo=geo)
-    #     l.flip_random_fract_edges()
-    #     #
-    #     dist_dict = l.cluster_distribution_list()
-    #     merged_dict += dist_dict
-    #     #
-    #     if (avg % sfreq == 0):
-    #         try:
-    #             filenameold = file_path_maker(mpath[mode], napath=avg)
-    #             os.remove(filenameold)
-    #         except OSError:
-    #             pass
-    #         filename = file_path_maker(mpath[mode], napath=avg+sfreq)
-    #         with open(filename, 'wb') as file:
-    #             pk.dump(merged_dict, file)
 elif mode == 'ordParam':
     neglinks = 0
     for cont, avg in enumerate(range(navg)):
         avg1 = avg+1
-        l = Lattice3D(side, pflip=p, geo=geo)
+        l = Lattice3D(side, pflip=p, geo=geo, initNwDict=True)
         l.flip_sel_edges(geometry_func(l))
         #
         l.calc_fluct_Pinf()
