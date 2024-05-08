@@ -7,8 +7,8 @@ printb = True
 
 for side in s:
     for pflip in p:
-        execstr = f"slanzarv -m 16384 --nomail python src/L3D_TransCluster.py " + \
-    f"{side} {pflip:.3g} -n 10000 --mode=pCluster"
+        execstr = f"slanzarv -m 16384 --nomail python src/L3D_TransCluster.py "\
+            + f"{side} {pflip:.3g} -n 10000 --mode=pCluster"
         if printb:
             print(execstr)
         else:

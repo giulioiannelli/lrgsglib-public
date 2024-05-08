@@ -50,7 +50,7 @@ import numpy as np
 class Lattice3D(SignedGraph):
     def __init__(
         self,
-        dim: tuple = L3D_DIM,
+        dim: Union[int, Tuple[int, int, int]] = L3D_DIM,
         geo: str = L3D_GEO,
         pbc: bool = L3D_PBC,
         fbc_val: float = L3D_FBCV,
@@ -61,7 +61,12 @@ class Lattice3D(SignedGraph):
         phi: float = L3D_PHI,
         **kwargs,
     ) -> None:
-        self.dim = sorted(dim, reverse=True)
+        if isinstance(dim, int):
+            self.dim = (dim, dim, dim)
+        elif isinstance(dim, tuple) and len(dim) == 3 and all(isinstance(x, int) for x in dim):
+            self.dim = sorted(dim, reverse=True)
+        else:
+            raise ValueError("dim must be an integer or a tuple of three integers")
         self.dimL = list(self.dim)
         self.pbc = pbc
         self.fbc_val = fbc_val

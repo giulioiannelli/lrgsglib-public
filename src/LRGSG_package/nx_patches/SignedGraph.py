@@ -19,21 +19,25 @@ class SignedGraph:
         dataOutdir: str = "",
         plotOutdir: str = "",
         initNwDict: bool = False,
+        makeDirsTree: bool = True
     ):
         self.__init_paths__(
-            dataOutdir=dataOutdir, plotOutdir=plotOutdir, expOutdir=expOutdir
+            dataOutdir=dataOutdir, 
+            plotOutdir=plotOutdir, 
+            expOutdir=expOutdir
         )
 
         if not is_in_range(pflip, LB_PFLIP, UB_PFLIP):
             raise ValueError(SG_ERRMSG_PFLIP)
         else:
             self.pflip = pflip
+        
         self.lsp_mode = lsp_mode
         self.p_c = None
         self.slspectrum = None
         self.rEdgeFlip = {}
         self.import_on = import_on
-        self.__make_dirs__()
+        self.__make_dirs__(makeDirsTree)
         self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
         if import_on:
             self.graphFname = self.expOutdir + self.stdFname
@@ -49,7 +53,7 @@ class SignedGraph:
     #
     def __init_graph_reprdict__(self):
         self.GraphReprDict = {}
-        self.GraphReprDict["G"] = self.G
+        self.GraphReprDict[SG_GRAPH_REPR] = self.G
         try:
             self.GraphReprDict["H"] = self.H
         except KeyError:
@@ -89,16 +93,17 @@ class SignedGraph:
         self.spectpath = f"{self.DEFAULT_SPECTDIR}{self.syshapePth}"
 
     #
-    def __make_dirs__(self):
-        for _ in [
-            self.expOutdir,
-            self.isingpath,
-            self.voterpath,
-            self.phtrapath,
-            self.lrgsgpath,
-            self.spectpath
-        ]:
-            os.makedirs(_, exist_ok=True)
+    def __make_dirs__(self, makeDirsTree):
+        if makeDirsTree:
+            for _ in [
+                self.expOutdir,
+                self.isingpath,
+                self.voterpath,
+                self.phtrapath,
+                self.lrgsgpath,
+                self.spectpath
+            ]:
+                os.makedirs(_, exist_ok=True)
 
     #
     def init_weights(self):
@@ -236,14 +241,14 @@ class SignedGraph:
             )
 
     #
-    def upd_graph(self, on_graph: str = "G"):
+    def upd_graph(self, on_graph: str = SG_GRAPH_REPR):
         if on_graph == "G":
             self.upd_H_graph()
         elif on_graph == "H":
             self.upd_G_graph()
 
     #
-    def unflip_all(self, on_graph="H"):
+    def unflip_all(self, on_graph: str = SG_GRAPH_REPR):
         if on_graph == "G":
             eset = self.esetG
         elif on_graph == "H":
@@ -251,7 +256,7 @@ class SignedGraph:
         self.flip_sel_edges(neg_weights_dict=1, on_graph=on_graph)
 
     #
-    def flip_random_fract_edges(self, on_graph: str = "G"):
+    def flip_random_fract_edges(self, on_graph: str = SG_GRAPH_REPR):
         """Flips a fraction p of edges (+1 to -1) of a graph G."""
         #
         try:
@@ -470,7 +475,7 @@ class SignedGraph:
                 G_no.remove_node(node)
         return G_yes, G_no
 
-    def cluster_distribution_list(self, which: int = 0, 
+    def cluster_distribution(self, which: int = 0, 
                                   on_graph: str = SG_GRAPH_REPR,
                                   binarize: bool = True):
         self.load_eigV_on_graph(which, on_graph, binarize)

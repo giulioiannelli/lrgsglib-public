@@ -83,7 +83,7 @@ if mode == 'pCluster':
                           initNwDict=True)
             l.flip_sel_edges(geometry_func(l))
             #
-            dist_dict = l.cluster_distribution_list()
+            dist_dict = l.cluster_distribution()
             merged_dict += dist_dict
             navgCurr = nAvgDone + (current_period + 1) * period
         fnameNew = file_path_maker(mpath[mode], napath=navgCurr)

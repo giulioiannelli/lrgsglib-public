@@ -5,6 +5,32 @@ from .errwar import *
 def do_nothing(*args, **kwargs):
     pass
 #
+def unzip_dict_items(input_dict: Dict[Any, Any]) -> Tuple[List[Any], List[Any]]:
+    """
+    Unzip a dictionary into two lists containing its keys and values, respectively.
+
+    Parameters:
+    ---------------
+    input_dict : Dict[Any, Any]
+        The dictionary from which to extract keys and values.
+
+    Returns:
+    ---------------
+    Tuple[List[Any], List[Any]]
+        A tuple containing two lists: the first with keys and the second with values from the dictionary.
+
+    Examples:
+    ---------------
+    >>> test_dict = {'a': 1, 'b': 2, 'c': 3}
+    >>> keys, values = unzip_dict_items(test_dict)
+    >>> print(keys)
+    ['a', 'b', 'c']
+    >>> print(values)
+    [1, 2, 3]
+    """
+    keys, values = zip(*input_dict.items()) if input_dict else ([], [])
+    return list(keys), list(values)
+#
 def sym_log_func_unsafe(x, a, b, c, d):
     """Return values from a general log function with safety checks."""
     # Ensure safe computation by adjusting values close to d
