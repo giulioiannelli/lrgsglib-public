@@ -1,11 +1,17 @@
-# Minimal makefile for hnn-main.c
 #
+export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
 # create directories
-DIRS := data/plot/
-$(shell mkdir -p $(DIRS))
+DIRS := data/
+
+# Target that creates necessary directories
+create_dirs:
+	@mkdir -p $(DIRS)
 #
 PATH_SRC  = src/LRGSG_package/
 PATH_SFMT = src/LRGSG_package/SFMT/
+PATH_GTPTCH = src/LRGSG_package/gt_patches/cpp
+PATH_SH = tools/bash
+
 #
 RBIMSIMULATOR0_PN = IsingSimulator0
 RBIMSIMULATOR1_PN = IsingSimulator1
@@ -54,7 +60,7 @@ ALLFLAGS  = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${INC_PATHS} ${DSFMTFLAG} ${WFLAGS} ${
 
 
 
-all: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2}
+all: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf
 
 ${PROGRAMN0}: ${PATHSRS0.c}
 	${CC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
@@ -65,16 +71,21 @@ ${PROGRAMN1}: ${PATHSRS1.c}
 ${PROGRAMN2}: ${PATHSRS2.c}
 	${CC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
 
+chmod_scripts:
+	find $(PATH_SH) -type f -name '*.sh' -exec chmod +x {} \;
+
+make_rootf:
+	echo "YES" > .isrootf
+
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
 
 clean:
 	${RM_FR} ${FILES.o} ${FILES.o} ${DEBRIS}
 
-SUBDIR = src/LRGSG_package/gt_patches/cpp
 
 all:
-	$(MAKE) -C $(SUBDIR)
+	$(MAKE) -C $(PATH_GTPTCH)
 
 clean:
-		$(MAKE) -C $(SUBDIR) clean
+	$(MAKE) -C $(PATH_GTPTCH) clean
