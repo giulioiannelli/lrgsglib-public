@@ -2,30 +2,36 @@
 
 - [LRG-Signed Documentation](#lrg-signed-documentation)
   - [Installation and Activation](#installation-and-activation)
+  - [Build the library](#build-the-library)
   - [How to use](#how-to-use)
     - [Signed 2D lattices](#signed-2d-lattices)
 
 
 # LRG-Signed Documentation
 ## Installation and Activation
-1. Download the project from GitHub:
+1. Clone the repo from GitHub and initialize submodules:
 ```
-git clone https://github.com/pvgongora/LRG-Signed
+git clone https://github.com/giulioiannelli/lrgsglib
+git submodule init
 ```
-2. Move to the main folder and create the `LRG-Signed` anaconda enviroment by running:
+2. Move to the main folder and create the `lrgsgenv` anaconda enviroment by running:
 ```
-conda env create -f LRG-Signed_env.yml
-# or
-conda install lmfit matplotlib numpy pandas scipy graph-tool networkx powerlaw tqdm -c conda-forge
+conda env create -f lrgsgenv.yml
 ```
 3. Verify that installation was succesfull by means of `conda list`. Activate the `conda` environment before executing scripts:
 ```
-conda activate LRG-Signed
+conda activate lrgsgenv
 ``` 
-4. For installing in [development mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html) the package just move to the package directory (with `cd src` from the project directory) and then run
+4. **[WORK IN PROGRESS]** To install in [development mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html) the package just move to the package directory (with `cd src` from the project directory) and then run
 ```
 pip install --editable .
 ```
+## Build the library
+Ensure that `lrgsgenv` exists. Then run:
+```
+make
+```
+
 [1]: test
 ## How to use
 ### Signed 2D lattices
