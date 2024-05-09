@@ -1,4 +1,6 @@
 # exports
+CONDA_PREFIX = $(shell conda info --root)/envs/lrgsgenv
+CONDA_BIN := $(CONDA_PREFIX)/bin
 export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
 # directories
 MAKEDIR := data/
@@ -40,7 +42,8 @@ PROGRAMN0  = $(addprefix $(PATH_CCORE), $(RBIMSIMULATOR0_PN))
 PROGRAMN1 = $(addprefix $(PATH_CCORE), $(RBIMSIMULATOR1_PN))
 PROGRAMN2 = $(addprefix $(PATH_CCORE), $(VMSIMULATOR_PN))
 #
-CC        = gcc
+GCC := $(CONDA_PREFIX)/bin/gcc
+CPP := $(CONDA_PREFIX)/bin/g++
 GFLAGS    = -g
 OFLAGS    = -O3
 DSFMTFLAG = -DSFMT_MEXP=19937
@@ -54,18 +57,24 @@ INC_PATH1 = -Isrc/LRSG_package/
 INC_PATHS = ${INC_PATH1} #${INC_PATH2} ${INC_PATH3}
 ALLFLAGS  = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${INC_PATHS} ${DSFMTFLAG} ${WFLAGS} ${INC_PATHS}
 
+setup:
+	@if [ ! -L $(CONDA_BIN)/gcc ]; then \
+	    ln -s $(CONDA_BIN)/x86_64-conda_cos6-linux-gnu-cc $(CONDA_BIN)/gcc; \
+	fi
+	@if [ ! -L $(CONDA_BIN)/g++ ]; then \
+	    ln -s $(CONDA_BIN)/x86_64-conda_cos6-linux-gnu-cpp $(CONDA_BIN)/g++; \
+	fi
 
-
-all: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf
+all: setup ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf sub_make
 
 ${PROGRAMN0}: ${PATHSRS0.c}
-	${CC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
+	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
 
 ${PROGRAMN1}: ${PATHSRS1.c}
-	${CC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
+	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
 
 ${PROGRAMN2}: ${PATHSRS2.c}
-	${CC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
+	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
 
 chmod_scripts:
 	find $(PATH_SH) -type f -name '*.sh' -exec chmod +x {} \;
@@ -77,15 +86,15 @@ make_rootf:
 create_dirs:
 	@mkdir -p $(MAKEDIR)
 
+sub_make:
+	$(MAKE) -C $(PATH_GTPTCH)
+
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
 
 clean:
 	${RM_FR} ${FILES.o} ${FILES.o} ${DEBRIS}
-
-
-all:
-	$(MAKE) -C $(PATH_GTPTCH)
-
-clean:
 	$(MAKE) -C $(PATH_GTPTCH) clean
+
+# Prevent duplication of 'all' and 'clean' by removing previous definitions
+.PHONY: all clean setup chmod_scripts create_dirs make_rootf sub_make
