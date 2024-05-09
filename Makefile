@@ -3,10 +3,11 @@ export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
 # directories
 MAKEDIR := data/
 # paths
-PATH_CCORE  = src/LRGSG_package/Ccore/
-PATH_SFMT = src/LRGSG_package/SFMT/
-PATH_GTPTCH = src/LRGSG_package/gt_patches/cpp/
 PATH_SH = tools/bash
+PATH_LRGSG = src/LRGSG_package/
+PATH_CCORE  = $(PATH_LRGSG)/Ccore/
+PATH_GTPTCH = $(PATH_LRGSG)/gt_patches/cpp/
+PATH_SFMT = $(PATH_CCORE)/SFMT/
 #
 RBIMSIMULATOR0_PN = IsingSimulator0
 RBIMSIMULATOR1_PN = IsingSimulator1
