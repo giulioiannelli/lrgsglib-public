@@ -1,4 +1,4 @@
-[submodule "src/LRGSG_package/SFMT"]
-	path = src/LRGSG_package/SFMT
+[submodule "SFMT"]
+	path = src/LRGSG_package/Ccore/SFMT
 	url = https://github.com/MersenneTwister-Lab/SFMT
 
