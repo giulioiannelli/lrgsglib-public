@@ -5,9 +5,9 @@ MAKEDIR := data/
 # paths
 PATH_SH = tools/bash
 PATH_LRGSG = src/LRGSG_package/
-PATH_CCORE  = $(PATH_LRGSG)/Ccore/
-PATH_GTPTCH = $(PATH_LRGSG)/gt_patches/cpp/
-PATH_SFMT = $(PATH_CCORE)/SFMT/
+PATH_CCORE  = $(PATH_LRGSG)Ccore/
+PATH_GTPTCH = $(PATH_LRGSG)gt_patches/cpp/
+PATH_SFMT = $(PATH_CCORE)SFMT/
 #
 RBIMSIMULATOR0_PN = IsingSimulator0
 RBIMSIMULATOR1_PN = IsingSimulator1
