@@ -29,10 +29,12 @@ pip install --editable .
 ## Build the library
 Ensure that `lrgsgenv` exists. Then run:
 ```
-make
+make all
 ```
+To clear the library simply `make clean`<sup>[1]</sup>.
 
-[1]: test
+[1]: Makefile
+
 ## How to use
 ### Signed 2D lattices
 A full description of these scripts can be read off by executing them with the `-h` flag. Note that the script must run from the parent folder (the root folder of the project).

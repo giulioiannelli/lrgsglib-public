@@ -51,19 +51,27 @@ LMFLAG    = -lm
 WFLAG1    = -Wall
 WFLAG2    = -Wextra
 WFLAGS    = ${WFLAG1} ${WFLAG2}
-INC_PATH1 = -Isrc/LRSG_package/
+INC_PATH1 = -Isrc/LRSG_package/Ccore
 # INC_PATH2 = -Isrc
 # INC_PATH3 = -Idep/SFMT
 INC_PATHS = ${INC_PATH1} #${INC_PATH2} ${INC_PATH3}
 ALLFLAGS  = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${INC_PATHS} ${DSFMTFLAG} ${WFLAGS} ${INC_PATHS}
 
 setup:
-	@if [ ! -L $(CONDA_BIN)/gcc ]; then \
-	    ln -s $(CONDA_BIN)/x86_64-conda_cos6-linux-gnu-cc $(CONDA_BIN)/gcc; \
+	@# Remove existing symbolic links if they exist
+	@if [ -L $(CONDA_BIN)/gcc ]; then \
+	    rm $(CONDA_BIN)/gcc; \
 	fi
-	@if [ ! -L $(CONDA_BIN)/g++ ]; then \
-	    ln -s $(CONDA_BIN)/x86_64-conda_cos6-linux-gnu-cpp $(CONDA_BIN)/g++; \
+	@# Create new symbolic link for gcc
+	ln -s $(CONDA_BIN)/x86_64-conda_cos6-linux-gnu-cc $(CONDA_BIN)/gcc;
+
+	@# Remove existing symbolic links if they exist
+	@if [ -L $(CONDA_BIN)/g++ ]; then \
+	    rm $(CONDA_BIN)/g++; \
 	fi
+	@# Create new symbolic link for g++
+	ln -s $(CONDA_BIN)/x86_64-conda_cos6-linux-gnu-cpp $(CONDA_BIN)/g++;
+
 
 all: setup ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf sub_make
 
