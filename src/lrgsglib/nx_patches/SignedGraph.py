@@ -521,7 +521,7 @@ class SignedGraph:
     def export_edgel(self):
         # TO BE FIXED
         a = list(self.H.edges(data="weight"))
-        with open(r"src/LRGSG_package/tmp_stuff/prova.txt", "w") as fp:
+        with open(r"src/lrgsglib/tmp_stuff/prova.txt", "w") as fp:
             for item in a:
                 # write each item on a new line
                 fp.write("%s %s %s\n" % item)
@@ -983,7 +983,7 @@ class SignedGraph_DEV(Graph):
     # def export_edgel(self):
     #     # TO BE FIXED
     #     a = list(self.H.edges(data="weight"))
-    #     with open(r"src/LRGSG_package/tmp_stuff/prova.txt", "w") as fp:
+    #     with open(r"src/lrgsglib/tmp_stuff/prova.txt", "w") as fp:
     #         for item in a:
     #             # write each item on a new line
     #             fp.write("%s %s %s\n" % item)

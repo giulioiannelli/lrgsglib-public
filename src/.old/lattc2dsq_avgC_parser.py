@@ -1,5 +1,5 @@
 from lrgsglib.core import *
-from LRGSG_package.config.const import *
+from lrgsglib.config.const import *
 import warnings
 
 # Your code here...

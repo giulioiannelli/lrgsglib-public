@@ -6,6 +6,6 @@ setup(
    description='A useful module',
    author='Giulio Iannelli',
    author_email='giulioiannelli.w@gmail.com',
-   packages=['LRGSG_package'],  #same as name
+   packages=['lrgsglib'],  #same as name
    install_requires=['numpy'], #external packages as dependencies
 )

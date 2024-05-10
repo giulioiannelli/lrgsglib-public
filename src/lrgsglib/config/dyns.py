@@ -309,7 +309,7 @@ class IsingDynamics_DEV(BinDynSys):
     #         if out_suffix == "":
     #             out_suffix = '""'
     #         self.cprogram = [
-    #             f"src/LRGSG_package/IsingSimulator{self.runlang[-1]}",
+    #             f"src/lrgsglib/IsingSimulator{self.runlang[-1]}",
     #             f"{self.sg.N}",
     #             f"{self.T}",
     #             f"{self.sg.pflip}",
@@ -579,7 +579,7 @@ class IsingDynamics:
             if out_suffix == "":
                 out_suffix = '""'
             self.cprogram = [
-                f"src/LRGSG_package/IsingSimulator{self.runlang[-1]}",
+                f"src/lrgsglib/IsingSimulator{self.runlang[-1]}",
                 f"{self.sg.N}",
                 f"{self.T}",
                 f"{self.sg.pflip}",
@@ -797,7 +797,7 @@ class IsingDynamics:
 #             if out_suffix == "":
 #                 out_suffix = '""'
 #             self.cprogram = [
-#                 f"src/LRGSG_package/IsingSimulator{self.MODE_RUN[-1]}",
+#                 f"src/lrgsglib/IsingSimulator{self.MODE_RUN[-1]}",
 #                 f"{self.system.N}",
 #                 f"{self.T}",
 #                 f"{self.system.pflip}",
