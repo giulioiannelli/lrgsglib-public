@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 #
 description = """
     Computational resourses regarding the Signed Laplacian spectrum of 2D 

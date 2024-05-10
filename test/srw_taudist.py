@@ -1,6 +1,6 @@
-from LRGSG_package.shared import *
-from LRGSG_package.config.utils import log_binning
-from LRGSG_package.LRGSG import Lattice2D, SignedRW, move_to_rootf
+from lrgsglib.shared import *
+from lrgsglib.config.utils import log_binning
+from lrgsglib.core import Lattice2D, SignedRW, move_to_rootf
 #
 plt.style.use("ipynb/nb_plotsheet.mplstyle")
 
