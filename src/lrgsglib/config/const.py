@@ -14,7 +14,7 @@ LB_PFLIP = .0
 UB_PFLIP = 1.
 
 DIR_SRC = "src/"
-DIR_PCK = "LRGSG_package/"
+DIR_PCK = "lrgsglib/"
 DIR_PLT = "plot/"
 DIR_DAT = "data/"
 

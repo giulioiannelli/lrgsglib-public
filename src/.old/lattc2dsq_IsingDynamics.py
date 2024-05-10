@@ -1,10 +1,10 @@
 from lrgsglib.core import *
-from LRGSG_package.config.plotlib import (
+from lrgsglib.config.plotlib import (
     imshow_colorbar_caxdivider,
     generate_maxpercdiff_colormap,
 )
-from LRGSG_package.config.utils import move_to_rootf, width_interval, dv
-from LRGSG_package.config.nx_patches import (
+from lrgsglib.config.utils import move_to_rootf, width_interval, dv
+from lrgsglib.config.nx_patches import (
     signed_spectral_layout,
     get_kth_order_neighbours,
 )

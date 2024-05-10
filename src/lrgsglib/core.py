@@ -446,7 +446,7 @@ def eigV_for_lattice2D(side, mode='scipy', **kwargs):
 #     self.init_ising_dynamics(IsingIC)
 #     self.id_string_isingdyn = randstring()
 #     if MODE == 'C':
-#         output_file = open(f"src/LRGSG_package/tmp_stuff/m_{self.id_string_isingdyn}.bin", 'wb')
+#         output_file = open(f"src/lrgsglib/tmp_stuff/m_{self.id_string_isingdyn}.bin", 'wb')
 #         self.s.tofile(output_file)
 #         return
 
