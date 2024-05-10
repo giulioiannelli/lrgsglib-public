@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 #
 move_to_rootf(print_tf=True)
 #

@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 plt.rcParams.update({'font.size': 30})
 
 no_p = 10

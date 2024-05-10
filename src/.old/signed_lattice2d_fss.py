@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 
 ssize_list = [2**k for k in range(4, 8)]
 nrep = [2**(17-2*k) for k in range(4, 8)]

@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 
 description = """ 
     Compute the order parameter of the transition and the susceptibility for a lattice setting.

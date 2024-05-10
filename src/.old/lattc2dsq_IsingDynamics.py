@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 from LRGSG_package.config.plotlib import (
     imshow_colorbar_caxdivider,
     generate_maxpercdiff_colormap,

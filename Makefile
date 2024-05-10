@@ -6,7 +6,7 @@ export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
 MAKEDIR := data/
 # paths
 PATH_SH = tools/bash
-PATH_LRGSG = src/LRGSG_package/
+PATH_LRGSG = src/lrgsglib/
 PATH_CCORE  = $(PATH_LRGSG)Ccore/
 PATH_GTPTCH = $(PATH_LRGSG)gt_patches/cpp/
 PATH_SFMT = $(PATH_CCORE)SFMT/
