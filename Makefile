@@ -58,19 +58,28 @@ INC_PATHS = ${INC_PATH1} #${INC_PATH2} ${INC_PATH3}
 ALLFLAGS  = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${INC_PATHS} ${DSFMTFLAG} ${WFLAGS} ${INC_PATHS}
 
 setup:
-	@# Remove existing symbolic links if they exist
+	@# Find the gcc compiler binary
+	$(eval GCC_BIN := $(shell find $(CONDA_BIN) -name 'x86_64-conda_cos*-linux-gnu-cc' | head -n 1))
+	@# Find the g++ compiler binary
+	$(eval GPP_BIN := $(shell find $(CONDA_BIN) -name 'x86_64-conda_cos*-linux-gnu-cpp' | head -n 1))
+
+	@# Remove existing gcc symlink if it exists and create a new one
 	@if [ -L $(CONDA_BIN)/gcc ]; then \
 	    rm $(CONDA_BIN)/gcc; \
 	fi
-	@# Create new symbolic link for gcc
-	ln -s $(CONDA_BIN)/x86_64-conda_cos6-linux-gnu-cc $(CONDA_BIN)/gcc;
+	@ln -s $(GCC_BIN) $(CONDA_BIN)/gcc;
 
-	@# Remove existing symbolic links if they exist
+	@# Remove existing g++ symlink if it exists and create a new one
 	@if [ -L $(CONDA_BIN)/g++ ]; then \
 	    rm $(CONDA_BIN)/g++; \
 	fi
-	@# Create new symbolic link for g++
-	ln -s $(CONDA_BIN)/x86_64-conda_cos6-linux-gnu-cpp $(CONDA_BIN)/g++;
+	@ln -s $(GPP_BIN) $(CONDA_BIN)/g++;
+
+	@echo "Using GCC at $(GCC_BIN)"
+	@echo "Using G++ at $(GPP_BIN)"
+	@if [ -z "$(GCC_BIN)" ] || [ -z "$(GPP_BIN)" ]; then \
+		echo "Error: Unable to find required compilers in $(CONDA_BIN)"; exit 1; \
+	fi
 
 
 all: setup ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf sub_make
