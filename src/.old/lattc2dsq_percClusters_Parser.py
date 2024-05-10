@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 
 description = """
     This program computes the cluster distribution size of the sign fluctuation inside the signed Laplacian operator of a square lattice. It requires specifying the size of the lattice and the flipping probability. Optionally, it can average the results over multiple runs.

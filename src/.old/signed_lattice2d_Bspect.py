@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 
 plist = np.concatenate([[0.001, 0.01, 0.05, 0.075, 0.080, 0.085, 0.090, 0.091], 
                 np.linspace(0.090, 0.106, num=17),

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "LRGSG_package"
+name = "lrgsglib"
 version = "0.0.1"
 authors = [
   { name="Giulio Iannelli", email="giulioiannelli.w@gmail.com" },
