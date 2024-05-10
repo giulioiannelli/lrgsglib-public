@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 description = """
     pCluster: Cluster distribution in signed Laplacian on lattices. 
     ordParam: Calculates order parameter and susceptibility.

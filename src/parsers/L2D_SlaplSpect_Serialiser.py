@@ -1,4 +1,4 @@
-from LRGSG_package.LRGSG import *
+from lrgsglib.core import *
 #
 description = """
     Serialiser for Lattice2D_SlaplSpect.py
