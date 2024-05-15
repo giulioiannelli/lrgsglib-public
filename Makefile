@@ -8,6 +8,7 @@ MAKEDIR := data/
 PATH_SH = tools/bash
 PATH_LRGSG = src/lrgsglib/
 PATH_CCORE  = $(PATH_LRGSG)Ccore/
+PATH_STOCPROC = $(PATH_CCORE)stocproc/
 PATH_GTPTCH = $(PATH_LRGSG)gt_patches/cpp/
 PATH_SFMT = $(PATH_CCORE)SFMT/
 #
@@ -18,6 +19,16 @@ LRGSGSRCC = LRGSG_utils sfmtrng
 ISINGLRGSRC = ${LRGSGSRCC} LRGSG_rbim
 VOTERLRGSRC = ${LRGSGSRCC} LRGSG_vm
 SFMTSRC = SFMT
+
+CXXFLAGS = -O3 -Wall -shared -std=c++14 -fPIC
+
+# Python includes and libraries
+PYTHON_INC = $(shell python3 -m pybind11 --includes)
+PYTHON_LIB = $(shell python3-config --ldflags)
+
+# Targets
+RW_TARGET = $(PATH_STOCPROC)random_walk$(shell python3-config --extension-suffix)
+RW_SOURCES = $(PATH_STOCPROC)random_walk.cpp
 #
 #
 RBIMSIM0.c = $(addsuffix .c, $(RBIMSIMULATOR0_PN))
@@ -82,7 +93,7 @@ setup:
 	fi
 
 
-all: setup ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf sub_make
+all: setup ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} $(RW_TARGET) chmod_scripts create_dirs make_rootf sub_make
 
 ${PROGRAMN0}: ${PATHSRS0.c}
 	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
@@ -92,6 +103,9 @@ ${PROGRAMN1}: ${PATHSRS1.c}
 
 ${PROGRAMN2}: ${PATHSRS2.c}
 	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
+
+$(RW_TARGET): $(RW_SOURCES)
+	$(CPP) $(CXXFLAGS) $(PYTHON_INC) $(RW_SOURCES) -o $(RW_TARGET) $(PYTHON_LIB)
 
 chmod_scripts:
 	find $(PATH_SH) -type f -name '*.sh' -exec chmod +x {} \;
@@ -112,6 +126,8 @@ RM_FR  = rm -fr
 clean:
 	${RM_FR} ${FILES.o} ${FILES.o} ${DEBRIS}
 	$(MAKE) -C $(PATH_GTPTCH) clean
+	rm -f $(RW_TARGET)
+
 
 # Prevent duplication of 'all' and 'clean' by removing previous definitions
 .PHONY: all clean setup chmod_scripts create_dirs make_rootf sub_make

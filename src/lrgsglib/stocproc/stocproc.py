@@ -37,6 +37,7 @@ class BinStocProc:
                 f'storeMode "{storeMode}" is not in the allowed list of strings'
             )
         self.simTime = simTime
+        self.StopFlag = False
 
     def __run_py_1__(self):
         raise NotImplementedError("Subclasses must implement this method")
@@ -50,9 +51,8 @@ class BinStocProc:
     def run(self):
         raise NotImplementedError("Subclasses must implement this method")
 
-
 class SignedRW(BinStocProc):
-    def __init__(self, sg: SignedGraph, **kwargs):
+    def __init__(self, sg: SignedGraph, stopSim: bool = False, **kwargs):
         super().__init__(sg, **kwargs)
         if self.initMode:
             self.__init_proc__()
@@ -63,12 +63,16 @@ class SignedRW(BinStocProc):
                 self.store_state = self.store_state_seq
         else:
             self.store_state = do_nothing
+        if stopSim:
+            self.stop_sim = self.stop_sim_cond
+        else:
+            self.stop_sim = do_nothing
         self.node_index = {node: i for i,node in enumerate(self.sg.nodeList)}
         self.index_node = {i: node for i,node in enumerate(self.sg.nodeList)}
 
 
     def __init_random__(self):
-        pos = random.choice(self.sg.nodeList)
+        pos = self.sg.get_central_edge()[0]#self.sg.nodeList[self.sg.G.number_of_nodes()//2]#random.choice(self.sg.nodeList)
         val = random.choice(BSP_VAL)
         self.s_0 = [pos, val]
 
@@ -87,15 +91,21 @@ class SignedRW(BinStocProc):
         neighbors_indices = adj_matrix.indices[start:end]
         cnn = np.random.choice(neighbors_indices)
         self.s_t = [self.index_node[cnn], self.s_t[1] * adj_matrix[ndidx, cnn]]
+        self.stop_sim_cond(adj_matrix[ndidx, cnn])
+
 
     def __run_py_N__(self):
         for t in range(self.sg.N):
             self.__run_py_1__()
+            if self.StopFlag:
+                break
             self.store_state(t)
 
     def __run_py__(self):
         for _ in range(self.simTime):
             self.__run_py_N__()
+            if self.StopFlag:
+                break
 
     def run(self):
         if self.runMode in BSP_RUN_MODES_PY_LIST:
@@ -109,3 +119,8 @@ class SignedRW(BinStocProc):
     def store_state_per(self, t: int):
         if not (t % self.storeFreq):
             self.s_tCntr[self.s_t[0]] += self.s_t[1]
+    def stop_sim_cond(self, adjVal: int):
+        if adjVal == -1 or len(list(self.sg.G.neighbors(self.s_t[0]))) != self.sg.z:
+            self.StopFlag = True
+        
+

@@ -73,11 +73,14 @@ class Lattice2D(SignedGraph):
         #
         if self.geo == L2D_SHRT_GEO_DICT['tri']:
             nxfunc = triangular_lattice_graph_FastPatch
+            self.z = 6
             self.syshape = (self.side1, self.side2)
         elif self.geo == L2D_SHRT_GEO_DICT['sqr']:
             nxfunc = squared_lattice_graph_FastPatch
+            self.z = 4
             self.syshape = (self.side1, self.side2)
         elif self.geo == L2D_SHRT_GEO_DICT['hex']:
+            self.z = 3
             nxfunc = hexagonal_lattice_graph_FastPatch
             self.syshape = (self.side1, self.side2)
         #

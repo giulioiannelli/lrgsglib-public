@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=42", "pybind11>=2.6.1"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "lrgsglib"
@@ -11,7 +11,7 @@ authors = [
 ]
 description = "A package containing useful classes and functions for stting up the theoretical apparatus of the Laplacian Renormalizazion Group for Signed Graph"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -19,8 +19,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "hhttps://github.com/pvgongora/LRG-Signed"
-"Bug Tracker" = "https://github.com/pvgongora/LRG-Signed/issues"
+"Homepage" = "https://github.com/giulioiannelli/lrgsglib"
+"Bug Tracker" = "https://github.com/giulioiannelli/lrgsglib/issues"
 
 [tool.black]
 line-length = 80
