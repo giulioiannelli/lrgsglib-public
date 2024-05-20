@@ -9,6 +9,8 @@ PATH_SH = tools/bash
 PATH_LRGSG = src/lrgsglib/
 PATH_CCORE  = $(PATH_LRGSG)Ccore/
 PATH_STOCPROC = $(PATH_CCORE)stocproc/
+PATH_STOCPROC_LATTICES = $(PATH_STOCPROC)signedRw/Lattices/
+
 PATH_GTPTCH = $(PATH_LRGSG)gt_patches/cpp/
 PATH_SFMT = $(PATH_CCORE)SFMT/
 #
@@ -119,6 +121,7 @@ create_dirs:
 
 sub_make:
 	$(MAKE) -C $(PATH_GTPTCH)
+	$(MAKE) -C $(PATH_STOCPROC_LATTICES)
 
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
@@ -126,6 +129,7 @@ RM_FR  = rm -fr
 clean:
 	${RM_FR} ${FILES.o} ${FILES.o} ${DEBRIS}
 	$(MAKE) -C $(PATH_GTPTCH) clean
+	$(MAKE) -C $(PATH_STOCPROC_LATTICES) clean
 	rm -f $(RW_TARGET)
 
 
