@@ -1,6 +1,6 @@
 # v2.0 - 03/05/2022 - Giulio Iannelli
 axes.linewidth : 1
-axes.prop_cycle: (cycler('color', ['1f77b4', '2ca02c', 'E53A3A', 'ff7f0e', '9467bd', '8c564b', 'e377c2', '7f7f7f', 'C6B604', '17becf']) + cycler(marker=['o', 'p', 'H', '8', 's', '^', 'd', 'X', '*', 'D']))
+axes.prop_cycle: (cycler('color', ['1f77b4', '2ca02c', 'E53A3A', 'ff7f0e', '9467bd', '8c564b', 'e377c2', '7f7f7f', '6F6602', '17becf', '7FCF17', '1717CF', 'DCE000']) + cycler(marker=['o', 'p', 'H', '8', 's', '^', 'd', 'X', '*', 'D', '.', 'h', 'v']))
 errorbar.capsize: 10
 figure.figsize : 16, 9
 font.size : 34
@@ -328,7 +328,7 @@ text.usetex: True  # use latex for all text handling. The following fonts
                      # zapf chancery, charter, serif, sans-serif, helvetica,
                      # avant garde, courier, monospace, computer modern roman,
                      # computer modern sans serif, computer modern typewriter
-text.latex.preamble: \usepackage{mathtools}\usepackage{bm}\DeclareMathOperator{\counts}{counts}\DeclareMathOperator{\freq}{frequency}\DeclareMathOperator{\Var}{Var}\DeclarePairedDelimiter{\avg}{\langle}{\rangle}\let\epsilon\varepsilon\let\vec\bm\usepackage{siunitx}\sisetup{inter-unit-product=\ensuremath{{\cdot}}}\DeclareSIUnit\counts{count}\DeclareSIUnit\au{a.u.}\DeclareSIUnit\pix{px}# IMPROPER USE OF THIS FEATURE WILL LEAD TO LATEX FAILURES
+text.latex.preamble: \usepackage{mathtools}\usepackage{bm}\DeclareMathOperator{\counts}{counts}\DeclareMathOperator{\freq}{frequency}\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}\DeclareMathOperator{\Var}{Var}\DeclarePairedDelimiter{\avg}{\langle}{\rangle}\let\epsilon\varepsilon\let\vec\bm\usepackage{siunitx}\sisetup{inter-unit-product=\ensuremath{{\cdot}}}\DeclareSIUnit\counts{count}\DeclareSIUnit\au{a.u.}\DeclareSIUnit\pix{px}# IMPROPER USE OF THIS FEATURE WILL LEAD TO LATEX FAILURES
                     
                         # AND IS THEREFORE UNSUPPORTED. PLEASE DO NOT ASK FOR HELP
                         # IF THIS FEATURE DOES NOT DO WHAT YOU EXPECT IT TO.
