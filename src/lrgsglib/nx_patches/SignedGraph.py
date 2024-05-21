@@ -33,7 +33,6 @@ class SignedGraph:
             self.pflip = pflip
         
         self.lsp_mode = lsp_mode
-        self.p_c = None
         self.slspectrum = None
         self.rEdgeFlip = {}
         self.import_on = import_on
