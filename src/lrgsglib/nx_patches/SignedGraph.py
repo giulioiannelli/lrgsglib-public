@@ -12,8 +12,8 @@ class SignedGraph:
     def __init__(
         self,
         G: Graph,
-        import_on: bool = False,
         pflip: float = 0.0,
+        import_on: bool = False,
         lsp_mode: str = "intervals",
         expOutdir: str = "",
         dataOutdir: str = "",
@@ -322,19 +322,17 @@ class SignedGraph:
             eigVbin = np.sign(np.where(self.eigV == 0, +1, self.eigV))
         return eigVbin
 
-    def calc_fluct_Pinf(self, which: int = 0):
-        eigV = self.bin_eigV(which)
-        eV_p = np.count_nonzero(eigV >= 0)
-        eV_n = self.N - eV_p
-
-        self.eigV_fluct = abs(eV_p - eV_n) / self.N
-        self.Pinf = np.min([eV_p, eV_n]) / self.N
-
-        if hasattr(self, "eigV_fluct_dict"):
-            self.eigV_fluct_dict[which] = self.eigV_fluct
-        else:
-            self.eigV_fluct_dict = {which: self.Pinf}
-
+    def calc_Pinf(self, which: int = 0, on_graph: str = SG_GRAPH_REPR):
+        cd = self.cluster_sizes(which, on_graph)
+        size = cd[0]
+        # eV_p = np.count_nonzero(eigV >= 0)
+        # eV_n = self.N - eV_p
+        # self.eigV_fluct = abs(eV_p - eV_n) / self.N
+        self.Pinf = size / self.N
+        # if hasattr(self, "eigV_fluct_dict"):
+        #     self.eigV_fluct_dict[which] = self.eigV_fluct
+        # else:
+        #     self.eigV_fluct_dict = {which: self.Pinf}
         if hasattr(self, "Pinf_dict"):
             self.Pinf_dict[which] = self.Pinf
         else:
@@ -353,89 +351,6 @@ class SignedGraph:
             )
             self.resLp = self.resLp - new_eigv0 * np.identity(self.N)
 
-    # #
-    # def lsp_selection(self, custom_list):
-    #     if self.lsp_mode == "custom":
-    #         self.lsp = np.array(custom_list)
-    #     elif self.lsp_mode == "intervals":
-    #         intervals = []
-    #         tmp = max([vset["rsf"] for vset in custom_list])
-    #         for vset in custom_list:
-    #             if vset["kind"] == "log":
-    #                 spacing_f = np.logspace
-    #                 vset["start"] = np.log10(vset["start"])
-    #                 vset["stop"] = np.log10(vset["stop"])
-    #             elif vset["kind"] == "lin":
-    #                 spacing_f = np.linspace
-    #             intervals.append(  #
-    #                 round_sigfig_n(  #
-    #                     spacing_f(
-    #                         vset["start"],
-    #                         vset["stop"],
-    #                         num=vset["num"],
-    #                         endpoint=False,
-    #                     ),
-    #                     vset["rsf"],
-    #                 )
-    #             )
-    #         self.lsp = (intervals := np.concatenate(intervals))
-    #         while set(self.lsp).__len__() == intervals.__len__():
-    #             tmp = tmp - 1
-    #             self.lsp = np.round(self.lsp, tmp)
-    #         tmp = tmp + 1
-    #         self.lsp = np.round(intervals, tmp)
-
-    # def default_dict_lsp(self, num_low=3, num_at=6, num_high=3):
-    #     d = (  #
-    #         {
-    #             "kind": "lin",
-    #             "start": 0.001,
-    #             "stop": self.p_c - self.p_c * num_at / 100,
-    #             "num": num_low,
-    #             "rsf": 1,
-    #         },
-    #         {
-    #             "kind": "lin",
-    #             "start": self.p_c - self.p_c * num_at / 100,
-    #             "stop": self.p_c + self.p_c * num_at / 100,
-    #             "num": num_at,
-    #             "rsf": 3,
-    #         },
-    #         {
-    #             "kind": "lin",
-    #             "start": self.p_c + self.p_c * num_at / 100,
-    #             "stop": 1,
-    #             "num": num_high,
-    #             "rsf": 1,
-    #         },
-    #     )
-    #     return d
-    #
-    # def dfs_list(self, node, visited, sign):
-    #     if visited[node] or sign[node] <= 0:
-    #         return 0
-    #     visited[node] = True
-    #     size = 1
-    #     for neighbor in self.H[node]:
-    #         if not visited[neighbor]:
-    #             size += self.dfs_list(neighbor, visited, sign)
-    #     return size
-    # #
-    # def cluster_distribution_list_OLD(self, sv = None):
-    #     visited = [False] * self.N
-    #     distribution = {}
-    #     if sv is None:
-    #         try:
-    #             sv = self.eigV[0]
-    #         except AttributeError:
-    #             self.compute_k_eigvV()
-    #             sv = flip_to_positive_majority(self.eigV[0])
-    #     for node in range(len(self.H)):
-    #         if not visited[node] and sv[node] > 0:
-    #             size = self.dfs_list(node, visited, sv)
-    #             distribution[size] = distribution.get(size, 0) + 1
-    #     return distribution
-    #
 
     def graph_neighbors(self, node, on_graph: str = SG_GRAPH_REPR):
         graph = self.GraphReprDict[on_graph]
@@ -474,14 +389,17 @@ class SignedGraph:
                 G_no.remove_node(node)
         return G_yes, G_no
 
+    def cluster_sizes(self, which: int = 0, on_graph: str = SG_GRAPH_REPR, binarize: bool = True):
+        self.load_eigV_on_graph(which, on_graph, binarize)
+        G_pos, G_neg = self.group_nodes_by_kv(f"eigV{which}", -1, on_graph)
+        clusters = list(nx.connected_components(G_neg))
+        clusterLen = sorted(list(map(lambda x: len(x), clusters)), reverse=True)
+        return clusterLen
+    
     def cluster_distribution(self, which: int = 0, 
                                   on_graph: str = SG_GRAPH_REPR,
                                   binarize: bool = True):
-        self.load_eigV_on_graph(which, on_graph, binarize)
-        G_pos, G_neg = self.group_nodes_by_kv(f"eigV{which}", -1, on_graph)
-        clusters = sorted(list(nx.connected_components(G_neg)), 
-                        key=lambda x: len(x), reverse=True)
-        clusterLen = list(map(lambda x: len(x), clusters))
+        clusterLen = self.cluster_sizes(which, on_graph, binarize)
         distNeg = {
             size: clusterLen.count(size) for size in set(clusterLen)
         }
