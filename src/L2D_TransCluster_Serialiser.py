@@ -9,6 +9,7 @@ fullMode = args.mode
 progMode = args.mode.split('_')[-1]
 execBool = args.exec
 printBool = args.print
+typf = args.float_type
 #
 if fullMode.endswith('pCluster'):
     List = [16, 32, 64, 96, 128, 192, 256]
@@ -62,8 +63,8 @@ if execBool or printBool:
             print(s)
     def exec_str(L, p, geo, cell, navg, mode):
         lnchStr = f"python src/{progName}.py"
-        argstr = (f"{L} {p:.3g} -g {geo} -c {cell} -n "
-                    f"{navg} --mode={mode}")
+        argstr = (f"{L} {p:.3g} -g {geo} -c {cell} -n {navg} -t {typf} "+
+                  f"--mode={mode}")
         return (f"{slanzarv_str(mode, L, p, geo, cell)} "
                         f"{lnchStr} {argstr}")
 else:
