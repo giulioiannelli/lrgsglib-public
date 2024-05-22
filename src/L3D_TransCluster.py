@@ -100,7 +100,7 @@ elif mode == 'ordParam':
         l = Lattice3D(side, pflip=p, geo=geo, initNwDict=True)
         l.flip_sel_edges(geometry_func(l))
         #
-        l.calc_fluct_Pinf()
+        l.calc_Pinf()
         #
         Fluct[cont]=l.eigV_fluct
         Fluct2[cont]=l.eigV_fluct**2
