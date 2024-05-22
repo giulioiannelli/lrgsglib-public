@@ -12,6 +12,8 @@ DEFAULT_PRINT = False
 DEFAULT_EXEC = "no"
 DEFAULT_mMB = 2**10
 DEFAULT_MMB = 2**14
+DEFAULT_FLOAT_TYPE = "float64"
+
 # Helpers for argparse descriptions
 HELP_print = f"""
     Option to print the output of the Serialiser.
@@ -41,7 +43,9 @@ HELP_mode = f"""
 HELP_o = f"""
     Suffix for the output file name (optional) | default='{DEFAULT_OUT_SUFFIX}'
 """
-
+HELP_t = f"""
+    Floating point arithmetic depth. | default='{DEFAULT_FLOAT_TYPE}'
+"""
 Lattice2D_TransCluster_progName = "L2D_TransCluster"
 Lattice2D_TransCluster_progNameShrt = "L2D"
 # Setup the argument parser
@@ -102,3 +106,11 @@ parser.add_argument(
     help=HELP_mode,
     type=str,
 )
+parser.add_argument(
+    "-t",
+    "--float_type",
+    default=DEFAULT_FLOAT_TYPE,
+    help=HELP_t,
+    type=str,
+)
+
