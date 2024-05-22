@@ -10,6 +10,8 @@ progMode = args.mode.split('_')[-1]
 execBool = args.exec
 printBool = args.print
 typf = args.float_type
+outsx = args.out_suffix
+
 #
 if fullMode.endswith('pCluster'):
     List = [16, 32, 64, 96, 128, 192, 256]
@@ -17,7 +19,7 @@ if fullMode.endswith('pCluster'):
     cell = args.cell_type
     plist = np.linspace(0.06, .3, num=20)
 elif fullMode.endswith('ordParam'):
-    List = [16, 32, 48, 64, 96, 128, 192, 256]
+    List = [16, 32, 48, 64, 96]
     def linspacepfunc(geo, cell):
         if cell != 'randXERR':
             if geo != 'hexagonal':
