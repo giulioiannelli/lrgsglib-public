@@ -10,6 +10,7 @@ DEFAULT_OUT_SUFFIX = ""
 DEFAULT_MODE = "ordParam"
 DEFAULT_GEO = "squared"
 DEFAULT_CELL = "rand"
+DEFAULT_FLOAT_TYPE = "float64"
 # Helpers for argparse descriptions
 HELP_L = """
     Size of the square lattice.
@@ -32,6 +33,9 @@ HELP_mode = f"""
 """
 HELP_o = f"""
     Suffix for the output file name | default='{DEFAULT_OUT_SUFFIX}'
+"""
+HELP_t = f"""
+    Floating point arithmetic depth. | default='{DEFAULT_FLOAT_TYPE}'
 """
 HELP_svfreq = f"""
     Saving frequency for the data. By default 1/20 of the number of averages 
@@ -90,4 +94,10 @@ parser.add_argument(
     help=HELP_o,
     type=str,
 )
-
+parser.add_argument(
+    "-t",
+    "--float_type",
+    default=DEFAULT_FLOAT_TYPE,
+    help=HELP_t,
+    type=str,
+)
