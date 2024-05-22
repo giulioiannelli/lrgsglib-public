@@ -16,7 +16,7 @@ if fullMode.endswith('pCluster'):
     cell = args.cell_type
     plist = np.linspace(0.06, .3, num=20)
 elif fullMode.endswith('ordParam'):
-    List = [192, 256, 512]
+    List = [16, 32, 48, 64, 96, 128, 192, 256]
     def linspacepfunc(geo, cell):
         if cell != 'randXERR':
             if geo != 'hexagonal':
