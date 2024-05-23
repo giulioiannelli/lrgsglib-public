@@ -77,7 +77,8 @@ if execBool or printBool:
             print(s)
     def exec_str(L, p, geo, cell, navg, mode):
         lnchStr = f"python src/{progName}.py"
-        argstr = (f"{L} {p:.3g} -g {geo} -c {cell} -n {navg} -t {typf} -o \'{outsx}\' "+
+        optStr = f"-o {outsx}" if outsx else ""
+        argstr = (f"{L} {p:.3g} -g {geo} -c {cell} -n {navg} -t {typf} {optStr} "+
                   f"--mode={mode}")
         return (f"{slanzarv_str(mode, L, p, geo, cell)} "
                         f"{lnchStr} {argstr}")
