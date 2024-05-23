@@ -98,6 +98,7 @@ elif mode == 'ordParam':
         avg1 = avg+1
         l = Lattice3D(side, pflip=p, geo=geo, initNwDict=True)
         l.flip_sel_edges(geometry_func(l))
+        neglinks += l.Ne_n
         #
         l.compute_k_eigvV(typf=typf)
         l.calc_Pinf()
