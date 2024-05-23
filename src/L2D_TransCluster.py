@@ -116,7 +116,10 @@ match mode:
             neglinks += l.Ne_n
             #
             l.compute_k_eigvV(typf=typf)
-            l.calc_Pinf()
+            try:
+                l.calc_Pinf()
+            except IndexError:
+                continue
             #
             Pinf.append(l.Pinf)
             Pinf2.append(l.Pinf**2)

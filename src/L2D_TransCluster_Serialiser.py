@@ -14,10 +14,10 @@ outsx = args.out_suffix
 
 #
 if fullMode.endswith('pCluster'):
-    List = [16, 32, 64, 96, 128, 192, 256]
+    List = [16, 32, 64, 96, 128]
     geo = args.geometry
     cell = args.cell_type
-    plist = np.linspace(0.06, .3, num=20)
+    plist = np.linspace(0.06, .3, num=25)
 elif fullMode.endswith('ordParam'):
     List = [32, 64, 96, 128]
     def linspacepfunc(geo, cell):
