@@ -19,7 +19,7 @@ if fullMode.endswith('pCluster'):
     cell = args.cell_type
     plist = np.linspace(0.06, .3, num=20)
 elif fullMode.endswith('ordParam'):
-    List = [16, 32, 48, 64, 96]
+    List = [32, 64, 96, 128]
     def linspacepfunc(geo, cell):
         if cell != 'randXERR':
             if geo != 'hexagonal':
@@ -27,9 +27,11 @@ elif fullMode.endswith('ordParam'):
             else:
                 return np.linspace(0, 0.35, 100)
         return np.linspace(0, 1, 100)
-    geometry_cell_dict = {'squared': L2D_RAND_CELL_LIST,
-                        'triangular': L2D_RAND_CELL_LIST,
-                        'hexagonal': L2D_RAND_CELL_LIST}
+    # geometry_cell_dict = {'squared': L2D_RAND_CELL_LIST,
+    #                     'triangular': L2D_RAND_CELL_LIST,
+    #                     'hexagonal': L2D_RAND_CELL_LIST}
+    geometry_cell_dict = {'squared': ['rand', 'randZERR'],
+                          'triangular': ['rand', 'randZERR']}
     plist = {geo: {cell: linspacepfunc(geo, cell) for cell in cells}  
             for geo,cells in geometry_cell_dict.items()}
 #
@@ -55,11 +57,11 @@ if execBool or printBool:
         def operate(s, count):
             print(s)
             os.system(s)
-            count += 1
+            return count +1
     elif execBool:
         def operate(s, count):
             os.system(s)
-            count += 1
+            return count +1
     elif printBool:
         def operate(s, *args):
             print(s)
@@ -77,14 +79,14 @@ if fullMode.endswith('pCluster'):
     for L in List:
         for p in plist:
             estring = exec_str(L, p, geo, cell, navg, progMode)
-            operate(estring, count)
+            count = operate(estring, count)
 elif fullMode.endswith('ordParam'):
     for L in List:
         for geo, cellst in geometry_cell_dict.items():
             for cell in cellst:
                 for p in plist[geo][cell]:
                     estring = exec_str(L, p, geo, cell, navg, progMode)
-                    operate(estring, count)
+                    count = operate(estring, count)
 else:
     print(f"no program executed, unkonw mode provided: {fullMode}")
     exit(0)         
