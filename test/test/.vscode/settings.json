@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "Makefile": "c",
-        "optional": "c",
-        "variant": "c"
-    }
-}
