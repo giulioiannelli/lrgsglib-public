@@ -130,12 +130,15 @@ match mode:
                 Pinf2_tot,
                 Pinf2_tot-Pinf_tot**2]
             #
-            if (avg % sfreq == 0):
+            if (avg1 % sfreq == 0):
                 try:
-                    filenameold = file_path_maker(mpath[mode], napath=avg)
+                    filenameold = file_path_maker(mpath[mode], napath=avg1-sfreq)
                     os.remove(filenameold)
                 except OSError:
                     pass
-                filename = file_path_maker(mpath[mode], napath=avg+sfreq)
+                filename = file_path_maker(mpath[mode], napath=avg1)
                 with open(filename, 'wb') as file:
                     np.savetxt(file, np.atleast_2d(data), fmt='%.7g')
+        remains = navg % sfreq
+        os.rename(file_path_maker(mpath[mode], napath=navg-remains),
+                  file_path_maker(mpath[mode], napath=navg))
