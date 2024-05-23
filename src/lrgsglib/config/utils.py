@@ -125,8 +125,26 @@ def is_in_range(number, range_start, range_end):
     """
     return range_start <= number <= range_end
 
+def sort_array_by_column(arr: np.ndarray, column_index: int) -> np.ndarray:
+    """
+    Sorts a numpy array by a specific column.
 
-def find_matching_files(search_dir: str, pattern_str: str) -> List[str]:
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to be sorted.
+    column_index : int
+        The index of the column to sort by.
+
+    Returns
+    -------
+    np.ndarray
+        The sorted array.
+    """
+    return arr[arr[:, column_index].argsort()]
+
+
+def find_matching_files(search_dir: str, pattern_str: str) -> Union[str, List[str]]:
     """
     Searches all files in the specified directory that match a given pattern.
 
@@ -140,16 +158,49 @@ def find_matching_files(search_dir: str, pattern_str: str) -> List[str]:
 
     Returns
     -------
-    List[str]
-        A list of file names within the search directory that match the given 
-        pattern.
+    Union[str, List[str]]
+        A single file name if only one file matches the pattern, or a list of 
+        file names within the search directory that match the given pattern.
     """
-    from os import listdir
-    from re import compile
-    pattern = compile(f'.*{pattern_str}.*')
-    all_files = listdir(search_dir)
+    pattern = re.compile(f'.*{pattern_str}.*')
+    all_files = os.listdir(search_dir)
     matching_files = [fname for fname in all_files if pattern.match(fname)]
+    
+    if len(matching_files) == 1:
+        return matching_files[0]
     return matching_files
+
+def extract_value_from_filename(file_name: str, value_pattern: str) -> float:
+    """
+    Extracts a numeric value from a single file name based on a specified regular expression pattern.
+    
+    Parameters
+    ----------
+    file_name : str
+        The file name from which to extract the value.
+    value_pattern : str
+        The regular expression pattern used to extract the numeric value from the file name. The pattern
+        should contain a capturing group for the numeric value.
+        
+    Returns
+    -------
+    float
+        The extracted numeric value from the file name.
+        
+    Examples
+    --------
+    >>> file_name = "data_p=1.5.pkl"
+    >>> value_pattern = r"p=([\\d.]+)"
+    >>> extract_value_from_filename(file_name, value_pattern)
+    1.5
+    
+    This function extracts the p-value from the provided file name.
+    """
+    match = re.search(value_pattern, file_name)
+    if match:
+        return float(match.group(1).rstrip('.'))
+    else:
+        raise ValueError("No match found in the file name.")
 
 def extract_values_from_filenames(file_names: List[str], value_pattern: str, sort: bool = True) -> np.ndarray:
     """
