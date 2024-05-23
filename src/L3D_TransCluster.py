@@ -10,6 +10,7 @@ mode = args.mode
 navg = args.number_of_averages
 sfreq = args.save_frequency if args.save_frequency else navg // 20
 outsx = args.out_suffix
+typf = args.float_type
 #
 if cell in ['rand', 'randZERR', 'randXERR'] or cell.startswith('ball'):
     if cell == 'rand':
@@ -32,10 +33,6 @@ if mode == 'pCluster':
     merged_dict = Counter()
     extout = PKL
 elif mode == 'ordParam':
-    Pinf = np.zeros(navg)
-    Pinf2 = np.zeros(navg)
-    Fluct = np.zeros(navg)
-    Fluct2 = np.zeros(navg)
     extout = TXT
 else:
     raise ValueError("Invalid mode specified")
@@ -49,7 +46,7 @@ def file_path_maker(mpath, mode=mode, ppath = p,
         spath = "_"+spath
     return f'{mpath}{mode}_p={ppath:.3g}_{ctpath}_na={napath}{spath}{extout}'
 #
-lattice = Lattice3D(dim=(side for _ in range(3)), pflip=p, geo=geo)
+lattice = Lattice3D(dim=tuple(side for _ in range(3)), pflip=p, geo=geo)
 mpath = {'pCluster': lattice.lrgsgpath, 
          'ordParam': lattice.phtrapath}
 filename = file_path_maker(mpath[mode])
@@ -94,28 +91,28 @@ if mode == 'pCluster':
             pk.dump(merged_dict, f)
         fnameOld = fnameNew
 elif mode == 'ordParam':
+    Pinf = []
+    Pinf2 = []
     neglinks = 0
     for cont, avg in enumerate(range(navg)):
         avg1 = avg+1
         l = Lattice3D(side, pflip=p, geo=geo, initNwDict=True)
         l.flip_sel_edges(geometry_func(l))
         #
+        l.compute_k_eigvV(typf=typf)
         l.calc_Pinf()
         #
-        Fluct[cont]=l.eigV_fluct
-        Fluct2[cont]=l.eigV_fluct**2
-        Pinf[cont]=l.Pinf
-        Pinf2[cont]=l.Pinf**2
+        Pinf.append(l.Pinf)
+        Pinf2.append(l.Pinf**2)
         #
-        neglinks += l.Ne_n
-        data=[l.pflip,
-              neglinks,
-              avg1,
-              np.sum(Pinf)/avg1, 
-              np.sum(Pinf2)/avg1, 
-              np.sum(Fluct)/avg1, 
-              np.sum(Fluct2)/avg1, 
-              np.var(Fluct[Fluct!=0])]
+        Pinf_tot = sum(Pinf)/avg1
+        Pinf2_tot = sum(Pinf2)/avg1
+        data=[avg1,
+            l.pflip,
+            neglinks/avg1,
+            Pinf_tot,
+            Pinf2_tot,
+            Pinf2_tot-Pinf_tot**2]
         #
         if (avg % sfreq == 0):
             try:
@@ -125,4 +122,4 @@ elif mode == 'ordParam':
                 pass
             filename = file_path_maker(mpath[mode], napath=avg+sfreq)
             with open(filename, 'wb') as file:
-                np.savetxt(file, data, fmt='%.7g')
+                np.savetxt(file, np.atleast_2d(data), fmt='%.7g')

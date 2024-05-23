@@ -12,6 +12,8 @@ DEFAULT_PRINT = False
 DEFAULT_EXEC = "no"
 DEFAULT_mMB = 2**10
 DEFAULT_MMB = 2**14
+DEFAULT_FLOAT_TYPE = "float64"
+
 # Helpers for argparse descriptions
 HELP_print = f"""
     Option to print the output of the Serialiser. | default={DEFAULT_PRINT}
@@ -40,9 +42,11 @@ HELP_mode = f"""
 HELP_o = f"""
     Suffix for the output file name (optional) | default='{DEFAULT_OUT_SUFFIX}'
 """
-
-L2D_TransCluster_progName = "L2D_TransCluster"
-L2D_TransCluster_progNameShrt = "L2D"
+HELP_t = f"""
+    Floating point arithmetic depth. | default='{DEFAULT_FLOAT_TYPE}'
+"""
+L3D_TransCluster_progName = "L3D_TransCluster"
+L3D_TransCluster_progNameShrt = "L3D"
 # Setup the argument parser
 parser = argparse.ArgumentParser(description=description)
 # Required parameters
@@ -99,5 +103,12 @@ parser.add_argument(
     "--mode",
     default=DEFAULT_MODE,
     help=HELP_mode,
+    type=str,
+)
+parser.add_argument(
+    "-t",
+    "--float_type",
+    default=DEFAULT_FLOAT_TYPE,
+    help=HELP_t,
     type=str,
 )
