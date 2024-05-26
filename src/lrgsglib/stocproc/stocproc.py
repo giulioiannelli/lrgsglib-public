@@ -5,7 +5,7 @@ from ..nx_patches.funcs import *
 from ..nx_patches.objects import *
 
 
-class BinStocProc:
+class BinStatSys:
     def __init__(
         self,
         sg: SignedGraph,
@@ -51,7 +51,7 @@ class BinStocProc:
     def run(self):
         raise NotImplementedError("Subclasses must implement this method")
 
-class SignedRW(BinStocProc):
+class SignedRW(BinStatSys):
     def __init__(self, sg: SignedGraph, stopSim: bool = False, **kwargs):
         super().__init__(sg, **kwargs)
         if self.initMode:

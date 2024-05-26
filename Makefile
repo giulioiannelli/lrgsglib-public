@@ -8,8 +8,8 @@ MAKEDIR := data/
 PATH_SH = tools/bash
 PATH_LRGSG = src/lrgsglib/
 PATH_CCORE  = $(PATH_LRGSG)Ccore/
-PATH_STOCPROC = $(PATH_CCORE)stocproc/
-PATH_STOCPROC_LATTICES = $(PATH_STOCPROC)signedRw/Lattices/
+PATH_statsys = $(PATH_CCORE)statsys/
+PATH_statsys_LATTICES = $(PATH_statsys)signedRw/Lattices/
 
 PATH_GTPTCH = $(PATH_LRGSG)gt_patches/cpp/
 PATH_SFMT = $(PATH_CCORE)SFMT/
@@ -29,8 +29,8 @@ PYTHON_INC = $(shell python3 -m pybind11 --includes)
 PYTHON_LIB = $(shell python3-config --ldflags)
 
 # Targets
-RW_TARGET = $(PATH_STOCPROC)random_walk$(shell python3-config --extension-suffix)
-RW_SOURCES = $(PATH_STOCPROC)random_walk.cpp
+RW_TARGET = $(PATH_statsys)random_walk$(shell python3-config --extension-suffix)
+RW_SOURCES = $(PATH_statsys)random_walk.cpp
 #
 #
 RBIMSIM0.c = $(addsuffix .c, $(RBIMSIMULATOR0_PN))
@@ -121,7 +121,7 @@ create_dirs:
 
 sub_make:
 	$(MAKE) -C $(PATH_GTPTCH)
-	$(MAKE) -C $(PATH_STOCPROC_LATTICES)
+	$(MAKE) -C $(PATH_statsys_LATTICES)
 
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
@@ -129,7 +129,7 @@ RM_FR  = rm -fr
 clean:
 	${RM_FR} ${FILES.o} ${FILES.o} ${DEBRIS}
 	$(MAKE) -C $(PATH_GTPTCH) clean
-	$(MAKE) -C $(PATH_STOCPROC_LATTICES) clean
+	$(MAKE) -C $(PATH_statsys_LATTICES) clean
 	rm -f $(RW_TARGET)
 
 
