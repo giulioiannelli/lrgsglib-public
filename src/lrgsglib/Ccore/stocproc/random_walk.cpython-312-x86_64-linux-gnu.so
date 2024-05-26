@@ -1,7 +1,7 @@
-# 0 "src/lrgsglib/Ccore/stocproc/random_walk.cpp"
+# 0 "src/lrgsglib/Ccore/statsys/random_walk.cpp"
 # 0 "<built-in>"
 # 0 "<command-line>"
-# 1 "src/lrgsglib/Ccore/stocproc/random_walk.cpp"
+# 1 "src/lrgsglib/Ccore/statsys/random_walk.cpp"
 # 1 "/home/opisthofulax/anaconda3/envs/lrgsgenv/lib/python3.12/site-packages/pybind11/include/pybind11/pybind11.h" 1
 # 11 "/home/opisthofulax/anaconda3/envs/lrgsgenv/lib/python3.12/site-packages/pybind11/include/pybind11/pybind11.h"
        
@@ -78799,7 +78799,7 @@ inline function get_overload(const T *this_ptr, const char *name) {
 #pragma GCC diagnostic pop
 # 2963 "/home/opisthofulax/anaconda3/envs/lrgsgenv/lib/python3.12/site-packages/pybind11/include/pybind11/pybind11.h"
  }
-# 2 "src/lrgsglib/Ccore/stocproc/random_walk.cpp" 2
+# 2 "src/lrgsglib/Ccore/statsys/random_walk.cpp" 2
 # 1 "/home/opisthofulax/anaconda3/envs/lrgsgenv/lib/python3.12/site-packages/pybind11/include/pybind11/numpy.h" 1
 # 10 "/home/opisthofulax/anaconda3/envs/lrgsgenv/lib/python3.12/site-packages/pybind11/include/pybind11/numpy.h"
        
@@ -95084,7 +95084,7 @@ Helper vectorize(Return (Class::*f)(Args...) const) {
 #pragma GCC diagnostic pop
 # 2133 "/home/opisthofulax/anaconda3/envs/lrgsgenv/lib/python3.12/site-packages/pybind11/include/pybind11/numpy.h"
  }
-# 3 "src/lrgsglib/Ccore/stocproc/random_walk.cpp" 2
+# 3 "src/lrgsglib/Ccore/statsys/random_walk.cpp" 2
 
 # 1 "/home/opisthofulax/anaconda3/envs/lrgsgenv/x86_64-conda-linux-gnu/include/c++/13.2.0/random" 1 3
 # 32 "/home/opisthofulax/anaconda3/envs/lrgsgenv/x86_64-conda-linux-gnu/include/c++/13.2.0/random" 3
@@ -103505,10 +103505,10 @@ namespace __detail
 
 }
 # 54 "/home/opisthofulax/anaconda3/envs/lrgsgenv/x86_64-conda-linux-gnu/include/c++/13.2.0/random" 2 3
-# 5 "src/lrgsglib/Ccore/stocproc/random_walk.cpp" 2
+# 5 "src/lrgsglib/Ccore/statsys/random_walk.cpp" 2
 
 
-# 6 "src/lrgsglib/Ccore/stocproc/random_walk.cpp"
+# 6 "src/lrgsglib/Ccore/statsys/random_walk.cpp"
 namespace py = pybind11;
 
 std::vector<int> random_walk(const py::array_t<double>& data,

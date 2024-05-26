@@ -11,7 +11,7 @@ from scipy.spatial.distance import squareform
 from .nx_patches.funcs import *
 from .nx_patches.objects import *
 from .config.dyns import *
-from .stocproc.stocproc import *
+from .statsys.statsys import *
 from .config.const import *
 from .config.errwar import *
 from .config.plotlib import *

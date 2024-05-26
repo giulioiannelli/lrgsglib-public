@@ -579,7 +579,7 @@ class IsingDynamics:
             if out_suffix == "":
                 out_suffix = '""'
             self.cprogram = [
-                f"src/lrgsglib/IsingSimulator{self.runlang[-1]}",
+                f"src/lrgsglib/Ccore/IsingSimulator{self.runlang[-1]}",
                 f"{self.sg.N}",
                 f"{self.T}",
                 f"{self.sg.pflip}",
