@@ -10,6 +10,7 @@ PATH_LRGSG = src/lrgsglib/
 PATH_CCORE  = $(PATH_LRGSG)Ccore/
 PATH_statsys = $(PATH_CCORE)statsys/
 PATH_statsys_LATTICES = $(PATH_statsys)signedRw/Lattices/
+PATH_statsys_rbim_base = $(PATH_statsys)RBIsingM/base/
 
 PATH_GTPTCH = $(PATH_LRGSG)gt_patches/cpp/
 PATH_SFMT = $(PATH_CCORE)SFMT/
@@ -95,7 +96,7 @@ setup:
 	fi
 
 
-all: setup ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} $(RW_TARGET) chmod_scripts create_dirs make_rootf sub_make
+all: setup ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf sub_make
 
 ${PROGRAMN0}: ${PATHSRS0.c}
 	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
@@ -106,8 +107,8 @@ ${PROGRAMN1}: ${PATHSRS1.c}
 ${PROGRAMN2}: ${PATHSRS2.c}
 	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
 
-$(RW_TARGET): $(RW_SOURCES)
-	$(CPP) $(CXXFLAGS) $(PYTHON_INC) $(RW_SOURCES) -o $(RW_TARGET) $(PYTHON_LIB)
+# $(RW_TARGET): $(RW_SOURCES)
+# 	$(CPP) $(CXXFLAGS) $(PYTHON_INC) $(RW_SOURCES) -o $(RW_TARGET) $(PYTHON_LIB)
 
 chmod_scripts:
 	find $(PATH_SH) -type f -name '*.sh' -exec chmod +x {} \;
@@ -122,6 +123,7 @@ create_dirs:
 sub_make:
 	$(MAKE) -C $(PATH_GTPTCH)
 	$(MAKE) -C $(PATH_statsys_LATTICES)
+	$(MAKE) -C $(PATH_statsys_rbim_base)
 
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
@@ -130,6 +132,7 @@ clean:
 	${RM_FR} ${FILES.o} ${FILES.o} ${DEBRIS}
 	$(MAKE) -C $(PATH_GTPTCH) clean
 	$(MAKE) -C $(PATH_statsys_LATTICES) clean
+	$(MAKE) -C $(PATH_statsys_rbim_base) clean
 	rm -f $(RW_TARGET)
 
 
