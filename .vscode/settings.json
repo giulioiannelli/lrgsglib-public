@@ -14,7 +14,12 @@
         "lrgsg_rbim.h": "c",
         "stddef.h": "c",
         "lrgsg_vm.h": "c",
-        "inttypes.h": "c"
+        "inttypes.h": "c",
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "__split_buffer": "cpp",
+        "list": "cpp"
     },
     "python.formatting.provider": "black",
     "python.formatting.blackArgs": [

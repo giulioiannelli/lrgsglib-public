@@ -10,7 +10,7 @@
 #include <iostream>
 
 #define ENABLE_TIMING
-#undef ENABLE_TIMING
+// #undef ENABLE_TIMING
 
 namespace py = boost::python;
 
