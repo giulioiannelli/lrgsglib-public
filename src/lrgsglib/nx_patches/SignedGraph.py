@@ -4,6 +4,7 @@ from scipy.sparse import identity as scsp_identity
 from scipy.sparse.linalg import eigsh as scsp_eigsh
 
 
+
 class SignedGraph:
     sgpath = "custom_graph"
     syshapePth = ""
@@ -72,12 +73,12 @@ class SignedGraph:
         self.datPath = f"{self.dataOutdir}{self.sgpath}"
         self.pltPath = f"{self.dataOutdir}{self.plotOutdir}{self.sgpath}"
         #
-        self.DEFAULT_GRAPHDIR = self.datPath + DIR_GRAPH
-        self.DEFAULT_ISINGDIR = self.datPath + DIR_ISING
-        self.DEFAULT_VOTERDIR = self.datPath + DIR_VOTER
-        self.DEFAULT_LRGSGDIR = self.datPath + DIR_LRGSG
-        self.DEFAULT_PHTRADIR = self.datPath + DIR_PHTRA
-        self.DEFAULT_SPECTDIR = self.datPath + DIR_SPECT
+        self.DEFAULT_GRAPHDIR = pth_join(self.datPath, DIR_GRAPH)
+        self.DEFAULT_ISINGDIR = pth_join(self.datPath, DIR_ISING)
+        self.DEFAULT_VOTERDIR = pth_join(self.datPath, DIR_VOTER)
+        self.DEFAULT_LRGSGDIR = pth_join(self.datPath, DIR_LRGSG)
+        self.DEFAULT_PHTRADIR = pth_join(self.datPath, DIR_PHTRA)
+        self.DEFAULT_SPECTDIR = pth_join(self.datPath, DIR_SPECT)
         #
         self.expOutdir = (
             expOutdir
@@ -85,11 +86,11 @@ class SignedGraph:
             else f"{self.DEFAULT_GRAPHDIR}{self.syshapePth}"
         )
         #
-        self.isingpath = f"{self.DEFAULT_ISINGDIR}{self.syshapePth}"
-        self.voterpath = f"{self.DEFAULT_VOTERDIR}{self.syshapePth}"
-        self.lrgsgpath = f"{self.DEFAULT_LRGSGDIR}{self.syshapePth}"
-        self.phtrapath = f"{self.DEFAULT_PHTRADIR}{self.syshapePth}"
-        self.spectpath = f"{self.DEFAULT_SPECTDIR}{self.syshapePth}"
+        self.isingpath = pth_join(self.DEFAULT_ISINGDIR, self.syshapePth)
+        self.voterpath = pth_join(self.DEFAULT_VOTERDIR, self.syshapePth)
+        self.lrgsgpath = pth_join(self.DEFAULT_LRGSGDIR, self.syshapePth)
+        self.phtrapath = pth_join(self.DEFAULT_PHTRADIR, self.syshapePth)
+        self.spectpath = pth_join(self.DEFAULT_SPECTDIR, self.syshapePth)
 
     #
     def __make_dirs__(self, makeDirsTree):
@@ -308,8 +309,9 @@ class SignedGraph:
             )
         except (AttributeError, IndexError):
             self.compute_k_eigvV(howmany=which + 1)
-            eigVbin = np.sign(
-                np.where(self.eigV[which] == 0, +1, self.eigV[which])
+            eigVbin = flip_to_positive_majority(np.sign(
+                    np.where(self.eigV[which] == 0, +1, self.eigV[which])
+                )
             )
 
         return eigVbin
@@ -371,7 +373,7 @@ class SignedGraph:
             self.compute_k_eigvV(howmany=which + 1)
             eigV = self.eigV[which]
         if binarize:
-            eigV = flip_to_positive_majority(self.bin_eigV(which=which))
+            eigV = self.bin_eigV(which=which)
         eigVNodeAttr = {
             nd: v for v, nd in zip(eigV, self.GraphReprDict[on_graph].nodes)
         }
