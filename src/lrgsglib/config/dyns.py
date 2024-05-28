@@ -91,7 +91,7 @@ class SignedRW(BinDynSys):
         if out_suffix == "":
             out_suffix = '\'\''
         self.cprogram = [
-            pthjoin(DIR_SRC, DIR_PCK, self.dyn_UVclass),
+            pth_join(DIR_SRC, DIR_PCK, self.dyn_UVclass),
             # f"{DIR_SRC_DEFAULT}{DIR_PCK_DEFAULT}{self.dyn_UVclass}",
             f"{self.sg.N}",
             f"{self.sg.pflip}",
@@ -145,7 +145,7 @@ class VoterModel(BinDynSys):
         if out_suffix == "":
             out_suffix = '\'\''
         self.cprogram = [
-            pthjoin(DIR_SRC, DIR_PCK, self.dyn_UVclass),
+            pth_join(DIR_SRC, DIR_PCK, self.dyn_UVclass),
             # f"{DIR_SRC_DEFAULT}{DIR_PCK_DEFAULT}{self.dyn_UVclass}",
             f"{self.sg.N}",
             f"{self.sg.pflip}",
