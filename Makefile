@@ -11,6 +11,7 @@ PATH_CCORE  = $(PATH_LRGSG)Ccore/
 PATH_statsys = $(PATH_CCORE)statsys/
 PATH_statsys_LATTICES = $(PATH_statsys)signedRw/Lattices/
 PATH_statsys_rbim_base = $(PATH_statsys)RBIsingM/base/
+PATH_statsys_rbim_stor = $(PATH_statsys)RBIsingM/storer/
 
 PATH_GTPTCH = $(PATH_LRGSG)gt_patches/cpp/
 PATH_SFMT = $(PATH_CCORE)SFMT/
@@ -124,6 +125,7 @@ sub_make:
 	$(MAKE) -C $(PATH_GTPTCH)
 	$(MAKE) -C $(PATH_statsys_LATTICES)
 	$(MAKE) -C $(PATH_statsys_rbim_base)
+	$(MAKE) -C $(PATH_statsys_rbim_stor)
 
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
@@ -133,6 +135,7 @@ clean:
 	$(MAKE) -C $(PATH_GTPTCH) clean
 	$(MAKE) -C $(PATH_statsys_LATTICES) clean
 	$(MAKE) -C $(PATH_statsys_rbim_base) clean
+	$(MAKE) -C $(PATH_statsys_rbim_stor) clean
 	rm -f $(RW_TARGET)
 
 

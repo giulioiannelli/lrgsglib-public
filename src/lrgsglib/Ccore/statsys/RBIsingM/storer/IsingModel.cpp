@@ -12,7 +12,7 @@
 
 namespace py = boost::python;
 
-// #define ENABLE_TIMING
+#define ENABLE_TIMING
 
 struct pair_to_python_tuple {
     static PyObject* convert(const std::pair<int, int>& p) {
@@ -58,7 +58,7 @@ std::pair<int, int> normalize_edge(int a, int b) {
 
 class IsingModel {
 public:
-    IsingModel(py::list edge_list, py::list sign_list, int width, int height, double temperature, std::string mode = "synchronous")
+    IsingModel(py::list edge_list, py::list sign_list, int width, int height, double temperature, std::string mode = "sequential")
         : width(width), height(height), temperature(temperature), mode(mode) {
         rng.seed(std::random_device{}());
 #ifdef ENABLE_TIMING
@@ -73,20 +73,34 @@ public:
         initializeSpins();
     }
 
-    void simulate(int steps) {
+    void simulate(int steps, int frame_rate) {
+        int frame_interval = steps / frame_rate;
 #ifdef ENABLE_TIMING
         auto start = std::chrono::high_resolution_clock::now();
 #endif
-        if (mode == "synchronous") {
+        if (mode == "sequential") {
+            for (int i = 0; i < steps; ++i) {
+                sequentialUpdate();
+                if (i % frame_interval == 0) {
+                    captureFrame(i);
+                }
+            }
+        } else if (mode == "synchronous") {
             for (int i = 0; i < steps; ++i) {
                 synchronousUpdate();
+                if (i % frame_interval == 0) {
+                    captureFrame(i);
+                }
             }
         } else if (mode == "asynchronous") {
             for (int i = 0; i < steps; ++i) {
                 asynchronousUpdate();
+                if (i % frame_interval == 0) {
+                    captureFrame(i);
+                }
             }
         } else {
-            throw std::invalid_argument("Invalid mode. Use 'synchronous' or 'asynchronous'.");
+            throw std::invalid_argument("Invalid mode. Use 'sequential', 'synchronous' or 'asynchronous'.");
         }
 #ifdef ENABLE_TIMING
         auto end = std::chrono::high_resolution_clock::now();
@@ -111,6 +125,37 @@ public:
         return spin_list;
     }
 
+    double getEnergy() const {
+        double energy = 0.0;
+        for (int node = 0; node < width * height; ++node) {
+            for (const auto& neighbor : neighbors.at(node)) {
+                auto edge = normalize_edge(node, neighbor);
+                energy += -spins[node] * spins[neighbor] * signs.at(edge);
+            }
+        }
+        return energy / 2.0; // Each pair counted twice
+    }
+
+    double getMagnetization() const {
+        double magnetization = 0.0;
+        for (const auto& spin : spins) {
+            magnetization += spin;
+        }
+        return magnetization / (width * height);
+    }
+
+    py::list getFrameSpins() const {
+        return frame_spins;
+    }
+
+    py::list getFrameEnergies() const {
+        return frame_energies;
+    }
+
+    py::list getFrameMagnetizations() const {
+        return frame_magnetizations;
+    }
+
 private:
     std::map<std::pair<int, int>, int> signs;
     std::map<int, std::vector<int>> neighbors;
@@ -122,6 +167,10 @@ private:
 
     std::mt19937 rng;
     std::uniform_real_distribution<> dist{0.0, 1.0};
+
+    py::list frame_spins;
+    py::list frame_energies;
+    py::list frame_magnetizations;
 
     void initializeNeighborsAndSigns(py::list edge_list, py::list sign_list) {
         std::vector<std::pair<int, int>> edges;
@@ -164,7 +213,7 @@ private:
         return deltaE;
     }
 
-    void synchronousUpdate() {
+    void sequentialUpdate() {
 #ifdef ENABLE_TIMING
         auto start = std::chrono::high_resolution_clock::now();
 #endif
@@ -177,6 +226,25 @@ private:
 #ifdef ENABLE_TIMING
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
+        std::cout << "sequentialUpdate took: " << elapsed.count() << " seconds\n";
+#endif
+    }
+
+    void synchronousUpdate() {
+#ifdef ENABLE_TIMING
+        auto start = std::chrono::high_resolution_clock::now();
+#endif
+        std::vector<int> new_spins = spins;
+        for (int node = 0; node < width * height; ++node) {
+            double deltaE = calculateEnergyChange(node);
+            if (deltaE <= 0 || dist(rng) < std::exp(-deltaE / temperature)) {
+                new_spins[node] *= -1;
+            }
+        }
+        spins = new_spins;
+#ifdef ENABLE_TIMING
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
         std::cout << "synchronousUpdate took: " << elapsed.count() << " seconds\n";
 #endif
     }
@@ -185,7 +253,7 @@ private:
 #ifdef ENABLE_TIMING
         auto start = std::chrono::high_resolution_clock::now();
 #endif
-        for (int step = 0; step < width * height; ++step) { // Ensure the same number of updates as synchronous
+        for (int step = 0; step < width * height; ++step) { // Ensure the same number of updates as sequential
             int node = rng() % (width * height);
             double deltaE = calculateEnergyChange(node);
             if (deltaE <= 0 || dist(rng) < std::exp(-deltaE / temperature)) {
@@ -198,13 +266,28 @@ private:
         std::cout << "asynchronousUpdate took: " << elapsed.count() << " seconds\n";
 #endif
     }
+
+    void captureFrame(int step) {
+        py::list frame;
+        for (const auto& spin : spins) {
+            frame.append(spin);
+        }
+        frame_spins.append(frame);
+        frame_energies.append(getEnergy());
+        frame_magnetizations.append(getMagnetization());
+    }
 };
 
-BOOST_PYTHON_MODULE(ising_model) {
+BOOST_PYTHON_MODULE(ising_model_store) {
     py::to_python_converter<std::pair<int, int>, pair_to_python_tuple>();
     pair_from_python_tuple();
 
     py::class_<IsingModel>("IsingModel", py::init<py::list, py::list, int, int, double, py::optional<std::string>>())
         .def("simulate", &IsingModel::simulate)
-        .def("getSpins", &IsingModel::getSpins);
+        .def("getSpins", &IsingModel::getSpins)
+        .def("getEnergy", &IsingModel::getEnergy)
+        .def("getMagnetization", &IsingModel::getMagnetization)
+        .def("getFrameSpins", &IsingModel::getFrameSpins)
+        .def("getFrameEnergies", &IsingModel::getFrameEnergies)
+        .def("getFrameMagnetizations", &IsingModel::getFrameMagnetizations);
 }

@@ -4,6 +4,11 @@ from .errwar import *
 #
 def do_nothing(*args, **kwargs):
     pass
+
+
+def conditional_print(message, verbose, **kwargs):
+    if verbose:
+        print(message, **kwargs)
 #
 def unzip_dict_items(input_dict: Dict[Any, Any]) -> Tuple[List[Any], List[Any]]:
     """

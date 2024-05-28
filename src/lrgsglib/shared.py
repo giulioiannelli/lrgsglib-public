@@ -23,7 +23,7 @@ from itertools import product
 from networkx.classes.graph import Graph
 from numpy.typing import NDArray
 from os import chdir, getcwd
-from os.path import join as pthjoin
+from os.path import join as pth_join
 from scipy.interpolate import pchip
 from scipy.ndimage import gaussian_filter 
 from scipy.sparse import csr_array
