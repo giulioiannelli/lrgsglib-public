@@ -7,6 +7,7 @@ import powerlaw
 import random
 import re
 import string
+import struct
 import sys
 import time
 #

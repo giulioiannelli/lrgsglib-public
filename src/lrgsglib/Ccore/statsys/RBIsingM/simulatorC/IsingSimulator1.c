@@ -1,3 +1,5 @@
+#define BIN_EDGE_LIST_FORMAT
+#
 #include "LRGSG_customs.h"
 #include "LRGSG_rbim.h"
 #include "LRGSG_utils.h"
@@ -51,9 +53,6 @@ int main(int argc, char *argv[]) {
     eqSTEP = strtozu(argv[7]);
     datdir = argv[8];
     out_id = argv[9];
-    /* open adjacency matrix file */
-    sprintf(buf, ADJ_FNAME, datdir, N, code_id);
-    __fopen(&f_adj, buf, "rb");
     /* open magnetization initial condition  */
     sprintf(buf, SINI_FNAME, datdir, N, code_id);
     __fopen(&f_sini, buf, "rb");
@@ -81,11 +80,6 @@ int main(int argc, char *argv[]) {
         sprintf(buf, CLOUT_FNAME, datdir, N, i, code_id, T, out_id, ext_save);
         __fopen((f_out + i), buf, mod_save);
     }
-    /* fill adjacency matrix */
-    adj = __chMalloc(N * sizeof(*adj));
-    for (size_t i = 0; i < N; i++)
-        *(adj + i) = __chMalloc(N * sizeof(**adj));
-    __fill_adj__(&f_adj, N, &adj);
     /* fill initial condition */
     s = __chMalloc(N * sizeof(*s));
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
@@ -107,7 +101,16 @@ int main(int argc, char *argv[]) {
         __fopen(&f_edgel, buf, "r+");
         __fill_edgl_read__(&f_edgel, N, &edgl, &neighs, &neigh_len);
     } else {
+        /* open adjacency matrix file */
         __fopen(&f_edgel, buf, "w+");
+        //
+        sprintf(buf, ADJ_FNAME, datdir, N, code_id);
+        __fopen(&f_adj, buf, "rb");
+        adj = __chMalloc(N * sizeof(*adj));
+        for (size_t i = 0; i < N; i++)
+            *(adj + i) = __chMalloc(N * sizeof(**adj));
+        __fill_adj__(&f_adj, N, &adj);
+        //
         __fill_edgl_make__(&f_edgel, N, &adj, &edgl, &neighs, &neigh_len);
     }
     /* allocate energy array and mclust */

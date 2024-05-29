@@ -235,25 +235,6 @@ extern uint32_t strtou32(const char *s)
         fprintf(stderr, MSG_ERR_SCNU32);
         exit(EXIT_FAILURE);
     }
-    // char c;
-    // int scanned;
-    // uint32_t i;
-    // scanned = sscanf(s, "%" SCNu32 "%c", &i, &c);
-    // printf("%" PRIu32 "%c\n", i, c);
-    // if (scanned == 1)
-    //     return i;
-    // else if (scanned > 1)
-    // {
-    //     perror("strtou32");
-    //     return i;
-    // }
-    // if (c != '\0' || errno != 0)
-    // {
-    //     perror("strtou32");
-    //     printf("%" PRIu32 "%c", i, c);
-    //     exit(EXIT_FAILURE);
-    // }
-    // return 0;
 }
 /* FILES I/O FUNCTIONS ****************************************************** */
 //
@@ -459,8 +440,16 @@ extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, size_tp **ne
     }
     cntr = 0;
     node_i = 0;
+    #ifdef BIN_EDGE_LIST_FORMAT
+    size_t i, j;
+    while (fread(&i, sizeof(size_t), 1, *f) == 1 &&
+        fread(&j, sizeof(size_t), 1, *f) == 1 &&
+        fread(&w_ij, sizeof(double), 1, *f) == 1)
+    {
+    #else
     for(size_t i, j; fscanf(*f, "%zu %zu %lf", &i, &j, &w_ij) != EOF;)
     {
+    #endif
         last = i;
         if (i != node_i)
         {
@@ -500,13 +489,6 @@ extern void __fill_edgl_make__(FILE **f, size_t N, double_p **adj, double_p **ed
         // printf("%zu, %zu, %zu\n", i, *(*neigh_len + i), cntr);
     }
 }
-
-// extern void __make_adj_fromfile(size_t i, size_t j, double tmp, double_p **adj)
-// {
-//     *(*(*adj + i) + j) = (double) tmp;
-//     *(*(*adj + j) + i) = *(*(*adj + i) + j);
-// }
-
 
 // /* DICTIONARY IMPLEMENTATION ************************************************ */
 // //

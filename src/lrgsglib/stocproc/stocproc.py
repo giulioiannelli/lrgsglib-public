@@ -67,8 +67,8 @@ class SignedRW(BinStatSys):
             self.stop_sim = self.stop_sim_cond
         else:
             self.stop_sim = do_nothing
-        self.node_index = {node: i for i,node in enumerate(self.sg.nodeList)}
-        self.index_node = {i: node for i,node in enumerate(self.sg.nodeList)}
+        self.node_index = {node: i for i,node in enumerate(self.sg.nodesIn[self.onGraph])}
+        self.index_node = {i: node for i,node in enumerate(self.sg.nodesIn[self.onGraph])}
 
 
     def __init_random__(self):

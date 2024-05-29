@@ -95,30 +95,31 @@ class Lattice2D(SignedGraph):
         self.p_c = L2D_P_C_DICT[self.geo]
         self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
         #
-        self.G = nxfunc(self.side1, self.side2, periodic=self.pbc, 
+        self.H = nxfunc(self.side1, self.side2, periodic=self.pbc, 
                         with_positions=self.with_positions)
+        self.G = nx.convert_node_labels_to_integers(self.H)
     #
     def degree_check(self, degree):
         return np.where(np.array(list(map(lambda x: x[1], 
                                           list(self.G.degree())))) != degree)
     #
     def get_central_edge(self, on_graph: str = L2D_ONREP):
-        G = self.G
         cnode = (self.side1//2-1, self.side2//2)
         cnode_t = (self.side1//2, self.side2//2)
         if self.geo == 'triangular':
             cnode = (self.side2//2, self.side1//2-1)
             cnode_t = (self.side2//2, self.side1//2)
         edge_t = (cnode, cnode_t)
-        if not G.has_edge(*edge_t):
+        if not self.H.has_edge(*edge_t):
             if self.geo =='hexagonal':
                 cnode = cnode_t
                 cnode_t = (self.side1//2+1, self.side2//2)
                 edge_t = (cnode, cnode_t)
         if on_graph == 'G':
-            return edge_t
+            print(self.edgeMap['H']['G'])
+            return self.edgeMap['G']['H'][edge_t]
         elif on_graph == 'H':
-            return self.edge_map[edge_t]
+            return edge_t
     #
     class nwContainer(dict):
         def __init__(self, l: SignedGraph, iterable=[], constant=None, 
@@ -126,25 +127,25 @@ class Lattice2D(SignedGraph):
             super().__init__(**kwargs)
             self.update((key, constant) for key in iterable)
             self.l = l
-            self.reprDict = list(self.l.GraphReprDict.keys())
+            self.rd = self.l.GraphReprs
             self.rNodeFlip = {g: random.sample(
-                                    list(self.l.GraphReprDict[g].nodes()), 
-                                    int(self.l.pflip*self.l.N)
-                                ) for g in self.reprDict}
+                                    list(self.l.nodesIn[g]), 
+                                    self.l.nflip
+                                ) for g in self.rd}
             #
             self.centedge = {g: self.l.get_central_edge(g) 
-                             for g in self.reprDict}
-            self['single'] = {g: [self.centedge[g]] for g in self.reprDict}
+                             for g in self.rd}
+            self['single'] = {g: [self.centedge[g]] for g in self.rd}
             self['singleZERR'] = {g: self.get_links_ZERR(
-                self.centedge[g][0], g, self.l.geo) for g in self.reprDict}
+                self.centedge[g][0], g, self.l.geo) for g in self.rd}
             self['singleXERR'] = {g: self.get_links_XERR(
-                self.centedge[g][0], g) for g in self.reprDict}
-            self['rand'] = {g: [e for e in self.l.rEdgeFlip[g]] 
-                            for g in self.reprDict}
+                self.centedge[g][0], g) for g in self.rd}
+            self['rand'] = {g: [e for e in self.l.fleset[g]] 
+                            for g in self.rd}
             self['randZERR'] = {g: self.get_rand_pattern('ZERR', on_graph=g) 
-                                   for g in self.reprDict}
+                                   for g in self.rd}
             self['randXERR'] = {g: self.get_rand_pattern('XERR', on_graph=g) 
-                                   for g in self.reprDict}
+                                   for g in self.rd}
         #
         def get_links_XERR(self, node: Any, on_graph: str = L2D_ONREP):
             return [(node, nn) for nn in self.l.graph_neighbors(node, on_graph)]
