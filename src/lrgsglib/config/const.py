@@ -10,7 +10,7 @@ PKL = ".pkl"
 # paths
 PATH_ROOTF = "lrgsglib/"
 # default values
-LB_PFLIP = .0
+LB_PFLIP = 0.
 UB_PFLIP = 1.
 
 DIR_SRC = "src/"
@@ -40,7 +40,13 @@ BSP_RUN_MODES = BSP_RUN_MODES_PY_LIST + BSP_RUN_MODES_C_LIST
 BSP_RUN_MODES_DICT = {**BSP_RUN_MODES_PY_DICT, **BSP_RUN_MODES_C_DICT}
 # Signed Graph default values
 SG_GRAPH_REPR = 'G'
+SG_GRAPHINT_REPR = SG_GRAPH_REPR
+SG_GRAPHGEO_REPR = 'H'
 SG_ERRMSG_PFLIP = f""" pflip must be between {LB_PFLIP} and {UB_PFLIP}, inclusive."""
+SG_ERRMSG_NW_DICT = f"Inheriting class must have attribute 'nwContainer'"
+SG_ERRMSG_NFLIP = """The probability of flipping an edge times the 
+                             number of edges is < 1, then no edges would be
+                             flipped. No flip will be performed."""
 #
 DEFErdosReny_pthabb = "er/"
 # 2D Lattice default values
