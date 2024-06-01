@@ -32,7 +32,7 @@ def create_Lattice2D_WeigvV(cell: str, **kwargs: Any) -> Lattice2D:
     ...     pflip=0.1,
     ...     sgpath='/path/to/subgraph/data',
     ...     pbc=False,
-    ...     initNwDict=True,
+    ...     init_nw_dict=True,
     ...     with_positions=True,
     ...     some_optional_arg=42
     ... )
