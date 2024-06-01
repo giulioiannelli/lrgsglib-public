@@ -13,4 +13,4 @@ class ErdosRenyi(SignedGraph):
 
     def init_graph(self):
         self.H = self.G
-        self.upd_graph_matrices()
+        self.upd_graphMtr()
