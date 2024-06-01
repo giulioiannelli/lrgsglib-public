@@ -76,7 +76,7 @@ if mode == 'pCluster':
     for current_period in range((nAvgNeed // period) + bool(nAvgNeed % period)):
         batch_size = min(nAvgNeed - current_period * period, period)
         for _ in range(batch_size):
-            l = Lattice3D(side, pflip=p, geo=geo, initNwDict=True)
+            l = Lattice3D(side, pflip=p, geo=geo, init_nw_dict=True)
             l.flip_sel_edges(geometry_func(l))
             #
             dist_dict = l.cluster_distribution()
@@ -96,7 +96,7 @@ elif mode == 'ordParam':
     neglinks = 0
     for cont, avg in enumerate(range(navg)):
         avg1 = avg+1
-        l = Lattice3D(side, pflip=p, geo=geo, initNwDict=True)
+        l = Lattice3D(side, pflip=p, geo=geo, init_nw_dict=True)
         l.flip_sel_edges(geometry_func(l))
         neglinks += l.Ne_n
         #
