@@ -1,23 +1,42 @@
 from ..shared import *
 #
-ColorType = Union[Tuple[int, int, int], Tuple[float, float, float], Tuple[int, int, int, int], Tuple[float, float, float, float], str]
+ColorType = ColorType = Union[
+    Tuple[int, int, int],
+    Tuple[float, float, float],
+    Tuple[int, int, int, int],
+    Tuple[float, float, float, float],
+    str
+]
 # extensions
 PDF = ".pdf"
 TXT = ".txt"
 BIN = ".bin"
 MP4 = ".mp4"
 PKL = ".pkl"
-# paths
-PATH_ROOTF = "lrgsglib/"
-# default values
+#
 LB_PFLIP = 0.
 UB_PFLIP = 1.
-
-DIR_SRC = "src/"
-DIR_PCK = "lrgsglib/"
-DIR_PLT = "plot/"
+# paths
+LRGSG_ROOT = os.getenv('LRGSG_ROOT')
+LRGSG_BUILD = os.getenv('LRGSG_BUILD')
+LRGSG_DATA = os.getenv('LRGSG_DATA')
+LRGSG_IPYNB = os.getenv('LRGSG_IPYNB')
+LRGSG_SRC = os.getenv('LRGSG_SRC')
+LRGSG_LIB = os.getenv('LRGSG_LIB')
+LRGSG_LIB_CCORE = os.getenv('LRGSG_LIB_CCORE')
+LRGSG_LIB_CBIN = os.getenv('LRGSG_LIB_CBIN')
+LRGSG_LIB_CONFIG = os.getenv('LRGSG_LIB_CONFIG')
+LRGSG_LIB_GT_PATCHES = os.getenv('LRGSG_LIB_GT_PATCHES')
+LRGSG_LIB_NX_PATCHES = os.getenv('LRGSG_LIB_NX_PATCHES')
+LRGSG_LIB_STOCPROC = os.getenv('LRGSG_LIB_STOCPROC')
+LRGSG_TEST = os.getenv('LRGSG_TEST')
+LRGSG_TOOLS = os.getenv('LRGSG_TOOLS')
+#
 DIR_DAT = "data/"
-
+DIR_PLT = "plot/"
+#
+PATH_ROOTF = "lrgsglib/"
+#
 DIR_GRAPH = "graphs/"
 DIR_ISING = "ising/"
 DIR_VOTER = "voter/"

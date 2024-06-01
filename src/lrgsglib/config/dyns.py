@@ -91,7 +91,7 @@ class SignedRW(BinDynSys):
         if out_suffix == "":
             out_suffix = '\'\''
         self.cprogram = [
-            pth_join(DIR_SRC, DIR_PCK, self.dyn_UVclass),
+            # pth_join(DIR_SRC, DIR_PCK, self.dyn_UVclass),
             # f"{DIR_SRC_DEFAULT}{DIR_PCK_DEFAULT}{self.dyn_UVclass}",
             f"{self.sg.N}",
             f"{self.sg.pflip}",
@@ -145,7 +145,7 @@ class VoterModel(BinDynSys):
         if out_suffix == "":
             out_suffix = '\'\''
         self.cprogram = [
-            pth_join(DIR_SRC, DIR_PCK, self.dyn_UVclass),
+            # pth_join(DIR_SRC, DIR_PCK, self.dyn_UVclass),
             # f"{DIR_SRC_DEFAULT}{DIR_PCK_DEFAULT}{self.dyn_UVclass}",
             f"{self.sg.N}",
             f"{self.sg.pflip}",
@@ -569,9 +569,14 @@ class IsingDynamics:
         tqdm_on: bool = True,
         thrmSTEP: int = 2,
         eqSTEP: int = 10,
+        randstring_OPT: bool = True,
     ):
         # name C0 and C1 to be modified, in C0 -> CS that is a single eigenstate is studied with all of his subclusters
         # name C1 -> CM where one studies the largest component of all the clusters
+        try:
+            getattr(self, f"id_string_isingdyn")
+        except AttributeError:
+            self.init_ising_dynamics(randstring_OPT)
         if self.runlang.startswith("C"):
             if adjfname == "":
                 adjfname = self.sg.stdFname
@@ -579,7 +584,7 @@ class IsingDynamics:
             if out_suffix == "":
                 out_suffix = '""'
             self.cprogram = [
-                f"src/lrgsglib/Ccore/bin/IsingSimulator{self.runlang[-1]}",
+                pth_join(LRGSG_LIB_CBIN, f"IsingSimulator{self.runlang[-1]}"),
                 f"{self.sg.N}",
                 f"{self.T}",
                 f"{self.sg.pflip}",
