@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stddef.h>
 #include <inttypes.h>
 
@@ -66,5 +67,19 @@
 typedef double *double_p;
 typedef size_t *size_tp;
 typedef int8_t *spin_tp; 
+
+#define LRGSG_ROOT getenv("LRGSG_ROOT")
+#define LRGSG_BUILD getenv("LRGSG_BUILD")
+#define LRGSG_DATA getenv("LRGSG_DATA")
+#define LRGSG_IPYNB getenv("LRGSG_IPYNB")
+#define LRGSG_SRC getenv("LRGSG_SRC")
+#define LRGSG_LIB getenv("LRGSG_LIB")
+#define LRGSG_LIB_CCORE getenv("LRGSG_LIB_CCORE")
+#define LRGSG_LIB_CONFIG getenv("LRGSG_LIB_CONFIG")
+#define LRGSG_LIB_GT_PATCHES getenv("LRGSG_LIB_GT_PATCHES")
+#define LRGSG_LIB_NX_PATCHES getenv("LRGSG_LIB_NX_PATCHES")
+#define LRGSG_LIB_STOCPROC getenv("LRGSG_LIB_STOCPROC")
+#define LRGSG_TEST getenv("LRGSG_TEST")
+#define LRGSG_TOOLS getenv("LRGSG_TOOLS")
 
 #endif /* __CUSTOM_H_INC__ */

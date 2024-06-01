@@ -1,5 +1,5 @@
 #define BIN_EDGE_LIST_FORMAT
-#
+//
 #include "LRGSG_customs.h"
 #include "LRGSG_rbim.h"
 #include "LRGSG_utils.h"

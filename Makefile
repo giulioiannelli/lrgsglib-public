@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 # exports
 CONDA_PREFIX = $(shell conda info --root)/envs/lrgsgenv
 CONDA_BIN := $(CONDA_PREFIX)/bin
@@ -5,6 +6,17 @@ CONDA_BIN := $(CONDA_PREFIX)/bin
 PYTHON_INC = $(shell python3 -m pybind11 --includes)
 PYTHON_LIB = $(shell python3-config --ldflags)
 export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
+#
+# include tools/bash/config.sh
+# export
+#
+config:
+	@source tools/bash/config.sh
+# Include the config.sh script to set up environment variables
+# CONFIG_SHELL := $(shell bash -c 'source tools/bash/config.sh && env')
+# # Export environment variables from config.sh
+# $(foreach line, $(CONFIG_SHELL), $(eval $(line)))
+#
 # paths
 PATH_BUILD = build/
 PATH_DOCS =	docs/
@@ -88,6 +100,10 @@ INC_PATH1 = -I${PATH_CCORE}
 INC_PATHS = ${INC_PATH1}
 ALLFLAGS  = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS} 
 
+
+
+all: setup config echo_paths ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf sub_make
+
 setup:
 	@# Find the gcc compiler binary
 	$(eval GCC_BIN := $(shell find $(CONDA_BIN) -name 'x86_64-conda_cos*-linux-gnu-cc' | head -n 1))
@@ -112,8 +128,20 @@ setup:
 		echo "Error: Unable to find required compilers in $(CONDA_BIN)"; exit 1; \
 	fi
 
-
-all: setup ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf sub_make
+echo_paths:
+	@echo "LRGSG_ROOT = $(LRGSG_ROOT)"
+	@echo "LRGSG_BUILD = $(LRGSG_BUILD)"
+	@echo "LRGSG_DATA = $(LRGSG_DATA)"
+	@echo "LRGSG_IPYNB = $(LRGSG_IPYNB)"
+	@echo "LRGSG_SRC = $(LRGSG_SRC)"
+	@echo "LRGSG_LIB = $(LRGSG_LIB)"
+	@echo "LRGSG_LIB_CCORE = $(LRGSG_LIB_CCORE)"
+	@echo "LRGSG_LIB_CONFIG = $(LRGSG_LIB_CONFIG)"
+	@echo "LRGSG_LIB_GT_PATCHES = $(LRGSG_LIB_GT_PATCHES)"
+	@echo "LRGSG_LIB_NX_PATCHES = $(LRGSG_LIB_NX_PATCHES)"
+	@echo "LRGSG_LIB_STOCPROC = $(LRGSG_LIB_STOCPROC)"
+	@echo "LRGSG_TEST = $(LRGSG_TEST)"
+	@echo "LRGSG_TOOLS = $(LRGSG_TOOLS)"
 
 ${PROGRAMN0}: ${PATHSRS0.c}
 	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
@@ -150,6 +178,8 @@ clean:
 	$(MAKE) -C $(PATH_RBIM_BASE) clean
 	$(MAKE) -C $(PATH_RBIM_STORE) clean
 	rm -f $(RW_TARGET)
+	rm -f *.o main
+
 
 
 # Prevent duplication of 'all' and 'clean' by removing previous definitions
