@@ -135,7 +135,7 @@ class SignedGraph:
             self.fleset[self.onGraph] = random.sample(self.eset[self.onGraph], 
                                                       self.nflip)
         self.upd_GraphRepr_All(self.onGraph)
-        self.upd_graph_matrices()
+        self.upd_graphMtr()
     #
     def upd_Degree(self, on_graph: str = SG_GRAPH_REPR):
         self.degrees = list(dict(self.gr[on_graph].degree).values())
@@ -143,16 +143,22 @@ class SignedGraph:
     def upd_Nen(self, on_graph: str = SG_GRAPH_REPR):
         self.Ne_n = len(self.fleset[on_graph])
     #
-    def zip_repr_nodes(self, x, on_graph: str = SG_GRAPH_REPR):
+    def get_adjMtrx(self, on_graph: str = SG_GRAPH_REPR, weight: str = 'weight',
+                    format: str = 'csr') -> csr_array:
+        return nx.to_scipy_sparse_array(self.GraphReprDict[on_graph], 
+                                        weight=weight, format=format)
+    #
+    def zip_reprNodes(self, x, on_graph: str = SG_GRAPH_REPR):
         graph = self.gr[on_graph]
         return dict(zip(graph, self.gr[x]))
-    def zip_repr_edges(self, x, on_graph: str = SG_GRAPH_REPR):
+    #
+    def zip_reprEdges(self, x, on_graph: str = SG_GRAPH_REPR):
         graph = self.gr[on_graph]
         return dict(zip(graph.edges(), self.gr[x].edges()))
     #
     def upd_NodeMap(self, on_graph: str = SG_GRAPH_REPR):
         self.nodeMap[on_graph] = {x: 
-            {v: k for k, v in self.zip_repr_nodes(x, on_graph).items()} 
+            {v: k for k, v in self.zip_reprNodes(x, on_graph).items()} 
             for x in self.GraphReprs if x != on_graph}
     #
     def upd_EdgeMap(self, on_graph: str = SG_GRAPH_REPR):
@@ -160,6 +166,10 @@ class SignedGraph:
         egraph_to =  lambda x: dict(zip(graph.edges(), self.gr[x].edges()))
         self.edgeMap[on_graph] = {x: {v: k for k, v in egraph_to(x).items()} 
                                    for x in self.GraphReprs if x != on_graph}
+    #
+    def upd_GraphRelabel(self, on_graph: str = SG_GRAPH_REPR, to_graph: str = SG_GRAPHINT_REPR):
+        self.gr[to_graph] = nx.relabel_nodes(self.gr[on_graph], self.nodeMap[to_graph][on_graph])
+    #
     def upd_ReprMaps(self, on_graph: str = SG_GRAPH_REPR):
         graph = self.gr[on_graph]
         ngraph_to = lambda x: dict(zip(graph, self.gr[x]))
@@ -185,17 +195,8 @@ class SignedGraph:
                 self.fleset[i] = [(u, v) for u, v, _ in edges(data=True) 
                                          if _.get('weight', 1) < 0]
                 self.upd_Nen(i)
-    def upd_GraphRelabel(self, on_graph: str = SG_GRAPH_REPR, to_graph: str = SG_GRAPHINT_REPR):
-        self.gr[to_graph] = nx.relabel_nodes(self.gr[on_graph], self.nodeMap[to_graph][on_graph])
-
-
     #
-    def adjacency_matrix(self, on_graph: str = SG_GRAPH_REPR, weight: str = 'weight'):
-        return nx.to_scipy_sparse_array(self.GraphReprDict[on_graph], 
-                                        weight=weight, format="csr")
-
-    #
-    def degree_matrix(self, A: csr_array) -> csr_array:
+    def get_degMtrx(self, A: csr_array, fmt: str = 'csr') -> csr_array:
         return csr_array(spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
 
     #
@@ -230,9 +231,9 @@ class SignedGraph:
         return self.sDeg - self.Adj
 
     #
-    def upd_graph_matrices(self, on_graph: str = SG_GRAPH_REPR):
-        self.Adj = self.adjacency_matrix(on_graph=on_graph)
-        self.Deg = self.degree_matrix(self.Adj)
+    def upd_graphMtr(self, on_graph: str = SG_GRAPH_REPR):
+        self.Adj = self.get_adjMtrx(on_graph=on_graph)
+        self.Deg = self.get_degMtrx(self.Adj)
         self.sDeg = self.absolute_degree_matrix(self.Adj)
         self.Lap = self.laplacian_matrix()
         self.sLp = self.signed_laplacian()
@@ -253,7 +254,7 @@ class SignedGraph:
             self.gr[on_graph], values=neg_weights_dict, name='weight'
         )
         self.upd_GraphRepr_All(on_graph)
-        self.upd_graph_matrices(on_graph)
+        self.upd_graphMtr(on_graph)
 
     #
     def check_pflip(self):
