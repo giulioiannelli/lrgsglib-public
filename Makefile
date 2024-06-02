@@ -2,6 +2,14 @@ SHELL := /bin/bash
 # exports
 CONDA_PREFIX = $(shell conda info --root)/envs/lrgsgenv
 CONDA_BIN := $(CONDA_PREFIX)/bin
+
+ACTIVATE_D=$(CONDA_PREFIX)/etc/conda/activate.d
+DEACTIVATE_D=$(CONDA_PREFIX)/etc/conda/deactivate.d
+CONFIG_SCRIPT_GEN=tools/bash/generate_config.sh
+CONFIG_SCRIPT_PATH=tools/bash/config_env.sh
+UNCONFIG_SCRIPT_PATH=tools/bash/unconfig_env.sh
+CUSTOM_ACTIVATE_SCRIPT=$(ACTIVATE_D)/custom_env_setup.sh
+CUSTOM_DEACTIVATE_SCRIPT=$(DEACTIVATE_D)/custom_env_cleanup.sh
 # Python includes and libraries
 PYTHON_INC = $(shell python3 -m pybind11 --includes)
 PYTHON_LIB = $(shell python3-config --ldflags)
@@ -10,8 +18,6 @@ export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
 # include tools/bash/config.sh
 # export
 #
-config:
-	@source tools/bash/config.sh
 # Include the config.sh script to set up environment variables
 # CONFIG_SHELL := $(shell bash -c 'source tools/bash/config.sh && env')
 # # Export environment variables from config.sh
@@ -102,9 +108,37 @@ ALLFLAGS  = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS}
 
 
 
-all: setup config echo_paths ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} chmod_scripts create_dirs make_rootf sub_make
+all: setup #chmod_scripts echo_paths ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} create_dirs sub_make
 
-setup:
+generate_config_script:
+	@echo "Generating config script..."
+	@chmod +x $(CONFIG_SCRIPT_GEN)
+	@bash $(CONFIG_SCRIPT_GEN)
+
+make_rootf:
+	@echo "Creating .isrootf file..."
+	@echo "YES" > .isrootf
+
+setup_conda_activate:
+	@echo "Creating activate.d directory..."
+	@mkdir -p $(ACTIVATE_D)
+	@echo "Creating custom activation script..."
+	@echo 'source $(CONFIG_SCRIPT_PATH)' > $(CUSTOM_ACTIVATE_SCRIPT)
+	@echo "Making custom activation script executable..."
+	@chmod +x $(CUSTOM_ACTIVATE_SCRIPT)
+	@echo "Setup conda environment activate.d complete."
+
+# Setup target to create deactivation script
+setup_conda_deactivate:
+	@echo "Creating deactivate.d directory..."
+	@mkdir -p $(DEACTIVATE_D)
+	@echo "Creating custom deactivation script..."
+	@echo 'source $(UNCONFIG_SCRIPT_PATH)' > $(CUSTOM_DEACTIVATE_SCRIPT)
+	@echo "Making custom deactivation script executable..."
+	@chmod +x $(CUSTOM_DEACTIVATE_SCRIPT)
+	@echo "Setup conda environment deactivate.d complete."
+
+setup: make_rootf generate_config_script setup_conda_activate setup_conda_deactivate
 	@# Find the gcc compiler binary
 	$(eval GCC_BIN := $(shell find $(CONDA_BIN) -name 'x86_64-conda_cos*-linux-gnu-cc' | head -n 1))
 	@# Find the g++ compiler binary
@@ -127,6 +161,8 @@ setup:
 	@if [ -z "$(GCC_BIN)" ] || [ -z "$(GPP_BIN)" ]; then \
 		echo "Error: Unable to find required compilers in $(CONDA_BIN)"; exit 1; \
 	fi
+
+
 
 echo_paths:
 	@echo "LRGSG_ROOT = $(LRGSG_ROOT)"
@@ -155,8 +191,6 @@ ${PROGRAMN2}: ${PATHSRS2.c}
 chmod_scripts:
 	find $(PATH_SH) -type f -name '*.sh' -exec chmod +x {} \;
 
-make_rootf:
-	echo "YES" > .isrootf
 
 # Target that creates necessary directories
 create_dirs:
@@ -179,6 +213,7 @@ clean:
 	$(MAKE) -C $(PATH_RBIM_STORE) clean
 	rm -f $(RW_TARGET)
 	rm -f *.o main
+	@rm -rf $(ACTIVATE_D) $(DEACTIVATE_D)
 
 
 
