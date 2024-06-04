@@ -16,7 +16,8 @@
 /* utils.c */
 
 extern void print_stdout_cwd(void);
-
+double* logspace(double start, double stop, int num);
+int* logspace_int(double start, double stop, int num);
 extern double sum_vs(size_t n, double *v);
 extern double sum_vs_2(size_t n, double *v);
 

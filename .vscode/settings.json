@@ -90,7 +90,11 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "__nullptr": "cpp"
+        "__nullptr": "cpp",
+        "__tuple": "c",
+        "locale": "c",
+        "sfmtrng.h": "c",
+        "stdlib.h": "c"
     },
     "python.formatting.provider": "black",
     "python.formatting.blackArgs": [

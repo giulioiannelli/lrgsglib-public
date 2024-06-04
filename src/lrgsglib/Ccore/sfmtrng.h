@@ -7,6 +7,7 @@
 #define __HNRNGM_H_INC__
 
 /* seed related functions */
+#define MIN_ARRNG_NUMBERS 312
 #define LENSRND 4 /* number of elements in the seed array for sfmt */
 #define _PID_TIME_SEED1_ ((time(0) ^ getpid()))
 #define _PID_TIME_SEED2_ (((time(0) << time(0)) ^ getpid()))
@@ -35,5 +36,6 @@ extern uint64_t SFMTrng_u64(void);
 extern double   SFMTrng_dbl(void);
 extern void __set_seed_SFMT(void);
 extern void __check_RNG(void);
+extern uint64_t* __gen_rand_u64_array(size_t N);
 
 #endif /* __HNRNGM_H_INC__ */

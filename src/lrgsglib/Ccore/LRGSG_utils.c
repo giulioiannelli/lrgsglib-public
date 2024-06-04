@@ -50,7 +50,46 @@ double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
     }
     return -sum / N;
 }
+/**
+ * @brief Generate a logarithmically-spaced vector
+ *
+ * @param start The base-10 logarithm of the start value of the desired range
+ * @param stop The base-10 logarithm of the stop value of the desired range
+ * @param num The number of values to be generated in the vector
+ * @return A dynamically allocated array of doubles representing the logarithmically-spaced vector
+ *
+ * @note The returned array must be freed by the caller using free() when no longer needed.
+ */
+double* logspace(double start, double stop, int num) {
+    double* vec = (double*)malloc(num * sizeof(double));
+    double step = (stop - start) / (num - 1);
 
+    for (int i = 0; i < num; i++) {
+        vec[i] = pow(10, start + i * step);
+    }
+
+    return vec;
+}
+/**
+ * @brief Generate a int logarithmically-spaced vector
+ *
+ * @param start The base-10 logarithm of the start value of the desired range
+ * @param stop The base-10 logarithm of the stop value of the desired range
+ * @param num The number of values to be generated in the vector
+ * @return A dynamically allocated array of doubles representing the logarithmically-spaced vector
+ *
+ * @note The returned array must be freed by the caller using free() when no longer needed.
+ */
+int* logspace_int(double start, double stop, int num) {
+    int* vec = (int*)malloc(num * sizeof(int));
+    double step = (stop - start) / (num - 1);
+
+    for (int i = 0; i < num; i++) {
+        vec[i] = (int)round(pow(10, start + i * step));
+    }
+
+    return vec;
+}
 /** perform the sum of a floating point array 
  * @param n (size_t) the number of vector components
  * @param v (double *) the floaring point array

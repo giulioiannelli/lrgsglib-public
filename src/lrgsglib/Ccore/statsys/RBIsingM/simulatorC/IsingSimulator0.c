@@ -1,7 +1,7 @@
 #include "LRGSG_utils.h"
 #include "LRGSG_customs.h"
-#include "LRGSG_rbim.h"
 #include "sfmtrng.h"
+#include "LRGSG_rbim.h"
 
 #define ISNG_DIR "%sising/"
 #define SINI_FNAME ISNG_DIR "N=%zu/s_%s" BINX
@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
     char *ptr, *datdir, *out_id,  *code_id;
     double T, p;
     double *m, *ene;
+    char *updStr = argv[10];
     spin_tp s;
     size_t N, side, thrmSTEP, eqSTEP;//, side;
     size_t tmp;
@@ -46,6 +47,7 @@ int main(int argc, char *argv[])
     T = strtod(argv[2], &ptr);
     p = strtod(argv[3], &ptr);
     code_id = argv[4];
+    // we miss argv[5]
     thrmSTEP = strtozu(argv[6]);
     eqSTEP = strtozu(argv[7]);
     datdir = argv[8];
@@ -56,7 +58,7 @@ int main(int argc, char *argv[])
     sprintf(buf, SINI_FNAME, datdir, N, argv[4]);
     __fopen(&f_sini, buf, "rb");
 
-    
+
     
     sprintf(buf, ENE_FNAME, datdir, N, code_id, T, out_id);
     __fopen(&f_ene, buf, "wb");
@@ -91,7 +93,9 @@ int main(int argc, char *argv[])
     {
         m[t] = calc_magn(N, s);
         ene[t] = calc_energy_full(N, s, neigh_len, neighs, edgl);
-        glauber_metropolis_Nstep(N, T, s, neigh_len, neighs, edgl);
+        // glauber_metropolis_Nstep(N, T, s, neigh_len, neighs, edgl);
+        // printf("t=%zu, ene=%.4g, magn=%.4g\n", t, ene[t], m[t]);
+        glauber_metropolis_Nstep_mode(N, T, s, neigh_len, neighs, edgl, updStr);
     }
     fwrite(ene, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_ene);
     fwrite(m, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_magn);

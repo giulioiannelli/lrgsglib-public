@@ -1,114 +1,104 @@
-SHELL := /bin/bash
-# exports
-CONDA_PREFIX = $(shell conda info --root)/envs/lrgsgenv
-CONDA_BIN := $(CONDA_PREFIX)/bin
-
-ACTIVATE_D=$(CONDA_PREFIX)/etc/conda/activate.d
-DEACTIVATE_D=$(CONDA_PREFIX)/etc/conda/deactivate.d
-CONFIG_SCRIPT_GEN=tools/bash/generate_config.sh
-CONFIG_SCRIPT_PATH=tools/bash/config_env.sh
-UNCONFIG_SCRIPT_PATH=tools/bash/unconfig_env.sh
-CUSTOM_ACTIVATE_SCRIPT=$(ACTIVATE_D)/custom_env_setup.sh
-CUSTOM_DEACTIVATE_SCRIPT=$(DEACTIVATE_D)/custom_env_cleanup.sh
-# Python includes and libraries
-PYTHON_INC = $(shell python3 -m pybind11 --includes)
-PYTHON_LIB = $(shell python3-config --ldflags)
-export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
-#
-# include tools/bash/config.sh
-# export
-#
-# Include the config.sh script to set up environment variables
-# CONFIG_SHELL := $(shell bash -c 'source tools/bash/config.sh && env')
-# # Export environment variables from config.sh
-# $(foreach line, $(CONFIG_SHELL), $(eval $(line)))
-#
 # paths
 PATH_BUILD = build/
-PATH_DOCS =	docs/
-PATH_DAT = data/
-PATH_SRC = src/
-PATH_TEST = test/
+PATH_DOCS  = docs/
+PATH_DAT   = data/
+PATH_SRC   = src/
+PATH_TEST  = test/
 PATH_TOOLS = tools/
 
 PATH_LRGSGLIB = $(PATH_SRC)lrgsglib/
-PATH_SH = $(PATH_TOOLS)bash/
+PATH_SH       = $(PATH_TOOLS)bash/
 #
 PATH_CCORE  = $(PATH_LRGSGLIB)Ccore/
 PATH_GTPTCH = $(PATH_LRGSGLIB)gt_patches/
 #
 PATH_CCORE_BIN  = $(PATH_CCORE)bin/
 PATH_GTPTCH_CPP = $(PATH_GTPTCH)cpp/
-PATH_SFMT = $(PATH_CCORE)SFMT/
-PATH_STATSYS = $(PATH_CCORE)statsys/
+PATH_SFMT       = $(PATH_CCORE)SFMT/
+PATH_STATSYS    = $(PATH_CCORE)statsys/
 #
 PATH_RBIM = $(PATH_STATSYS)RBIsingM/
-PATH_SRW = $(PATH_STATSYS)signedRw/
-PATH_VM = $(PATH_STATSYS)voterM/
+PATH_SRW  = $(PATH_STATSYS)signedRw/
+PATH_VM   = $(PATH_STATSYS)voterM/
 #
-PATH_RBIM_BASE = $(PATH_RBIM)base/
-PATH_RBIM_SIMC = $(PATH_RBIM)simulatorC/
-PATH_RBIM_STORE =$(PATH_RBIM)storer/
-PATH_SRW_LATT = $(PATH_SRW)Lattices/
+PATH_RBIM_BASE  = $(PATH_RBIM)base/
+PATH_RBIM_SIMC  = $(PATH_RBIM)simulatorC/
+PATH_RBIM_STORE = $(PATH_RBIM)storer/
+PATH_SRW_LATT   = $(PATH_SRW)Lattices/
+# conda paths
+CONDA_PREFIX = $(shell conda info --root)/envs/lrgsgenv
+CONDA_BIN    = $(CONDA_PREFIX)/bin
+# conda activation
+ACTIVATE_D   = $(CONDA_PREFIX)/etc/conda/activate.d
+DEACTIVATE_D = $(CONDA_PREFIX)/etc/conda/deactivate.d
+#
+CONFIG_SCRIPT_GEN        = $(PATH_SH)generate_config.sh
+CONFIG_SCRIPT_PATH       = $(PATH_SH)config_env.sh
+UNCONFIG_SCRIPT_PATH     = $(PATH_SH)unconfig_env.sh
+CUSTOM_ACTIVATE_SCRIPT   = $(ACTIVATE_D)/custom_env_setup.sh
+CUSTOM_DEACTIVATE_SCRIPT = $(DEACTIVATE_D)/custom_env_cleanup.sh
+# Python includes and libraries
+PYTHON_INC = $(shell python3 -m pybind11 --includes)
+PYTHON_LIB = $(shell python3-config --ldflags)
+export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig#:$(PKG_CONFIG_PATH)
 #
 # directories
+DIRS_TO_MAKE = $(PATH_DAT)
 #
-DIRS_TO_MAKE := $(PATH_DAT)
+FN_RBIMSIM0 = IsingSimulator0
+FN_RBIMSIM1 = IsingSimulator1
+FN_RBIMSIM2 = IsingSimulator2
+FN_VMSIM0   = voter_model
+FN_LRGSGLIB = LRGSG_utils sfmtrng 
+SRC_RBIM    = LRGSG_rbim
+SRC_VM      = LRGSG_vm
+SFMTSRC     = SFMT
 #
-RBIMSIMULATOR0_PN = IsingSimulator0
-RBIMSIMULATOR1_PN = IsingSimulator1
-VMSIMULATOR_PN = voter_model
-SRC_LRGSGLIB = LRGSG_utils sfmtrng 
-SRC_RBIM = LRGSG_rbim
-SRC_VM = LRGSG_vm
-SFMTSRC = SFMT
+RBIMSIM0.c = $(addsuffix .c, $(FN_RBIMSIM0))
+RBIMSIM1.c = $(addsuffix .c, $(FN_RBIMSIM1))
+RBIMSIM2.c = $(addsuffix .c, $(FN_RBIMSIM2))
+VMSIM0.c   = $(addsuffix .c, $(FN_VMSIM0))
 #
-CXXFLAGS = -O3 -Wall -shared -std=c++14 -fPIC
-#
-#
-RBIMSIM0.c = $(addsuffix .c, $(RBIMSIMULATOR0_PN))
-RBIMSIM1.c = $(addsuffix .c, $(RBIMSIMULATOR1_PN))
-VMSIM.c = $(addsuffix .c, $(VMSIMULATOR_PN))
-#
-SRCCFILES.c = $(addsuffix .c, $(SRC_LRGSGLIB))
+SRCCFILES.c     = $(addsuffix .c, $(FN_LRGSGLIB))
 SRCCFILESRBIM.c = $(addsuffix .c, $(SRC_RBIM))
-SRCCFILESVM.c = $(addsuffix .c, $(SRC_VM))
-SFMTFILES.c = $(addsuffix .c, $(SFMTSRC))
-#
-SRCCRS0.c = ${RBIMSIM0.c}
-SRCCRS1.c = ${RBIMSIM1.c}
-SRCCVM1.c = ${VMSIM.c}
+SRCCFILESVM.c   = $(addsuffix .c, $(SRC_VM))
+SFMTFILES.c     = $(addsuffix .c, $(SFMTSRC))
 #
 PATH_SRCC_FILES = $(addprefix $(PATH_CCORE), $(SRCCFILES.c))
-PATH_SRCC_RBIM = $(addprefix $(PATH_RBIM_SIMC), $(SRCCFILESRBIM.c))
+PATH_SRCC_RBIM  = $(addprefix $(PATH_RBIM_SIMC), $(SRCCFILESRBIM.c))
 PATH_SFMT_FILES = $(addprefix $(PATH_SFMT), $(SFMTFILES.c))
-PATH_SRCC_VM = $(addprefix $(PATH_VM), $(SRCCFILESVM.c))
+PATH_SRCC_VM    = $(addprefix $(PATH_VM), $(SRCCFILESVM.c))
+#
 PATHSRS0.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM0.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
 PATHSRS1.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM1.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
-PATHSRS2.c := $(addprefix $(PATH_VM), $(VMSIM.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_VM) $(PATH_SFMT_FILES)
+PATHSRS2.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM2.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
+PATHSRSVM0.c := $(addprefix $(PATH_VM), $(VMSIM0.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_VM) $(PATH_SFMT_FILES)
 #
 # FILES.o = ${FILES.c:.c=.o}
 #
-PROGRAMN0  = $(addprefix $(PATH_CCORE_BIN), $(RBIMSIMULATOR0_PN))
-PROGRAMN1 = $(addprefix $(PATH_CCORE_BIN), $(RBIMSIMULATOR1_PN))
-PROGRAMN2 = $(addprefix $(PATH_CCORE_BIN), $(VMSIMULATOR_PN))
+PROGRAMN0 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM0))
+PROGRAMN1 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM1))
+PROGRAMN2 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM2))
+PROGRAMNVM0 = $(addprefix $(PATH_CCORE_BIN), $(FN_VMSIM0))
 #
 GCC := $(CONDA_PREFIX)/bin/gcc
 CPP := $(CONDA_PREFIX)/bin/g++
-GFLAGS    = -g
-OFLAGS    = -O3
-DSFMTFLAG = -DSFMT_MEXP=19937
-LMFLAG    = -lm
-WFLAG1    = -Wall
-WFLAG2    = -Wextra
-WFLAGS    = ${WFLAG1} ${WFLAG2}
-INC_PATH1 = -I${PATH_CCORE}
-INC_PATHS = ${INC_PATH1}
-ALLFLAGS  = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS} 
+CXXFLAGS      = -O3 -Wall -shared -std=c++14 -fPIC
+GFLAGS        = -g
+OFLAGS        = -O3
+DSFMTFLAG     = -DSFMT_MEXP=19937
+LMFLAG        = -lm
+WFLAG1        = -Wall
+WFLAG2        = -Wextra
+WFLAGS        = ${WFLAG1} ${WFLAG2}
+INC_PATH1     = -I${PATH_CCORE}
+INC_PATH_SFMT = -I${PATH_SFMT}
+INC_PATHS     = ${INC_PATH1} ${INC_PATH_SFMT}
+ALLFLAGS      = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS} 
 
+configure: setup chmod_scripts echo_paths create_dirs
 
-
-all: setup #chmod_scripts echo_paths ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} create_dirs sub_make
+all: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} sub_make
 
 generate_config_script:
 	@echo "Generating config script..."
@@ -172,6 +162,7 @@ echo_paths:
 	@echo "LRGSG_SRC = $(LRGSG_SRC)"
 	@echo "LRGSG_LIB = $(LRGSG_LIB)"
 	@echo "LRGSG_LIB_CCORE = $(LRGSG_LIB_CCORE)"
+	@echo "LRGSG_LIB_CBIN = $(LRGSG_LIB_CBIN)"
 	@echo "LRGSG_LIB_CONFIG = $(LRGSG_LIB_CONFIG)"
 	@echo "LRGSG_LIB_GT_PATCHES = $(LRGSG_LIB_GT_PATCHES)"
 	@echo "LRGSG_LIB_NX_PATCHES = $(LRGSG_LIB_NX_PATCHES)"
@@ -191,7 +182,6 @@ ${PROGRAMN2}: ${PATHSRS2.c}
 chmod_scripts:
 	find $(PATH_SH) -type f -name '*.sh' -exec chmod +x {} \;
 
-
 # Target that creates necessary directories
 create_dirs:
 	@mkdir -p $(DIRS_TO_MAKE)
@@ -206,7 +196,9 @@ DEBRIS = a.out *~
 RM_FR  = rm -fr
 
 clean:
-	${RM_FR} ${FILES.o} ${FILES.o} ${DEBRIS}
+	${RM_FR} ${PROGRAMN0}
+	${RM_FR} ${PROGRAMN1}
+	${RM_FR} ${PROGRAMN2}
 	$(MAKE) -C $(PATH_GTPTCH_CPP) clean
 	$(MAKE) -C $(PATH_SRW_LATT) clean
 	$(MAKE) -C $(PATH_RBIM_BASE) clean
