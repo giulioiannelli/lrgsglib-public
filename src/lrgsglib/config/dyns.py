@@ -491,14 +491,17 @@ class IsingDynamics:
         NoClust: int = 1,
         nstepsIsing: int = 100,
         save_magnetization: bool = False,
+        upd_mode: str = "asynchronous",
     ) -> None:
         self.runlang = runlang
         self.sg = sg
+        self.N = self.sg.N
         self.T = T
         self.ic = ic
         self.nstepsIsing = nstepsIsing
         self.save_magnetization = save_magnetization
         self.NoClust = NoClust
+        self.upd_mode = upd_mode
     #
     def bltzmnn_fact(self, enrgy: float) -> float:
         return np.exp(-enrgy / (self.k_B * self.T))
@@ -583,9 +586,11 @@ class IsingDynamics:
             out_suffix = out_suffix + self.id_string_isingdyn
             if out_suffix == "":
                 out_suffix = '""'
+            path = "src/lrgsglib/Ccore/bin"
+            baseName = f"IsingSimulator{self.runlang[-1]}"
             self.cprogram = [
-                pth_join(LRGSG_LIB_CBIN, f"IsingSimulator{self.runlang[-1]}"),
-                f"{self.sg.N}",
+                pth_join(path, baseName),
+                f"{self.N}",
                 f"{self.T}",
                 f"{self.sg.pflip}",
                 adjfname,
@@ -594,8 +599,11 @@ class IsingDynamics:
                 f"{eqSTEP}",
                 self.sg.datPath,
                 out_suffix,
+                self.upd_mode
             ]
-            call(self.cprogram)
+            stderrFname = f"log/err{baseName}_{self.N}_{out_suffix}.log"
+            stderr = open(stderrFname, 'w')
+            call(self.cprogram, stderr=stderr)
         else:
             metropolis_1step = np.vectorize(self.metropolis, excluded="self")
             if self.save_magnetization:
@@ -710,12 +718,9 @@ class IsingDynamics:
 
     #
     def export_s_init(self):
-        output_file = open(
-            f"{self.sg.isingpath}s_{self.sg.stdFname}.bin",
-            "wb",
-        )
-        self.s.astype("int8").tofile(output_file)
-
+        fname = f"{self.sg.isingpath}s_{self.sg.stdFname}.bin"
+        fout = open(fname, "wb")
+        self.s.astype("int8").tofile(fout)
     #
     def export_ising_clust(self):
         try:
@@ -728,11 +733,9 @@ class IsingDynamics:
             print(excpt)
 
         for i in range(self.NoClust):
-            output_file = open(
-                f"{self.sg.isingpath}cl{i}_{self.sg.stdFname}.bin",
-                "wb",
-            )
-            np.array(self.Ising_clusters[i]).astype(int).tofile(output_file)
+            fname = f"{self.sg.isingpath}cl{i}_{self.sg.stdFname}.bin"
+            fout = open(fname, "wb")
+            np.array(self.Ising_clusters[i]).astype(int).tofile(fout)
 
 
 #     def boltzmann_factor(self, energy: float) -> float:
