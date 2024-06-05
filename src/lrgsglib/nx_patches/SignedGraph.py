@@ -122,18 +122,19 @@ class SignedGraph:
     def __init_sgraph__(self, init_weights_val: Union[float, List] = 1) -> None:
         self.__init_nNodesEdges__()
         if self.import_on:
-            self.nflip = self.Ne_n
-            self.pflip = self.nflip / self.Ne
+            self.neflip = self.Ne_n
+            self.pflip = self.neflip / self.Ne
             edgesWithData = self.gr[self.onGraph].edges(data=True)
             self.fleset[self.onGraph] = [(u, v) for u, v, _ in edgesWithData 
                                          if _.get('weight', 1) < 0]
         else:
-            self.nflip = int(self.pflip * self.Ne)
+            self.neflip = int(self.pflip * self.Ne)
+            self.nflip = int(self.pflip * self.N)
             self.__init_weights__(init_weights_val)
             edges = self.gr[self.onGraph].edges
             self.eset[self.onGraph] = list(edges())
             self.fleset[self.onGraph] = random.sample(self.eset[self.onGraph], 
-                                                      self.nflip)
+                                                      self.neflip)
         self.upd_GraphRepr_All(self.onGraph)
         self.upd_graphMtr()
     #
@@ -258,18 +259,16 @@ class SignedGraph:
 
     #
     def check_pflip(self):
-        if self.nflip < 1: raise NflipError(SG_ERRMSG_NFLIP)
+        if self.neflip < 1: raise NflipError(SG_ERRMSG_NFLIP)
     #
     def flip_random_fract_edges(self, on_graph: str = SG_GRAPH_REPR):
         """Flips a fraction p of edges (+1 to -1) of a graph G."""
         #
         try:
             self.check_pflip()
-        except Exception as e:
-            # handle the exception
-            print("An exception occurred:", type(e).__name__, "-", e)
-        
-        self.flip_sel_edges(self.fleset[on_graph], on_graph)
+            self.flip_sel_edges(self.fleset[on_graph], on_graph)
+        except NflipError:
+            pass
     #
     def unflip_all(self, on_graph: str = SG_GRAPH_REPR):
         self.flip_sel_edges(1, on_graph)
@@ -451,29 +450,18 @@ class SignedGraph:
     #
     def export_edgel_bin(self, on_graph: str = SG_GRAPH_REPR, 
                          print_msg: bool = False, mode: str = 'numpy') -> None:
+        edges = self.GraphReprDict[on_graph].edges(data='weight')
         match mode:
             case 'numpy':
-                edges = np.array(list(self.edges[on_graph]()), 
-                                 dtype=[('i', np.uint64), ('j', np.uint64), ('w_ij', np.float64)])
-        with open(f"{self.expOutdir}edgelist_{self.stdFname}.bin", "wb") as f:
-            for edge in self.esetH:
-                f.write(struct.pack("QQd", edge[0], edge[1], edge[2]))
-    # #
-    # def export_edgel(self, exp_mode: str = "bin"):
-    #     match exp_mode:
-    #         case "bin":
-    #             self.export_edgel_bin()
-    #     with open('edgelist.bin', 'wb') as f:
-    #         for edge in edges:
-    #             f.write(struct.pack('QQd', edge[0], edge[1], edge[2]))  # Q for size_t, d for double
-
-    #     # TO BE FIXED
-    #     a = list(self.H.edges(data='weight'))
-    #     with open(r"src/lrgsglib/tmp_stuff/prova.txt", "w") as fp:
-    #         for item in a:
-    #             # write each item on a new line
-    #             fp.write("%s %s %s\n" % item)
-    #         print("Done")
+                edge_array = np.array(list(edges), 
+                                 dtype=[('i', np.uint64), #these has to be changed based on the repr
+                                        ('j', np.uint64), #these has to be changed based on the repr
+                                        ('w_ij', np.float64)])
+                edge_array.tofile(f"{self.expOutdir}edgelist_{self.stdFname}.bin")
+            case 'struct':
+                with open(f"{self.expOutdir}edgelist_{self.stdFname}.bin", "wb") as f:
+                    for edge in edges:
+                        f.write(struct.pack("QQd", edge[0], edge[1], edge[2]))
 
     #
     def get_edge_color(
