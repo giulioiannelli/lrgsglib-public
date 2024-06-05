@@ -1,6 +1,6 @@
 from ..shared import *
 #
-ColorType = ColorType = Union[
+ColorType = Union[
     Tuple[int, int, int],
     Tuple[float, float, float],
     Tuple[int, int, int, int],
