@@ -116,7 +116,6 @@ class Lattice2D(SignedGraph):
                 cnode_t = (self.side1//2+1, self.side2//2)
                 edge_t = (cnode, cnode_t)
         if on_graph == 'G':
-            print(self.edgeMap['H']['G'])
             return self.edgeMap['G']['H'][edge_t]
         elif on_graph == 'H':
             return edge_t

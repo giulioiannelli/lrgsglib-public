@@ -66,7 +66,19 @@
 
 typedef double *double_p;
 typedef size_t *size_tp;
-typedef int8_t *spin_tp; 
+typedef int8_t *spin_tp;
+typedef struct {
+    uint64_t u, v;
+    double w;
+} Edge;
+typedef Edge* Edges;
+
+typedef struct {
+    size_t *neighbors;
+    double *weights;
+} NodeEdges;
+typedef NodeEdges* NodesEdges;
+
 
 #define LRGSG_ROOT getenv("LRGSG_ROOT")
 #define LRGSG_BUILD getenv("LRGSG_BUILD")

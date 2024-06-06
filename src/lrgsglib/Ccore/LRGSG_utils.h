@@ -16,8 +16,8 @@
 /* utils.c */
 
 extern void print_stdout_cwd(void);
-double* logspace(double start, double stop, int num);
-int* logspace_int(double start, double stop, int num);
+extern double* logspace(double start, double stop, int num);
+extern int* logspace_int(double stop, int* num);
 extern double sum_vs(size_t n, double *v);
 extern double sum_vs_2(size_t n, double *v);
 
@@ -46,19 +46,26 @@ extern pid_t call(char *argv[]);
 extern void __wait_childs(void);
 
 char *rand_string(char *str, size_t size);
+extern Edges __read_bin_EdgeList__(const char *filename, size_t *edge_count);
+extern void process_edges(const char *filename, size_t N, Edges *edges,
+    NodesEdges *node_edges, size_tp *neigh_len);
 
 extern void __make_adj_from_tmp(size_t i, size_t j, double tmp, double_p **adj);
 extern void __fill_adj__(FILE **f, size_t N, double_p **adj);
-extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, size_tp **neighs, size_tp *neigh_len);
-extern void __fill_edgl_make__(FILE **f, size_t N, double_p **adj, double_p **edgl, size_tp **neighs, size_tp *neigh_len);
+extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, 
+    size_tp **neighs, size_tp *neigh_len);
+extern void __fill_edgl_make__(FILE **f, size_t N, double_p **adj, 
+    double_p **edgl, size_tp **neighs, size_tp *neigh_len);
 
 
 double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs,
                          double_p *edgl);
+double neighWeight_magn(NodeEdges ne, spin_tp s, size_t n_nn);
 double calc_magn(size_t N, spin_tp s);
 double calc_ext_magn(size_t N, spin_tp s);
 double calc_ext_magn2(size_t N, spin_tp s);
 void flip_spin(size_t nd, spin_tp s);
 double calc_clust_magn(size_t cli_l, size_tp cli, spin_tp s);
+double calc_totEnergy(size_t N, spin_tp s, size_tp nlen, NodesEdges ne);
 
 #endif /* __LRSGLIB_H_INC__ */

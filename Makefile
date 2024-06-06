@@ -97,8 +97,8 @@ INC_PATHS     = ${INC_PATH1} ${INC_PATH_SFMT}
 ALLFLAGS      = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS} 
 
 configure: setup chmod_scripts echo_paths create_dirs
-
-all: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} sub_make
+c_make: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} 
+all: configure c_make #sub_make chmod_scripts
 
 generate_config_script:
 	@echo "Generating config script..."
