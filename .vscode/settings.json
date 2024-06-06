@@ -94,7 +94,8 @@
         "__tuple": "c",
         "locale": "c",
         "sfmtrng.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "stdio.h": "c"
     },
     "python.formatting.provider": "black",
     "python.formatting.blackArgs": [

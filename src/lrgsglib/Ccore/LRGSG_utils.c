@@ -39,7 +39,13 @@ double neigh_weight_magn(size_t nd, size_t n_nn, spin_tp s, size_tp *neighs,
     double sum = 0.;
     for (size_t i = 0; i < n_nn; i++)
         sum += *(*(edgl + nd) + i) * *(s + *(*(neighs + nd) + i));
-    return sum / n_nn;
+    return sum;
+}
+double neighWeight_magn(NodeEdges ne, spin_tp s, size_t n_nn) {
+    double sum = 0.;
+    for (size_t i = 0; i < n_nn; i++)
+        sum += *(ne.weights + i) * *(s + *(ne.neighbors + i));
+    return sum;
 }
 double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
                         double_p *edgl) {
@@ -49,6 +55,14 @@ double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
         sum += tmp;
     }
     return -sum / N;
+}
+double calc_totEnergy(size_t N, spin_tp s, size_tp nlen, NodesEdges ne) {
+    double sum = 0., tmp = 0.;
+    for (size_t i = 0; i < N; i++) {
+        tmp = *(s + i) * neighWeight_magn(ne[i], s, nlen[i]);
+        sum += tmp;
+    }
+    return - sum / N;
 }
 /**
  * @brief Generate a logarithmically-spaced vector
@@ -60,7 +74,7 @@ double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
  *
  * @note The returned array must be freed by the caller using free() when no longer needed.
  */
-double* logspace(double start, double stop, int num) {
+extern double* logspace(double start, double stop, int num) {
     double* vec = (double*)malloc(num * sizeof(double));
     double step = (stop - start) / (num - 1);
 
@@ -71,21 +85,35 @@ double* logspace(double start, double stop, int num) {
     return vec;
 }
 /**
- * @brief Generate a int logarithmically-spaced vector
+ * @brief Generate a logarithmically-spaced vector of integers.
  *
- * @param start The base-10 logarithm of the start value of the desired range
  * @param stop The base-10 logarithm of the stop value of the desired range
- * @param num The number of values to be generated in the vector
- * @return A dynamically allocated array of doubles representing the logarithmically-spaced vector
+ * @param num Pointer to the number of values to be generated in the vector. The value may be adjusted within the function.
+ * @return A dynamically allocated array of integers representing the logarithmically-spaced vector
  *
  * @note The returned array must be freed by the caller using free() when no longer needed.
  */
-int* logspace_int(double start, double stop, int num) {
-    int* vec = (int*)malloc(num * sizeof(int));
-    double step = (stop - start) / (num - 1);
+extern int* logspace_int(double stop, int* num) {
+    int* vec = (int*)malloc((*num) * sizeof(int));
+    double step = stop / (*num - 1);
 
-    for (int i = 0; i < num; i++) {
-        vec[i] = (int)round(pow(10, start + i * step));
+    for (int i = 0; i < *num; i++) {
+        vec[i] = (int)round(pow(10, i * step));
+    }
+    // Check if the first two points are the same
+    if (vec[0] == vec[1]) {
+        int num_max = 1 + (int)(1 / (log10(2) / stop));
+        num_max = num_max < *num ? num_max : *num;
+        // Free the previously allocated memory
+        free(vec);
+        // Update the num value
+        *num = num_max;
+        vec = (int*)malloc((*num) * sizeof(int));
+        step = stop / (*num - 1);
+
+        for (int i = 0; i < *num; i++) {
+            vec[i] = (int)round(pow(10, i * step));
+        }
     }
 
     return vec;
@@ -464,11 +492,14 @@ extern void __fill_adj__(FILE **f, size_t N, double_p **adj)
         {
             __fread_check(fread(&tmp, sizeof(tmp), 1, *f), 1);
             __make_adj_from_tmp(i, j, tmp, adj);
+            printf("%.4g ", *(*(*adj + i) + j));
         }
+        printf("\n");
     }
 }
 
-extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, size_tp **neighs, size_tp *neigh_len)
+extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, 
+    size_tp **neighs, size_tp *neigh_len)
 {
     size_t node_i, cntr, last = 0;
     double w_ij;
@@ -528,6 +559,62 @@ extern void __fill_edgl_make__(FILE **f, size_t N, double_p **adj, double_p **ed
         // printf("%zu, %zu, %zu\n", i, *(*neigh_len + i), cntr);
     }
 }
+
+
+
+// Function to read edges from a binary file
+extern Edges __read_bin_EdgeList__(const char *filename, size_t *edge_count) {
+    FILE *file;
+    Edge *edges;
+    //
+    __fopen(&file, filename, "rb");
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    *edge_count = (size_t) file_size / sizeof(Edge);
+    
+    edges = __chMalloc(file_size);
+
+    fread(edges, sizeof(Edge), *edge_count, file);
+    fclose(file);
+
+    return edges;
+}
+
+extern void process_edges(const char *filename, size_t N, Edges *edges,
+    NodesEdges *node_edges, size_tp *neigh_len) {
+    size_t edge_count;
+    *edges = __read_bin_EdgeList__(filename, &edge_count);
+    *node_edges = __chMalloc(N * sizeof(**node_edges));
+    *neigh_len = __chCalloc(N, sizeof(**neigh_len));
+    for (Edge *e = *edges; e < *edges + edge_count; e++) {
+        (*neigh_len)[e->u]++;
+        (*neigh_len)[e->v]++;
+    }
+    // Allocate the actual arrays now that we know the sizes
+    for (size_t i = 0; i < N; i++) {
+        if ((*neigh_len)[i] > 0) {
+            (*node_edges)[i].neighbors = __chMalloc((*neigh_len)[i] * sizeof(*(*node_edges)[i].neighbors));
+            (*node_edges)[i].weights = __chMalloc((*neigh_len)[i] * sizeof(*(*node_edges)[i].weights));
+        }
+        (*neigh_len)[i] = 0; // Reset to use as an index
+    }
+    for (Edge *e = *edges; e < *edges + edge_count; e++) {
+        uint64_t u = e->u;
+        uint64_t v = e->v;
+        double w = e->w;
+
+        (*node_edges)[u].neighbors[(*neigh_len)[u]] = v;
+        (*node_edges)[u].weights[(*neigh_len)[u]] = w;
+        (*neigh_len)[u]++;
+
+        (*node_edges)[v].neighbors[(*neigh_len)[v]] = u;
+        (*node_edges)[v].weights[(*neigh_len)[v]] = w;
+        (*neigh_len)[v]++;
+    }
+}
+
+
 
 // /* DICTIONARY IMPLEMENTATION ************************************************ */
 // //

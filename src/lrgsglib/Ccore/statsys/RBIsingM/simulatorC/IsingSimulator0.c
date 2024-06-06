@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
         glauber_metropolis_Nstep_mode(N, T, s, neigh_len, neighs, edgl, updStr);
     }
     fwrite(ene, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_ene);
-    fwrite(m, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_magn);
+    fwrite(m, sizeof(*m), (T_EQ_STEP + T_THERM_STEP), f_magn);
 
 
     fclose(f_magn);
