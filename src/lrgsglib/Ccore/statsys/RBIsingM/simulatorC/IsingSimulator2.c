@@ -71,13 +71,13 @@ int main(int argc, char *argv[])
     ene = __chMalloc(sizeof(*ene) * T_STEPS);
     //
     sprintf(buf, ENE_FNAME, datdir, N, code_id, T, out_id);
-    __fopen(&f_ene, buf, "wb");
+    __fopen(&f_ene, buf, "ab");
     sprintf(buf, MAGN_FNAME, datdir, N, code_id, T, out_id);
-    __fopen(&f_magn, buf, "wb");
+    __fopen(&f_magn, buf, "ab");
     sprintf(buf, SINI_FNAME, datdir, N, code_id);
     __fopen(&f_sini, buf, "rb");
     sprintf(buf, S_FNAME, datdir, N, code_id, T, out_id);
-    __fopen(&f_s, buf, "wb");
+    __fopen(&f_s, buf, "ab");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     sprintf(buf, EDGL_FNAME, datdir, N, code_id);
     process_edges(buf, N, &edges, &node_edges, &neigh_len);
@@ -92,9 +92,11 @@ int main(int argc, char *argv[])
         ene[t] = calc_totEnergy(N, s, neigh_len, node_edges);
         glauberMetropolis_Nstep(N, T, s, neigh_len, node_edges, update_mode);
     }
-    printf("\n");
+    // printf("\n");
     fwrite(ene, sizeof(*ene), T_STEPS, f_ene);
     fwrite(m, sizeof(*m), T_STEPS, f_magn);
+    fflush(stdout);  // Clear any existing buffered output
+    fwrite(s, sizeof(*s), N, stdout);
     //
     fclose(f_sini);
     fclose(f_s);
