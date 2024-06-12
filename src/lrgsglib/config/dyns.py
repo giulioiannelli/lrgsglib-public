@@ -1,5 +1,5 @@
 from random import sample
-from subprocess import call
+import subprocess
 from tqdm import tqdm
 
 from ..nx_patches.funcs import *
@@ -100,7 +100,7 @@ class SignedRW(BinDynSys):
             adjfname,
             out_suffix
         ]
-        call(self.cprogram)
+        subprocess.call(self.cprogram)
 
     def run(self, **kwargs):
         if self.runlang.startswith("py"):
@@ -154,7 +154,7 @@ class VoterModel(BinDynSys):
             adjfname,
             out_suffix
         ]
-        call(self.cprogram)
+        subprocess.call(self.cprogram)
 
     def run(self, **kwargs):
         if self.runlang.startswith("py"):
@@ -567,12 +567,13 @@ class IsingDynamics:
     #
     def run(  #
         self,
-        adjfname: str = "",
+        fnameSffx: str = "",
         out_suffix: str = "",
         tqdm_on: bool = True,
         thrmSTEP: int = 2,
         eqSTEP: int = 10,
         randstring_OPT: bool = True,
+        freq: int = 10,
     ):
         # name C0 and C1 to be modified, in C0 -> CS that is a single eigenstate is studied with all of his subclusters
         # name C1 -> CM where one studies the largest component of all the clusters
@@ -581,29 +582,29 @@ class IsingDynamics:
         except AttributeError:
             self.init_ising_dynamics(randstring_OPT)
         if self.runlang.startswith("C"):
-            if adjfname == "":
-                adjfname = self.sg.stdFname
+            if fnameSffx == "":
+                fnameSffx = self.sg.stdFname
             out_suffix = out_suffix + self.id_string_isingdyn
             if out_suffix == "":
                 out_suffix = '""'
             path = "src/lrgsglib/Ccore/bin"
             baseName = f"IsingSimulator{self.runlang[-1]}"
-            self.cprogram = [
-                pth_join(path, baseName),
-                f"{self.N}",
+            arglist = [f"{self.N}",
                 f"{self.T}",
                 f"{self.sg.pflip}",
-                adjfname,
-                f"{self.NoClust}",
+                fnameSffx, f"{self.NoClust}",
                 f"{thrmSTEP}",
                 f"{eqSTEP}",
                 self.sg.datPath,
                 out_suffix,
-                self.upd_mode
-            ]
+                self.upd_mode, f"{freq}"]
+            self.cprogram = [pth_join(path, baseName)] + arglist
             stderrFname = f"log/err{baseName}_{self.N}_{out_suffix}.log"
             stderr = open(stderrFname, 'w')
-            call(self.cprogram, stderr=stderr)
+            print(self.cprogram)
+            result = subprocess.run(self.cprogram, stderr=stderr, stdout=subprocess.PIPE)
+            output = result.stdout
+            self.s = np.frombuffer(output, dtype=np.int8)
         else:
             metropolis_1step = np.vectorize(self.metropolis, excluded="self")
             if self.save_magnetization:

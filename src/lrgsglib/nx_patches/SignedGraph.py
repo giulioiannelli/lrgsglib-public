@@ -377,6 +377,11 @@ class SignedGraph:
         ]
         return node_attrs
 
+    def load_vec_on_nodes(self, vec: np.ndarray, attr: str, on_graph: str = SG_GRAPH_REPR):
+        vecNodeAttr = {
+            nd: v for v, nd in zip(vec, self.GraphReprDict[on_graph].nodes)
+        }
+        nx.set_node_attributes(self.GraphReprDict[on_graph], vecNodeAttr, attr)
     def load_eigV_on_graph(self, which: int = 0, on_graph: str = SG_GRAPH_REPR, 
                            binarize: bool = False):
         try:
@@ -426,7 +431,31 @@ class SignedGraph:
         #     size: clNeg.count(size) for size in set(clNeg)
         # }
         return distNeg
-
+    def classify_ferroAntiferro_regions(self, attr_str: str = 's', on_graph: str = SG_GRAPH_REPR):
+        antiGroup = []
+        ferroGroup = []
+        graph = self.GraphReprDict[on_graph]
+        for node, att in graph.nodes(data=attr_str):
+            neighbors = graph.neighbors(node)
+            if all(graph.nodes[n][attr_str] == -att for n in neighbors):
+                antiGroup.append(node)
+            elif all(graph.nodes[n][attr_str] == att for n in neighbors):
+                ferroGroup.append(node)
+        
+        return ferroGroup, antiGroup
+    
+    # def classify_disorder_regions(self, attr_str: str = 's', on_graph: str = SG_GRAPH_REPR):
+    #     n_negnei = {}
+    #     graph = self.GraphReprDict[on_graph]
+    #     for node, att in graph.nodes(data=attr_str):
+    #         neighbors = graph.neighbors(node)
+    #         condition = (graph.nodes[n][attr_str] == -att for n in neighbors)
+    #         if all(condition):
+    #             n_negnei['all'].append(node)
+    #         else any(condition):
+    #             ferroGroup.append(node)
+        
+    #     return antiGroup, ferroGroup
     #
     def export_graph(self, MODE: str = "pickle"):
         if MODE == "pickle":
