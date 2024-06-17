@@ -1,7 +1,4 @@
 from .objects import *
-from scipy.sparse import spdiags
-from scipy.sparse import identity as scsp_identity
-from scipy.sparse.linalg import eigsh as scsp_eigsh
 class SignedGraph:
     sgpath = "custom_graph"
     syshapePth = ""

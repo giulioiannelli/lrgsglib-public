@@ -1,9 +1,5 @@
-from ..config.const import *
-from ..config.plotlib import imshow_colorbar_caxdivider
-from .funcs import *
-from .SignedGraph import SignedGraph
-
-
+from .objects import *
+#
 class Lattice2D(SignedGraph):
     #
     def __init__(
@@ -159,7 +155,7 @@ class Lattice2D(SignedGraph):
         def get_links_triangle(self, node: Any, on_g = L2D_ONREP):
             node2 = list(self.l.graph_neighbors(node, on_g))[0]
             common_neighbors = list(nx.common_neighbors(
-                self.l.GraphReprDict[on_g], node, node2))
+                self.l.gr[on_g], node, node2))
             try:
                 node3 = common_neighbors[0]
                 links = [(node, node2), (node2, node3), (node, node3)]
@@ -168,7 +164,7 @@ class Lattice2D(SignedGraph):
             return links
         #
         def get_links_square(self, node: Any, on_g = L2D_ONREP):
-            g = self.l.GraphReprDict[on_g]
+            g = self.l.gr[on_g]
             neighbors = list(g.neighbors(node))
             for i in range(1, len(neighbors)):
                 first_neighbor = neighbors[0]  # Always the first neighbor
@@ -192,9 +188,9 @@ class Lattice2D(SignedGraph):
         #
         def get_links_hexagon(self, node: int, 
                               on_g: str = L2D_ONREP):
-            graph = self.l.GraphReprDict[on_g]
+            graph = self.l.gr[on_g]
             nodes_in_cycle = [node]
-            node_nn = list(self.l.GraphReprDict[on_g].neighbors(node))
+            node_nn = list(self.l.gr[on_g].neighbors(node))
 
             samp_node_nn_1 = node_nn[0]
             node_nn.remove(samp_node_nn_1)
@@ -233,7 +229,7 @@ class Lattice2D(SignedGraph):
                                     for k in self.get_links_XERR(i, on_g)]
                     else:
                         tmplst = self.rNodeFlip[on_g]
-                        grph = self.l.GraphReprDict[on_g]
+                        grph = self.l.gr[on_g]
                         _ = 0
                         patternList = []
                         while _ < len(tmplst):
@@ -262,7 +258,7 @@ class Lattice2D(SignedGraph):
         #
         def get_links_rball(self, R: int = 1, center: Any = None, 
                             on_g: str = L2D_ONREP):
-            graph = self.l.GraphReprDict[on_g]
+            graph = self.l.gr[on_g]
             if not center:
                 center = self.centedge[on_g][0]
             neighs_to_flip = get_neighbors_within_distance(graph, center, R)
