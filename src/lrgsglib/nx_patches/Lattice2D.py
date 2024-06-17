@@ -103,7 +103,7 @@ class Lattice2D(SignedGraph):
         return np.where(np.array(list(map(lambda x: x[1], 
                                           list(self.G.degree())))) != degree)
     #
-    def get_central_edge(self, on_graph: str = L2D_ONREP):
+    def get_central_edge(self, on_g: str = L2D_ONREP):
         cnode = (self.side1//2-1, self.side2//2)
         cnode_t = (self.side1//2, self.side2//2)
         if self.geo == 'triangular':
@@ -115,9 +115,9 @@ class Lattice2D(SignedGraph):
                 cnode = cnode_t
                 cnode_t = (self.side1//2+1, self.side2//2)
                 edge_t = (cnode, cnode_t)
-        if on_graph == 'G':
+        if on_g == 'G':
             return self.edgeMap['G']['H'][edge_t]
-        elif on_graph == 'H':
+        elif on_g == 'H':
             return edge_t
     #
     class nwContainer(dict):
@@ -141,25 +141,25 @@ class Lattice2D(SignedGraph):
                 self.centedge[g][0], g) for g in self.rd}
             self['rand'] = {g: [e for e in self.l.fleset[g]] 
                             for g in self.rd}
-            self['randZERR'] = {g: self.get_rand_pattern('ZERR', on_graph=g) 
+            self['randZERR'] = {g: self.get_rand_pattern('ZERR', on_g=g) 
                                    for g in self.rd}
-            self['randXERR'] = {g: self.get_rand_pattern('XERR', on_graph=g) 
+            self['randXERR'] = {g: self.get_rand_pattern('XERR', on_g=g) 
                                    for g in self.rd}
         #
-        def get_links_XERR(self, node: Any, on_graph: str = L2D_ONREP):
-            return [(node, nn) for nn in self.l.graph_neighbors(node, on_graph)]
+        def get_links_XERR(self, node: Any, on_g: str = L2D_ONREP):
+            return [(node, nn) for nn in self.l.graph_neighbors(node, on_g)]
         #
-        def get_links_ZERR(self, node: Any, on_graph: str = L2D_ONREP, 
+        def get_links_ZERR(self, node: Any, on_g: str = L2D_ONREP, 
                            geometry: str = L2D_GEO):
             dd = {'triangular': self.get_links_triangle,
              'squared': self.get_links_square,
              'hexagonal': self.get_links_hexagon}
-            return dd[geometry](node, on_graph)
+            return dd[geometry](node, on_g)
         #
-        def get_links_triangle(self, node: Any, on_graph = L2D_ONREP):
-            node2 = list(self.l.graph_neighbors(node, on_graph))[0]
+        def get_links_triangle(self, node: Any, on_g = L2D_ONREP):
+            node2 = list(self.l.graph_neighbors(node, on_g))[0]
             common_neighbors = list(nx.common_neighbors(
-                self.l.GraphReprDict[on_graph], node, node2))
+                self.l.GraphReprDict[on_g], node, node2))
             try:
                 node3 = common_neighbors[0]
                 links = [(node, node2), (node2, node3), (node, node3)]
@@ -167,8 +167,8 @@ class Lattice2D(SignedGraph):
                 links = [(node, node2)]
             return links
         #
-        def get_links_square(self, node: Any, on_graph = L2D_ONREP):
-            g = self.l.GraphReprDict[on_graph]
+        def get_links_square(self, node: Any, on_g = L2D_ONREP):
+            g = self.l.GraphReprDict[on_g]
             neighbors = list(g.neighbors(node))
             for i in range(1, len(neighbors)):
                 first_neighbor = neighbors[0]  # Always the first neighbor
@@ -191,10 +191,10 @@ class Lattice2D(SignedGraph):
             return links
         #
         def get_links_hexagon(self, node: int, 
-                              on_graph: str = L2D_ONREP):
-            graph = self.l.GraphReprDict[on_graph]
+                              on_g: str = L2D_ONREP):
+            graph = self.l.GraphReprDict[on_g]
             nodes_in_cycle = [node]
-            node_nn = list(self.l.GraphReprDict[on_graph].neighbors(node))
+            node_nn = list(self.l.GraphReprDict[on_g].neighbors(node))
 
             samp_node_nn_1 = node_nn[0]
             node_nn.remove(samp_node_nn_1)
@@ -225,47 +225,46 @@ class Lattice2D(SignedGraph):
             links = [tuple(sorted(edge)) for edge in subH.edges()]
             return links
         #
-        def get_rand_pattern(self, mode: str, 
-                             on_graph: str = L2D_ONREP):
-            if mode == "ZERR":
-                if self.l.geo == 'squared':
-                    mode = "square"
-                elif self.l.geo == 'triangular':
-                    mode = "triangle"
-                elif self.l.geo == 'hexagonal':
-                    mode = "hexagon"
-            if mode == "XERR":
-                patternList = [k for i in self.rNodeFlip[on_graph] 
-                               for k in self.get_links_XERR(i, on_graph)]
-                # Maybe introduce a way to remove the nodes already flipped away
-                # tmplst = self.rNodeFlip[on_graph]
-                # grph = self.l.GraphReprDict[on_graph]
-                # _ = 0
-                # patternList = []
-                # while _ < len(tmplst):
-                #     leval = [all([nnn['weight'] == -1 for nnn in grph[nn]])
-                #             for nn in grph.neighbors(_)]
-                #     if any(leval):
-                #         tmplst.pop(_)  # Removing the element
-                #     else:
-                #         patternList.append([k for k in self.get_links_XERR(tmplst[_], on_graph)])
-                #         _ += 1 
-            elif mode == "hexagon":
-                patternList = [k for i in self.rNodeFlip[on_graph]
-                                for k in self.get_links_hexagon(i, on_graph)]
-            elif mode == "square":
-                patternList = [k for i in self.rNodeFlip[on_graph] 
-                               for k in self.get_links_square(i, on_graph)]
-            elif mode == "triangle":
-                patternList = [k for i in self.rNodeFlip[on_graph] 
-                               for k in self.get_links_triangle(i, on_graph)]
+        def get_rand_pattern(self, mode: str, on_g: str = L2D_ONREP):
+            match mode:
+                case "XERR":
+                    if COUNT_XERR_PATTERNS:
+                        patternList = [k for i in self.rNodeFlip[on_g] 
+                                    for k in self.get_links_XERR(i, on_g)]
+                    else:
+                        tmplst = self.rNodeFlip[on_g]
+                        grph = self.l.GraphReprDict[on_g]
+                        _ = 0
+                        patternList = []
+                        while _ < len(tmplst):
+                            leval = [all([nnn['weight'] == -1 
+                                        for nnn in grph[nn].values()])
+                                        for nn in grph.neighbors(tmplst[_])]
+                            if any(leval):
+                                tmplst.pop(_)  # Removing the element
+                            else:
+                                glXERR = self.get_links_XERR(tmplst[_], 
+                                                             on_g)
+                                patternList.extend([k for k in glXERR])
+                                _ += 1
+                case "ZERR":
+                    match self.l.geo:
+                        case 'squared':
+                            patternList = [k for i in self.rNodeFlip[on_g] 
+                                for k in self.get_links_square(i, on_g)]
+                        case "hexagonal":
+                            patternList = [k for i in self.rNodeFlip[on_g]
+                                for k in self.get_links_hexagon(i, on_g)]    
+                        case "triangular":
+                            patternList = [k for i in self.rNodeFlip[on_g] 
+                               for k in self.get_links_triangle(i, on_g)]
             return list(set(patternList))
         #
         def get_links_rball(self, R: int = 1, center: Any = None, 
-                            on_graph: str = L2D_ONREP):
-            graph = self.l.GraphReprDict[on_graph]
+                            on_g: str = L2D_ONREP):
+            graph = self.l.GraphReprDict[on_g]
             if not center:
-                center = self.centedge[on_graph][0]
+                center = self.centedge[on_g][0]
             neighs_to_flip = get_neighbors_within_distance(graph, center, R)
             links = {(node, neighbor) for node in neighs_to_flip 
                      for neighbor in graph.neighbors(node)}
