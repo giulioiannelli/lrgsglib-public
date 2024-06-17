@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.cm as cm
 from matplotlib.cm import twilight
-from matplotlib.colors import LinearSegmentedColormap, ListedColormap 
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
 
 twilight_lim_low = 0.2
