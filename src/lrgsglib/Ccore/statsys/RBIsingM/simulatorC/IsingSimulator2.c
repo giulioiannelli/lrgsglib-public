@@ -5,7 +5,7 @@
 
 #define ISNG_DIR "%sising/"
 #define S_FNAME ISNG_DIR "N=%zu/sOut_%s_T=%.3g_%s" BINX
-#define SINI_FNAME ISNG_DIR "N=%zu/s_%s" BINX
+#define SINI_FNAME ISNG_DIR "N=%zu/s_%s_%s" BINX
 #define ENE_FNAME ISNG_DIR "N=%zu/ene_%s_T=%.3g_%s" BINX
 #define MAGN_FNAME ISNG_DIR "N=%zu/magn_%s_T=%.3g_%s" BINX
 
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     //
     FILE *f_sini, *f_s, *f_ene, *f_magn;
     char buf[STRL512];
-    char *ptr, *datdir, *out_id, *code_id, *update_mode;
+    char *ptr, *datdir, *out_id, *in_id, *update_mode;
     int nSampleLog;
     int* logspc;
     double T, p, thrmSTEP;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     side = (size_t)sqrt(N);
     T = strtod(argv[2], &ptr);
     p = strtod(argv[3], &ptr);
-    code_id = argv[4];
+    in_id = argv[4];
     // we miss argv[5]
     thrmSTEP = strtod(argv[6], &ptr);
     eqSTEP = strtozu(argv[7]);
@@ -70,16 +70,16 @@ int main(int argc, char *argv[])
     m = __chMalloc(sizeof(*m) * T_STEPS);
     ene = __chMalloc(sizeof(*ene) * T_STEPS);
     //
-    sprintf(buf, ENE_FNAME, datdir, N, code_id, T, out_id);
+    sprintf(buf, ENE_FNAME, datdir, N, in_id, T, out_id);
     __fopen(&f_ene, buf, "ab");
-    sprintf(buf, MAGN_FNAME, datdir, N, code_id, T, out_id);
+    sprintf(buf, MAGN_FNAME, datdir, N, in_id, T, out_id);
     __fopen(&f_magn, buf, "ab");
-    sprintf(buf, SINI_FNAME, datdir, N, code_id);
+    sprintf(buf, SINI_FNAME, datdir, N, in_id, out_id);
     __fopen(&f_sini, buf, "rb");
-    sprintf(buf, S_FNAME, datdir, N, code_id, T, out_id);
+    sprintf(buf, S_FNAME, datdir, N, in_id, T, out_id);
     __fopen(&f_s, buf, "ab");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
-    sprintf(buf, EDGL_FNAME, datdir, N, code_id);
+    sprintf(buf, EDGL_FNAME, datdir, N, in_id);
     process_edges(buf, N, &edges, &node_edges, &neigh_len);
     //  
     size_t freq = (size_t) (T_STEPS / nSampleLog);

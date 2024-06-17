@@ -103,6 +103,6 @@
         "79",
         "--experimental-string-processing"
         ],        
-    "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/lrgsglib/src/LRGSG_package/SFMT",
+    "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/lrgsglib/src/lrgsglib/Ccore/SFMT",
     "CodeGPT.apiKey": "OpenAI"
 }

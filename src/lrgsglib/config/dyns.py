@@ -18,7 +18,11 @@ class BinDynSys:
         runlang: str = "py",
         simpref: int = 1,
         savedyn: bool = False,
+        seed: int = None,
     ):
+        if seed:
+            random.seed(seed)
+            np.random.seed(seed)
         self.sg = sg
         self.ic = ic
         self.runlang = runlang
@@ -485,13 +489,17 @@ class IsingDynamics:
     def __init__(
         self,
         sg: SignedGraph = Lattice2D,
-        T: float = 1.0,
+        T: float = None,
         ic: str = "uniform",
         runlang: str = "py",
         NoClust: int = 1,
         nstepsIsing: int = 100,
         save_magnetization: bool = False,
         upd_mode: str = "asynchronous",
+        out_suffix: str = "",
+        in_suffix: str = "",
+        randstring_OPT: bool = False,
+        id_string: str = "",
     ) -> None:
         self.runlang = runlang
         self.sg = sg
@@ -502,106 +510,92 @@ class IsingDynamics:
         self.save_magnetization = save_magnetization
         self.NoClust = NoClust
         self.upd_mode = upd_mode
+        self.in_suffix = in_suffix or self.sg.stdFname
+        self.randstring_OPT = randstring_OPT
+        self.id_string_isingdyn = id_string
+        self.id_string_isingdyn = id_string or randstring() if randstring_OPT else ""
+        self.out_suffix = out_suffix + self.id_string_isingdyn
     #
-    def bltzmnn_fact(self, enrgy: float) -> float:
-        return np.exp(-enrgy / (self.k_B * self.T))
-
+    def bltzmnn_fact(self, E: float) -> float:
+        return np.exp(-E / (self.k_B * self.T))
     #
     def flip_spin(self, nd: int) -> None:
-        """
-        Flips the spin of a particle at a specified index within the system.
-
-        Parameters:
-        - nd (int): The index of the particle/spin to be flipped.
-
-        Returns:
-        - None
-
-        Modifies the state of the system by flipping the sign of the particle
-        at the given index `nd`.
-        """
         self.s[nd] *= -1
-
     #
     def neigh_ene(self, neigh: list) -> float:
         return np.sum(neigh) / len(neigh)
-
     #
     def neigh_wghtmagn(self, node: int) -> list:
-        node_dict = dict(self.sg.H[node])
-        return [w["weight"] * self.s[nn] for nn, w in node_dict.items()]
-
+        nd = dict(self.sg.G[node])
+        return [w["weight"] * self.s[nn] for nn, w in nd.items()]
     #
     def metropolis(self, node):
         neigh = self.neigh_wghtmagn(node)
         neighene = self.neigh_ene(neigh)
-        E_old = -self.s[node] * neighene
-        E_new = +self.s[node] * neighene
-        DeltaE = E_new - E_old
+        DeltaE = 2 * self.s[node] * neighene
         if DeltaE < 0:
             self.flip_spin(node)
         elif np.random.uniform() < self.bltzmnn_fact(DeltaE):
             self.flip_spin(node)
-
     #
     def calc_full_energy(self):
-        return np.array(
-            [
+        return np.array([
                 -self.s[node] * self.neigh_ene(self.neigh_wghtmagn(node))
-                for node in range(self.sg.N)
-            ]
-        ).sum()
-
+                for node in range(self.sg.N)]).sum()
     #
-    def init_ising_dynamics(self, randstring_OPT: bool = True):
-        self.id_string_isingdyn = randstring() if randstring_OPT else ""
-        if self.ic == "uniform":
-            self.s = np.random.choice([-1, 1], size=self.sg.N)
-        elif self.ic.startswith("ground_state"):
-            number = int(self.ic.split("_")[-1])
-            bineigv = self.sg.bin_eigV(which=number)
-            self.s = bineigv
+    def init_ising_dynamics(self, custom: Iterable = None):
+        self.out_suffix += self.id_string_isingdyn
+        match self.ic:
+            case "uniform":
+                self.s = np.random.choice([-1, 1], size=self.sg.N)
+            case _ if self.ic.startswith("ground_state"):
+                number = int(self.ic.split("_")[-1])
+                bineigv = self.sg.bin_eigV(which=number)
+                self.s = bineigv
+            case "custom":
+                self.s = custom
+            case _:
+                raise ValueError("Invalid initial condition.")
         if self.runlang.startswith("C") and not self.sg.import_on:
             self.export_s_init()
-
+            self.CbaseName = f"IsingSimulator{self.runlang[-1]}"
     #
     def run(  #
         self,
-        fnameSffx: str = "",
-        out_suffix: str = "",
         tqdm_on: bool = True,
         thrmSTEP: int = 2,
         eqSTEP: int = 10,
-        randstring_OPT: bool = True,
         freq: int = 10,
+        T_ising: float = None,
+        verbose: bool = False,
     ):
         # name C0 and C1 to be modified, in C0 -> CS that is a single eigenstate is studied with all of his subclusters
         # name C1 -> CM where one studies the largest component of all the clusters
         try:
-            getattr(self, f"id_string_isingdyn")
+            getattr(self, f"CbaseName")
         except AttributeError:
-            self.init_ising_dynamics(randstring_OPT)
+            self.init_ising_dynamics()
+        if T_ising:
+            self.T = T_ising
         if self.runlang.startswith("C"):
-            if fnameSffx == "":
-                fnameSffx = self.sg.stdFname
-            out_suffix = out_suffix + self.id_string_isingdyn
-            if out_suffix == "":
-                out_suffix = '""'
-            path = "src/lrgsglib/Ccore/bin"
-            baseName = f"IsingSimulator{self.runlang[-1]}"
+            
             arglist = [f"{self.N}",
-                f"{self.T}",
-                f"{self.sg.pflip}",
-                fnameSffx, f"{self.NoClust}",
+                f"{self.T:.3g}",
+                f"{self.sg.pflip:.3g}",
+                self.in_suffix, 
+                f"{self.NoClust}",
                 f"{thrmSTEP}",
                 f"{eqSTEP}",
                 self.sg.datPath,
-                out_suffix,
-                self.upd_mode, f"{freq}"]
-            self.cprogram = [pth_join(path, baseName)] + arglist
-            stderrFname = f"log/err{baseName}_{self.N}_{out_suffix}.log"
+                self.out_suffix,
+                self.upd_mode, 
+                f"{freq}"]
+            self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
+            stderrFname = f"err{self.CbaseName}_{self.N}_{self.out_suffix}.log"
+            stderrFname = os.path.join(LRGSG_LOG, stderrFname)
             stderr = open(stderrFname, 'w')
-            print(self.cprogram)
+            if verbose:
+                print(self.cprogram)
             result = subprocess.run(self.cprogram, stderr=stderr, stdout=subprocess.PIPE)
             output = result.stdout
             self.s = np.frombuffer(output, dtype=np.int8)
@@ -719,7 +713,7 @@ class IsingDynamics:
 
     #
     def export_s_init(self):
-        fname = f"{self.sg.isingpath}s_{self.sg.stdFname}.bin"
+        fname = f"{self.sg.isingpath}s_{self.in_suffix}_{self.out_suffix}.bin"
         fout = open(fname, "wb")
         self.s.astype("int8").tofile(fout)
     #

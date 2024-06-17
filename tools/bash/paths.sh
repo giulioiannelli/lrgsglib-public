@@ -4,6 +4,7 @@
 paths=(
     "LRGSG_ROOT"
     "LRGSG_BUILD=\"\${LRGSG_ROOT}/build\""
+    "LRGSG_LOG=\"\${LRGSG_ROOT}/log\""
     "LRGSG_DATA=\"\${LRGSG_ROOT}/data\""
     "LRGSG_IPYNB=\"\${LRGSG_ROOT}/ipynb\""
     "LRGSG_SRC=\"\${LRGSG_ROOT}/src\""

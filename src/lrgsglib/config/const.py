@@ -17,6 +17,7 @@ PKL = ".pkl"
 LB_PFLIP = 0.
 UB_PFLIP = 1.
 # paths
+load_dotenv()
 LRGSG_ROOT = os.getenv('LRGSG_ROOT')
 LRGSG_BUILD = os.getenv('LRGSG_BUILD')
 LRGSG_DATA = os.getenv('LRGSG_DATA')
@@ -31,6 +32,7 @@ LRGSG_LIB_NX_PATCHES = os.getenv('LRGSG_LIB_NX_PATCHES')
 LRGSG_LIB_STOCPROC = os.getenv('LRGSG_LIB_STOCPROC')
 LRGSG_TEST = os.getenv('LRGSG_TEST')
 LRGSG_TOOLS = os.getenv('LRGSG_TOOLS')
+LRGSG_LOG = os.getenv('LRGSG_LOG')
 #
 DIR_DAT = "data/"
 DIR_PLT = "plot/"

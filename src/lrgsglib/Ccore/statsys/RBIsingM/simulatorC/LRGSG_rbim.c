@@ -111,7 +111,8 @@ void glauber_metropolis_Nstep(size_t N, double T, spin_tp s, size_tp nlen,
  * @return           None
  */
 void glauber_metropolis_Nstep_mode(size_t N, double T, spin_tp s, size_tp nlen,
-                       size_tp *neighs, double_p *edgl, const char *update_mode) {
+                       size_tp *neighs, double_p *edgl, const char *update_mode)
+{
     for (size_t i = 0; i < N; i++)
         glauber_metropolis_1step(i, T, s, nlen, neighs, edgl);
     if (update_mode == NULL || strcmp(update_mode, "sequential") == 0) {
@@ -133,7 +134,10 @@ void glauber_metropolis_Nstep_mode(size_t N, double T, spin_tp s, size_tp nlen,
         // Handle invalid update mode (consider error handling)
     }
 }
-void simulated_annealing(size_t N, spin_tp s, size_tp nlen, size_tp *neighs, double_p *edgl, double T_start, double T_end, double cooling_rate, const char *update_mode) {
+void simulated_annealing(size_t N, spin_tp s, size_tp nlen, size_tp *neighs, 
+    double_p *edgl, double T_start, double T_end, double cooling_rate, 
+    const char *update_mode)
+{
     double T = T_start;
     while (T > T_end) {
         glauber_metropolis_Nstep_mode(N, T, s, nlen, neighs, edgl, update_mode);

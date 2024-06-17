@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec, rc_context
 from matplotlib.axes import Axes
 from matplotlib.cm import hsv, twilight, ScalarMappable
-from matplotlib.colors import Colormap, ListedColormap
+from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
 from matplotlib.path import Path

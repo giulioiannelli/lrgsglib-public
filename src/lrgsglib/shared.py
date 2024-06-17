@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from cycler import cycler
+from dotenv import load_dotenv
 from itertools import product
 from networkx.classes.graph import Graph
 from numpy.typing import NDArray
