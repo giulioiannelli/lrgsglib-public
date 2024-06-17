@@ -18,7 +18,11 @@ class SignedGraph:
         expOutdir: str = "",
         dataOutdir: str = "",
         plotOutdir: str = "",
+        seed: int = None,
     ):
+        if seed:
+            random.seed(seed)
+            np.random.seed(seed)
         self.GraphReprDict = {}
         self.nodeMap = {}
         self.edgeMap = {}
@@ -325,8 +329,8 @@ class SignedGraph:
         # Compute the product of weights and spins for each edge
         Eij = Jij * spins[Aij[:, 0]] * spins[Aij[:, 1]]
         # Sum the product terms
-        E = np.sum(Eij)
-        return E
+        E = -np.sum(Eij)
+        return E/self.N
 
     def bin_eigV_all(self):
         try:
@@ -477,18 +481,19 @@ class SignedGraph:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)
     #
-    def export_edgel_bin(self, on_graph: str = SG_GRAPH_REPR, 
+    def export_edgel_bin(self, on_graph: str = SG_GRAPH_REPR, expoName: str = "",
                          print_msg: bool = False, mode: str = 'numpy') -> None:
         edges = self.GraphReprDict[on_graph].edges(data='weight')
+        exname = expoName or self.stdFname
         match mode:
             case 'numpy':
                 edge_array = np.array(list(edges), 
                                  dtype=[('i', np.uint64), #these has to be changed based on the repr
                                         ('j', np.uint64), #these has to be changed based on the repr
                                         ('w_ij', np.float64)])
-                edge_array.tofile(f"{self.expOutdir}edgelist_{self.stdFname}.bin")
+                edge_array.tofile(f"{self.expOutdir}edgelist_{exname}.bin")
             case 'struct':
-                with open(f"{self.expOutdir}edgelist_{self.stdFname}.bin", "wb") as f:
+                with open(f"{self.expOutdir}edgelist_{exname}.bin", "wb") as f:
                     for edge in edges:
                         f.write(struct.pack("QQd", edge[0], edge[1], edge[2]))
 

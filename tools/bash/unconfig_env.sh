@@ -3,6 +3,7 @@
 # Unset directories
 unset LRGSG_ROOT
 unset LRGSG_BUILD
+unset LRGSG_LOG
 unset LRGSG_DATA
 unset LRGSG_IPYNB
 unset LRGSG_SRC

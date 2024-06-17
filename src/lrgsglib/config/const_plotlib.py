@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.cm as cm
 from matplotlib.cm import twilight
-from matplotlib.colors import LinearSegmentedColormap   
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap 
 
 
 twilight_lim_low = 0.2
@@ -14,6 +14,7 @@ restr_twilight_vals = twilight(
 restr_twilight = LinearSegmentedColormap.from_list(
     "restr_twilight", restr_twilight_vals
 )
+credcblu = ListedColormap([cred, cblu])
 cm.register_cmap(name="restr_twilight", cmap=restr_twilight)
 cm.register_cmap(name='restr_twilight_r', cmap=restr_twilight.reversed())
 
