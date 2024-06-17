@@ -239,11 +239,17 @@ class Lattice2D(SignedGraph):
                                for k in self.get_links_XERR(i, on_graph)]
                 # Maybe introduce a way to remove the nodes already flipped away
                 # tmplst = self.rNodeFlip[on_graph]
-                # while i < len(tmplst):
-                #     if tmplst[i] == 3:
-                #         lst.pop(i)  # Removing the element
+                # grph = self.l.GraphReprDict[on_graph]
+                # _ = 0
+                # patternList = []
+                # while _ < len(tmplst):
+                #     leval = [all([nnn['weight'] == -1 for nnn in grph[nn]])
+                #             for nn in grph.neighbors(_)]
+                #     if any(leval):
+                #         tmplst.pop(_)  # Removing the element
                 #     else:
-                #         i += 1 
+                #         patternList.append([k for k in self.get_links_XERR(tmplst[_], on_graph)])
+                #         _ += 1 
             elif mode == "hexagon":
                 patternList = [k for i in self.rNodeFlip[on_graph]
                                 for k in self.get_links_hexagon(i, on_graph)]
