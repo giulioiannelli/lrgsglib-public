@@ -9,10 +9,8 @@
 #define ENE_FNAME ISNG_DIR "N=%zu/ene_%s_T=%.3g_%s" BINX
 #define MAGN_FNAME ISNG_DIR "N=%zu/magn_%s_T=%.3g_%s" BINX
 
-
 #define GRPH_DIR "%sgraphs/"
 #define ADJ_FNAME GRPH_DIR "N=%zu/adj_%s" BINX
-// #define EDGL_FNAME GRPH_DIR "N=%zu/edgel_%s" TXTX
 #define EDGL_FNAME GRPH_DIR "N=%zu/edgelist_%s" BINX
 
 #define T_THERM_STEP (thrmSTEP * N)
@@ -27,14 +25,16 @@ uint32_t *seed_rand;
 
 int main(int argc, char *argv[])
 {
+    /* check argc */
     if (argc != EXPECTED_ARGC) {
         fprintf(stderr, "Usage: %s N T p code_id <free-arg> thrmSTEP eqSTEP \
             datdir out_id update_mode nSampleLog\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-    //
+    /* seed the SFMT RNG */
     __set_seed_SFMT();
     srand(time(NULL));
+    /* variables */
     //
     FILE *f_sini, *f_s, *f_ene, *f_magn;
     char buf[STRL512];
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     T = strtod(argv[2], &ptr);
     p = strtod(argv[3], &ptr);
     in_id = argv[4];
-    // we miss argv[5]
+    // we miss argv[5], which is Noclust
     thrmSTEP = strtod(argv[6], &ptr);
     eqSTEP = strtozu(argv[7]);
     datdir = argv[8];
@@ -76,9 +76,9 @@ int main(int argc, char *argv[])
     __fopen(&f_magn, buf, "ab");
     sprintf(buf, SINI_FNAME, datdir, N, in_id, out_id);
     __fopen(&f_sini, buf, "rb");
+    __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     sprintf(buf, S_FNAME, datdir, N, in_id, T, out_id);
     __fopen(&f_s, buf, "ab");
-    __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     sprintf(buf, EDGL_FNAME, datdir, N, in_id);
     process_edges(buf, N, &edges, &node_edges, &neigh_len);
     //  
