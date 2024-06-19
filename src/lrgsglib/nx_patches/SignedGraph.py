@@ -304,19 +304,14 @@ class SignedGraph:
             self.eigV = self.eigV.T
 
     #
+    def eigVbin(self, which: int = 0):
+        return flip_to_positive_majority(
+            np.sign(np.where(self.eigV[which] == 0, +1, self.eigV[which])))
+    
     def bin_eigV(self, which: int = 0):
-        try:
-            eigVbin = np.sign(
-                np.where(self.eigV[which] == 0, +1, self.eigV[which])
-            )
-        except (AttributeError, IndexError):
-            self.compute_k_eigvV(howmany=which + 1)
-            eigVbin = flip_to_positive_majority(np.sign(
-                    np.where(self.eigV[which] == 0, +1, self.eigV[which])
-                )
-            )
-
-        return eigVbin
+        if not hasattr(self, f"eigV[{which}]]"):
+            self.compute_k_eigvV(howmany=which+1)
+        return self.eigVbin(which)
     
     def compute_rbim_energy_eigV(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
         spins = self.bin_eigV(which)
@@ -330,6 +325,7 @@ class SignedGraph:
         return E/self.N
 
     def bin_eigV_all(self):
+        # to be reviewed must flip to positive majority
         try:
             eigVbin = np.sign(np.where(self.eigV == 0, +1, self.eigV))
         except (AttributeError, IndexError):
@@ -338,7 +334,7 @@ class SignedGraph:
         return eigVbin
 
     def calc_Pinf(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
-        cd = self.cluster_sizes(which, on_g)
+        cd = self.eigV_Cluster_sizes(which, on_g)
         size = cd[0]
         # eV_p = np.count_nonzero(eigV >= 0)
         # eV_n = self.N - eV_p
@@ -403,23 +399,29 @@ class SignedGraph:
         G = self.GraphReprDict[on_g]
         G_yes, G_no = G.copy(), G.copy()
         for node, v in G.nodes(data=k):
-            if v == val:
+            if v != val:
                 G_yes.remove_node(node)
             else:
                 G_no.remove_node(node)
         return G_yes, G_no
 
-    def cluster_sizes(self, which: int = 0, on_g: str = SG_GRAPH_REPR, binarize: bool = True):
+    def eigV_Cluster_sizes(self, which: int = 0, on_g: str = SG_GRAPH_REPR, 
+                      binarize: bool = True):
         self.load_eigV_on_g(which, on_g, binarize)
-        G_pos, G_neg = self.group_nodes_by_kv(f"eigV{which}", -1, on_g)
-        clusters = list(nx.connected_components(G_neg))
-        clusterLen = sorted(list(map(lambda x: len(x), clusters)), reverse=True)
+        if not hasattr(self, "clusters"):
+            self.compute_clusters(f"eigV{which}", +1, which, on_g)
+        clusterLen = sorted(list(map(lambda x: len(x), self.clusters)), 
+                            reverse=True)
         return clusterLen
     
+    def compute_clusters(self, k, val, on_g: str = SG_GRAPH_REPR):
+        G_yes, _ = self.group_nodes_by_kv(k, val, on_g)
+        self.clusters = list(nx.connected_components(G_yes))
+        self.numClusters = len(self.clusters)
     def cluster_distribution(self, which: int = 0, 
                                   on_g: str = SG_GRAPH_REPR,
                                   binarize: bool = True):
-        clusterLen = self.cluster_sizes(which, on_g, binarize)
+        clusterLen = self.eigV_Cluster_sizes(which, on_g, binarize)
         distNeg = {
             size: clusterLen.count(size) for size in set(clusterLen)
         }

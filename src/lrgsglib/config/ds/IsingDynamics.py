@@ -10,7 +10,7 @@ class IsingDynamics:
 
     def __init__(
         self,
-        sg: SignedGraph = Lattice2D,
+        sg: SignedGraph,
         T: float = None,
         ic: str = "uniform",
         runlang: str = "py",
@@ -20,7 +20,7 @@ class IsingDynamics:
         upd_mode: str = "asynchronous",
         out_suffix: str = "",
         in_suffix: str = "",
-        randstring_OPT: bool = False,
+        rndStr: bool = False,
         id_string: str = "",
     ) -> None:
         self.runlang = runlang
@@ -33,9 +33,9 @@ class IsingDynamics:
         self.NoClust = NoClust
         self.upd_mode = upd_mode
         self.in_suffix = in_suffix or self.sg.stdFname
-        self.randstring_OPT = randstring_OPT
+        self.randstring_OPT = rndStr
         self.id_string_isingdyn = id_string
-        randstr_tmp = randstring() if randstring_OPT else ""
+        randstr_tmp = randstring() if rndStr else ""
         self.id_string_isingdyn = id_string or randstr_tmp
         outs_plus = '_'.join([out_suffix, self.id_string_isingdyn])
         self.out_suffix = outs_plus if self.id_string_isingdyn else out_suffix
@@ -101,7 +101,6 @@ class IsingDynamics:
         if T_ising:
             self.T = T_ising
         if self.runlang.startswith("C"):
-            
             arglist = [f"{self.N}",
                 f"{self.T:.3g}",
                 f"{self.sg.pflip:.3g}",
@@ -118,7 +117,7 @@ class IsingDynamics:
             stderrFname = os.path.join(LRGSG_LOG, stderrFname)
             stderr = open(stderrFname, 'w')
             if verbose:
-                print(self.cprogram)
+                print('\rExecuting: ', ' '.join(self.cprogram), end='', flush=True)
             result = subprocess.run(self.cprogram, stderr=stderr, stdout=subprocess.PIPE)
             output = result.stdout
             self.s = np.frombuffer(output, dtype=np.int8)
@@ -240,20 +239,38 @@ class IsingDynamics:
         fout = open(fname, "wb")
         self.s.astype("int8").tofile(fout)
     #
-    def export_ising_clust(self):
+    def export_ising_clust(self, val: Any = +1, which: int = 0, 
+                           on_g: str = SG_GRAPH_REPR, binarize: bool = True): 
+        self.sg.load_eigV_on_g(which, on_g, binarize)
+        self.sg.compute_clusters(f"eigV{which}", val, on_g=on_g)
         try:
-            if self.NoClust > self.numIsing_cl:
+            if self.NoClust > self.sg.numClusters:
                 raise NoClustError(
                     "Requested number of Cluster files is bigger than the one"
                     " in selected topology."
                 )
         except NoClustError as excpt:
             print(excpt)
-
         for i in range(self.NoClust):
-            fname = f"{self.sg.isingpath}cl{i}_{self.sg.stdFname}.bin"
+            fname = os.path.join(self.sg.isingpath, 
+                                  '_'.join([f"cl{i}", self.in_suffix,
+                                            self.out_suffix])+BIN)
             fout = open(fname, "wb")
-            np.array(self.Ising_clusters[i]).astype(int).tofile(fout)
+            np.array(list(self.sg.clusters[i])).astype(int).tofile(fout)
+        # try:
+        #     if self.NoClust > self.numIsing_cl:
+        #         raise NoClustError(
+        #             "Requested number of Cluster files is bigger than the one"
+        #             " in selected topology."
+        #         )
+        # except NoClustError as excpt:
+        #     print(excpt)
+
+        # for i in range(self.NoClust):
+        #     fname = '_'.join([f"{self.sg.isingpath}cl{i}", self.in_suffix,
+        #                      self.out_suffix])+BIN
+        #     fout = open(fname, "wb")
+        #     np.array(self.Ising_clusters[i]).astype(int).tofile(fout)
 
 
 class IsingDynamics_DEV(BinDynSys):
