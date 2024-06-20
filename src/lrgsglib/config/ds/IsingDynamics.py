@@ -37,7 +37,10 @@ class IsingDynamics:
         self.id_string_isingdyn = id_string
         randstr_tmp = randstring() if rndStr else ""
         self.id_string_isingdyn = id_string or randstr_tmp
-        outs_plus = '_'.join([out_suffix, self.id_string_isingdyn])
+        if out_suffix:
+            outs_plus = '_'.join([out_suffix, self.id_string_isingdyn]) 
+        else:
+            outs_plus = self.id_string_isingdyn
         self.out_suffix = outs_plus if self.id_string_isingdyn else out_suffix
     #
     def bltzmnn_fact(self, E: float) -> float:
@@ -115,24 +118,22 @@ class IsingDynamics:
             self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
             stderrFname = f"err{self.CbaseName}_{self.N}_{self.out_suffix}.log"
             stderrFname = os.path.join(LRGSG_LOG, stderrFname)
-            stderr = open(stderrFname, 'w')
+            self.stderr = open(stderrFname, 'w')
             if verbose:
-                print('\rExecuting: ', ' '.join(self.cprogram), end='', flush=True)
-            result = subprocess.run(self.cprogram, stderr=stderr, stdout=subprocess.PIPE)
+                print('\rExecuting: ', ' '.join(self.cprogram), end='', 
+                      flush=True)
+            result = subprocess.run(self.cprogram, stderr=self.stderr, 
+                                    stdout=subprocess.PIPE)
             output = result.stdout
             self.s = np.frombuffer(output, dtype=np.int8)
         else:
             metropolis_1step = np.vectorize(self.metropolis, excluded="self")
             if self.save_magnetization:
-
                 def save_magn_array():
                     self.magn_array_save.append(self.s)
-
             else:
-
                 def save_magn_array():
                     pass
-
             sample = list(
                 range(self.sg.N)
             )  # rd.sample(list(self.system.H.nodes()), self.system.N)
@@ -235,9 +236,10 @@ class IsingDynamics:
 
     #
     def export_s_init(self):
-        fname = f"{self.sg.isingpath}s_{self.in_suffix}_{self.out_suffix}.bin"
-        fout = open(fname, "wb")
-        self.s.astype("int8").tofile(fout)
+        fname = os.path.join(self.sg.isingpath,
+                     '_'.join(['s', self.in_suffix, self.out_suffix])+BIN)
+        self.sfout = open(fname, "wb")
+        self.s.astype("int8").tofile(self.sfout)
     #
     def export_ising_clust(self, val: Any = +1, which: int = 0, 
                            on_g: str = SG_GRAPH_REPR, binarize: bool = True): 
@@ -255,8 +257,8 @@ class IsingDynamics:
             fname = os.path.join(self.sg.isingpath, 
                                   '_'.join([f"cl{i}", self.in_suffix,
                                             self.out_suffix])+BIN)
-            fout = open(fname, "wb")
-            np.array(list(self.sg.clusters[i])).astype(int).tofile(fout)
+            self.clfout = open(fname, "wb")
+            np.array(list(self.sg.clusters[i])).astype(int).tofile(self.clfout)
         # try:
         #     if self.NoClust > self.numIsing_cl:
         #         raise NoClustError(
@@ -271,7 +273,10 @@ class IsingDynamics:
         #                      self.out_suffix])+BIN
         #     fout = open(fname, "wb")
         #     np.array(self.Ising_clusters[i]).astype(int).tofile(fout)
-
+    def remove_run_c_files(self):
+        os.remove(self.sfout.name)
+        os.remove(self.clfout.name)
+        os.remove(self.stderr.name)
 
 class IsingDynamics_DEV(BinDynSys):
     dyn_UVclass = "ising_model"
