@@ -37,11 +37,8 @@ class IsingDynamics:
         self.id_string_isingdyn = id_string
         randstr_tmp = randstring() if rndStr else ""
         self.id_string_isingdyn = id_string or randstr_tmp
-        if out_suffix:
-            outs_plus = '_'.join([out_suffix, self.id_string_isingdyn]) 
-        else:
-            outs_plus = self.id_string_isingdyn
-        self.out_suffix = outs_plus if self.id_string_isingdyn else out_suffix
+        self.out_suffix = out_suffix
+        self.run_id = '_'.join([self.out_suffix, self.id_string_isingdyn])
     #
     def bltzmnn_fact(self, E: float) -> float:
         return np.exp(-E / (self.k_B * self.T))
@@ -112,9 +109,10 @@ class IsingDynamics:
                 f"{thrmSTEP}",
                 f"{eqSTEP}",
                 self.sg.datPath,
-                self.out_suffix,
+                self.run_id,
                 self.upd_mode, 
-                f"{freq}"]
+                f"{freq}",
+                self.out_suffix]
             self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
             stderrFname = f"err{self.CbaseName}_{self.N}_{self.out_suffix}.log"
             stderrFname = os.path.join(LRGSG_LOG, stderrFname)
@@ -237,7 +235,7 @@ class IsingDynamics:
     #
     def export_s_init(self):
         fname = os.path.join(self.sg.isingpath,
-                     '_'.join(['s', self.in_suffix, self.out_suffix])+BIN)
+                     '_'.join(['s', self.in_suffix, self.run_id])+BIN)
         self.sfout = open(fname, "wb")
         self.s.astype("int8").tofile(self.sfout)
     #
@@ -254,25 +252,12 @@ class IsingDynamics:
         except NoClustError as excpt:
             print(excpt)
         for i in range(self.NoClust):
-            fname = os.path.join(self.sg.isingpath, 
-                                  '_'.join([f"cl{i}", self.in_suffix,
-                                            self.out_suffix])+BIN)
+            fname = os.path.join(self.sg.isingpath,
+                                 '_'.join([f"cl{i}", self.in_suffix,
+                                           self.run_id])+BIN)
             self.clfout = open(fname, "wb")
             np.array(list(self.sg.clusters[i])).astype(int).tofile(self.clfout)
-        # try:
-        #     if self.NoClust > self.numIsing_cl:
-        #         raise NoClustError(
-        #             "Requested number of Cluster files is bigger than the one"
-        #             " in selected topology."
-        #         )
-        # except NoClustError as excpt:
-        #     print(excpt)
 
-        # for i in range(self.NoClust):
-        #     fname = '_'.join([f"{self.sg.isingpath}cl{i}", self.in_suffix,
-        #                      self.out_suffix])+BIN
-        #     fout = open(fname, "wb")
-        #     np.array(self.Ising_clusters[i]).astype(int).tofile(fout)
     def remove_run_c_files(self):
         os.remove(self.sfout.name)
         os.remove(self.clfout.name)

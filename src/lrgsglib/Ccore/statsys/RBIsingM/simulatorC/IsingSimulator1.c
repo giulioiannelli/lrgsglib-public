@@ -12,14 +12,14 @@
 #define ISNG_DIR "%sising/"
 #define SINI_FNAME ISNG_DIR "N=%zu/s_%s_%s" BINX
 #define CLID_FNAME ISNG_DIR "N=%zu/cl%zu_%s_%s" BINX
-#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_%s_T=%.3g%s%s"
+#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_%s_T=%.3g_%s%s"
 #define ENE_FNAME ISNG_DIR "N=%zu/ene_%s_T=%.3g_%s" BINX
 
 #define GRPH_DIR "%sgraphs/"
 #define ADJ_FNAME GRPH_DIR "N=%zu/adj_%s" BINX
 #define EDGL_FNAME GRPH_DIR "N=%zu/edgelist_%s" BINX
 
-#define EXPECTED_ARGC 12
+#define EXPECTED_ARGC 13
 
 sfmt_t sfmt;
 uint32_t *seed_rand;
@@ -39,7 +39,8 @@ int main(int argc, char *argv[])
     FILE *f_sini, *f_ene;
     FILE **f_cl, **f_out;
     char buf[STRL512];
-    char *ptr, *datdir, *in_id, *out_id, *mod_save, *ext_save, *update_mode;\
+    char *ptr, *datdir, *in_id, *out_id, *mod_save;
+    char *ext_save, *update_mode, *run_id;
     double T, p, thrmSTEP;
     double *ene;
     size_t N, side, Noclust, tmp, eqSTEP;
@@ -62,9 +63,10 @@ int main(int argc, char *argv[])
     thrmSTEP = strtod(argv[6], &ptr);
     eqSTEP = strtozu(argv[7]);
     datdir = argv[8];
-    out_id = argv[9];
+    run_id = argv[9];
     update_mode = argv[10];
     // we miss argv[11], which is nSampleLog
+    out_id = argv[12];
     /* open out files */
     switch (MOD_SAVE)
     {
@@ -86,13 +88,13 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < Noclust; i++)
         mclus[i] = __chMalloc(sizeof(**mclus) * T_EQ_STEP);
     /* open spin initial condition  */
-    sprintf(buf, SINI_FNAME, datdir, N, in_id, out_id);
+    sprintf(buf, SINI_FNAME, datdir, N, in_id, run_id);
     __fopen(&f_sini, buf, "rb");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     /* open cluster indices files */
     f_cl = __chMalloc(sizeof(*f_cl) * Noclust); 
     for (size_t i = 0; i < Noclust; i++) {
-        sprintf(buf, CLID_FNAME, datdir, N, i, in_id, out_id);
+        sprintf(buf, CLID_FNAME, datdir, N, i, in_id, run_id);
         __fopen((f_cl + i), buf, "rb");
     }
     f_out = __chMalloc(sizeof(*f_out) * Noclust);
