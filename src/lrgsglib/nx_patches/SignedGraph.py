@@ -17,15 +17,16 @@ class SignedGraph:
         plotOutdir: str = "",
         seed: int = None,
     ):
-        if seed:
-            random.seed(seed)
-            np.random.seed(seed)
         self.GraphReprDict = {}
         self.nodeMap = {}
         self.edgeMap = {}
         self.eset = {}
         self.fleset = {}
         self.nodesIn = {}
+        #
+        self.seed = seed or int(time.time() * 1000) + os.getpid()
+        random.seed(seed)
+        np.random.seed(seed)
         #
         self.__init_paths__(
             dataOutdir=dataOutdir, 
