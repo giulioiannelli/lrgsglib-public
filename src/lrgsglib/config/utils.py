@@ -5,6 +5,22 @@ from .errwar import *
 def do_nothing(*args, **kwargs):
     pass
 
+def join_non_empty(symb: str, *args):
+    """
+    Joins non-empty strings with an underscore.
+    
+    Parameters:
+        *args: Variable length argument list of strings.
+    
+    Returns:
+        A single string with non-empty strings joined by an underscore.
+    """
+    non_empty_args = [s for s in args if s]
+    
+    if len(non_empty_args) <= 1:
+        return ''.join(non_empty_args)
+    else:
+        return symb.join(non_empty_args)
 
 def conditional_print(message, verbose, **kwargs):
     if verbose:
