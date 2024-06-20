@@ -48,35 +48,39 @@ def slanzarv_str(mode, L, p, geo, c, T):
     return slanzarvstr + argstr
 #
 if execBool or printBool:
-    def operate(s, count):
+    count = 0
+    count_exe = 0
+    def operate(s):
+        global count, count_exe
         if execBool and printBool:
             print(s)
             os.system(s)
-            return count + 1
+            count += 1
+            count_exe += 1
         elif execBool:
             os.system(s)
-            return count + 1
+            count_exe += 1
         elif printBool:
             print(s)
-            return count + 1
-        return count
+            count += 1
     def exec_str(L, p, geo, cell, navg, T, runlang, in_suffix, out_suffix, NoClust):
         lnchStr = f"python src/{progName}.py"
         in_suffix = in_suffix or f"p={p:.3g}"
+        outstr = f"-os {out_suffix} " if out_suffix else " "
         argstr = (f"{L} {p:.3g} {T:.3g} -g {geo} -c {cell} -n {navg} -ic {ic} "
                   f"-rl {runlang} -is {in_suffix} "
-                  f"-os {out_suffix}" if out_suffix else ""
+                  f"{outstr}"
                   f"-nc {NoClust}")
         return f"{slanzarv_str(runlang, L, p, geo, cell, T)} {lnchStr} {argstr}"
 
 else:
     exit(0)
 
-count = 0
 for L in List:
     for p in plist:
             for T in Tlist:
                 estring = exec_str(L, p, geo, cell, navg, T, 
                                    runlang, in_suffix, out_suffix, NoClust)
-                count = operate(estring, count)
-print(f"Total number of jobs executed: {count}")
+                operate(estring)
+print(f"Total number of jobs executed: {count_exe}")
+print(f"Total number of jobs printed: {count}")
