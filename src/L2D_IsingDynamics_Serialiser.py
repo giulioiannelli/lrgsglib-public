@@ -60,12 +60,11 @@ if execBool or printBool:
             print(s)
             return count + 1
         return count
-    def exec_str(L, p, geo, cell, navg, T, runlang, in_suffix, 
-                 out_suffix, NoClust):
+    def exec_str(L, p, geo, cell, navg, T, runlang, in_suffix, NoClust):
         lnchStr = f"python src/{progName}.py"
         in_suffix = in_suffix or f"p={p:.3g}"
         argstr = (f"{L} {p:.3g} {T:.3g} -g {geo} -c {cell} -n {navg} -ic {ic} "
-                  f"-rl {runlang} -is {in_suffix} -os \'{out_suffix}\' "
+                  f"-rl {runlang} -is {in_suffix} "
                   f"-nc {NoClust}")
         return f"{slanzarv_str(runlang, L, p, geo, cell, T)} {lnchStr} {argstr}"
 
@@ -77,6 +76,6 @@ for L in List:
     for p in plist:
             for T in Tlist:
                 estring = exec_str(L, p, geo, cell, navg, T, 
-                                   runlang, in_suffix, out_suffix, NoClust)
+                                   runlang, in_suffix, NoClust)
                 count = operate(estring, count)
 print(f"Total number of jobs executed: {count}")
