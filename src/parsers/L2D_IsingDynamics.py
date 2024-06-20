@@ -15,7 +15,7 @@ phelp_T = """
 """
 #
 DEFAULT_GEO = 'squared'
-DEFAULT_CELL = 'rand'
+DEFAULT_CELL = 'randXERR'
 DEFAULT_INIT_COND = 'ground_state_0'
 DEFAULT_RUNLANG = 'C1'
 DEFAULT_NAVG = 500
