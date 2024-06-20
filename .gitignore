@@ -1,6 +1,7 @@
 #paths
 # Ignore everything in the data directory
 data/*
+src/lrgsglib/Ccore/bin/*
 
 # But not these directories (though their contents are still ignored by default)
 !data/plot/
