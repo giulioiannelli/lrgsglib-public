@@ -11,6 +11,7 @@ ColorType = Union[
 PDF = ".pdf"
 TXT = ".txt"
 BIN = ".bin"
+LOG = ".log"
 MP4 = ".mp4"
 PKL = ".pkl"
 #
