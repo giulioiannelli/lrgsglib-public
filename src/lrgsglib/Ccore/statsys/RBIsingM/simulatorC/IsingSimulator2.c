@@ -11,13 +11,13 @@
 
 #define GRPH_DIR "%sgraphs/"
 #define ADJ_FNAME GRPH_DIR "N=%zu/adj_%s" BINX
-#define EDGL_FNAME GRPH_DIR "N=%zu/edgelist_%s" BINX
+#define EDGL_FNAME GRPH_DIR "N=%zu/edgelist_%s_%s" BINX
 
 #define T_THERM_STEP (thrmSTEP * N)
 #define T_EQ_STEP (eqSTEP * N)
 #define T_STEPS (T_THERM_STEP + T_EQ_STEP)
 
-#define EXPECTED_ARGC 12
+#define EXPECTED_ARGC 13
 //
 
 sfmt_t sfmt;
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     //
     FILE *f_sini, *f_s, *f_ene, *f_magn;
     char buf[STRL512];
-    char *ptr, *datdir, *out_id, *in_id, *update_mode;
+    char *ptr, *datdir, *out_id, *in_id, *update_mode, *run_id;
     int nSampleLog;
     int* logspc;
     double T, p, thrmSTEP;
@@ -61,8 +61,10 @@ int main(int argc, char *argv[])
     thrmSTEP = strtod(argv[6], &ptr);
     eqSTEP = strtozu(argv[7]);
     datdir = argv[8];
-    out_id = argv[9];
+    run_id = argv[9];
     update_mode = argv[10];
+    // we miss argv[11], which is nSampleLog
+    out_id = argv[12];
     nSampleLog = atoi(argv[11]);
     logspc = logspace_int(log10(T_STEPS), &nSampleLog);
     //
@@ -71,15 +73,15 @@ int main(int argc, char *argv[])
     ene = __chMalloc(sizeof(*ene) * T_STEPS);
     //
     sprintf(buf, ENE_FNAME, datdir, N, in_id, T, out_id);
-    __fopen(&f_ene, buf, "ab");
+    __fopen(&f_ene, buf, "wb");
     sprintf(buf, MAGN_FNAME, datdir, N, in_id, T, out_id);
-    __fopen(&f_magn, buf, "ab");
-    sprintf(buf, SINI_FNAME, datdir, N, in_id, out_id);
+    __fopen(&f_magn, buf, "wb");
+    sprintf(buf, SINI_FNAME, datdir, N, in_id, run_id);
     __fopen(&f_sini, buf, "rb");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     sprintf(buf, S_FNAME, datdir, N, in_id, T, out_id);
-    __fopen(&f_s, buf, "ab");
-    sprintf(buf, EDGL_FNAME, datdir, N, in_id);
+    __fopen(&f_s, buf, "wb");
+    sprintf(buf, EDGL_FNAME, datdir, N, in_id, run_id);
     process_edges(buf, N, &edges, &node_edges, &neigh_len);
     //  
     size_t freq = (size_t) (T_STEPS / nSampleLog);
