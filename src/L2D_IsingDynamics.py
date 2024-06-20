@@ -13,6 +13,7 @@ in_suffix = args.in_suffix
 out_suffix = args.out_suffix
 NoClust = args.NoClust
 runlang = args.runlang
+remove_files = args.remove_files
 if ic.startswith('ground_state'):
     parts = ic.split('_')
     number = int(parts[-1])
@@ -31,5 +32,6 @@ for na in range(navg):
     l.export_edgel_bin(exName=isdy.id_string_isingdyn)
     isdy.export_ising_clust()
     isdy.run(verbose=False)
-    isdy.remove_run_c_files(remove_stderr=True)
-    l.remove_edgl_file()
+    if remove_files:
+        isdy.remove_run_c_files(remove_stderr=True)
+        l.remove_edgl_file()
