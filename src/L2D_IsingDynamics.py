@@ -26,8 +26,9 @@ for na in range(navg):
     l.compute_k_eigvV(howmany=howmany)
     l.export_edgel_bin(expoName=in_suffix)
     isdy = IsingDynamics(l, T, ic=ic, runlang=runlang, NoClust=NoClust, 
-                            rndStr=False, out_suffix=out_suffix, 
+                            rndStr=True, out_suffix=out_suffix, 
                             in_suffix=in_suffix)
     isdy.init_ising_dynamics()
     isdy.export_ising_clust()
     isdy.run(verbose=False)
+    isdy.remove_run_c_files()
