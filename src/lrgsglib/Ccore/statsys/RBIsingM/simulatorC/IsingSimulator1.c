@@ -12,7 +12,7 @@
 #define ISNG_DIR "%sising/"
 #define SINI_FNAME ISNG_DIR "N=%zu/s_%s_%s" BINX
 #define CLID_FNAME ISNG_DIR "N=%zu/cl%zu_%s_%s" BINX
-#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_%s_T=%.3g%s"
+#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_%s_T=%.3g%s%s"
 #define ENE_FNAME ISNG_DIR "N=%zu/ene_%s_T=%.3g_%s" BINX
 
 #define GRPH_DIR "%sgraphs/"
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     }
     f_out = __chMalloc(sizeof(*f_out) * Noclust);
     for (size_t i = 0; i < Noclust; i++) {
-        sprintf(buf, CLOUT_FNAME, datdir, N, i, in_id, T, ext_save);
+        sprintf(buf, CLOUT_FNAME, datdir, N, i, in_id, T, out_id, ext_save);
         __fopen((f_out + i), buf, mod_save);
     }
     /* fill initial condition */
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
         __fopen(&f_ene, buf, "ab");
         for (size_t i = 0; i < Noclust; i++)
             fwrite(mclus[i], sizeof(**mclus), T_EQ_STEP, f_out[i]);
-        fwrite(ene, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_ene);
+        fwrite(ene, sizeof(*ene), T_STEPS, f_ene);
         fclose(f_ene);
         break;
     case 1:
