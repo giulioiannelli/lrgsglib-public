@@ -10,14 +10,13 @@
 #define T_STEPS (T_THERM_STEP + T_EQ_STEP)
 
 #define ISNG_DIR "%sising/"
-#define SINI_FNAME ISNG_DIR "N=%zu/s_%s_%s" BINX
-#define CLID_FNAME ISNG_DIR "N=%zu/cl%zu_%s_%s" BINX
-#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_%s_T=%.3g_%s%s"
-#define ENE_FNAME ISNG_DIR "N=%zu/ene_%s_T=%.3g_%s" BINX
+#define SINI_FNAME ISNG_DIR "N=%zu/s_p=%.3g%s" BINX
+#define CLID_FNAME ISNG_DIR "N=%zu/cl%zu_p=%.3g%s" BINX
+#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_p=%.3g_T=%.3g_%s%s"
+#define ENE_FNAME ISNG_DIR "N=%zu/ene_p=%.3g_T=%.3g_%s" BINX
 
 #define GRPH_DIR "%sgraphs/"
-#define ADJ_FNAME GRPH_DIR "N=%zu/adj_%s" BINX
-#define EDGL_FNAME GRPH_DIR "N=%zu/edgelist_%s" BINX
+#define EDGL_FNAME GRPH_DIR "N=%zu/edgelist_p=%.3g%s" BINX
 
 #define EXPECTED_ARGC 13
 
@@ -27,9 +26,9 @@ uint32_t *seed_rand;
 int main(int argc, char *argv[])
 {
     /* check argc */
-    if (argc != EXPECTED_ARGC) {
-        fprintf(stderr, "Usage: %s N T p code_id <free-arg> thrmSTEP eqSTEP \
-            datdir out_id update_mode nSampleLog\n", argv[0]);
+    if (argc > EXPECTED_ARGC) {
+        fprintf(stderr, "Usage: %s N T p Noclust thrmSTEP eqSTEP datdir run_id"\
+            " out_id update_mode nSampleLog\n", argv[0]);
         exit(EXIT_FAILURE);
     }
     /* seed the SFMT RNG */
@@ -39,7 +38,7 @@ int main(int argc, char *argv[])
     FILE *f_sini, *f_ene;
     FILE **f_cl, **f_out;
     char buf[STRL512];
-    char *ptr, *datdir, *in_id, *out_id, *mod_save;
+    char *ptr, *datdir, *out_id, *mod_save;
     char *ext_save, *update_mode, *run_id;
     double T, p, thrmSTEP;
     double *ene;
@@ -55,18 +54,17 @@ int main(int argc, char *argv[])
     UNUSED(side);
     /* init variables */
     N = strtozu(argv[1]);
-    side = (size_t)sqrt(N);
     T = strtod(argv[2], &ptr);
     p = strtod(argv[3], &ptr);
-    in_id = argv[4];
-    Noclust = strtozu(argv[5]);
-    thrmSTEP = strtod(argv[6], &ptr);
-    eqSTEP = strtozu(argv[7]);
-    datdir = argv[8];
-    run_id = argv[9];
+    Noclust = strtozu(argv[4]);
+    thrmSTEP = strtod(argv[5], &ptr);
+    eqSTEP = strtozu(argv[6]);
+    datdir = argv[7];
+    run_id = argv[8];
+    out_id = argv[9];
     update_mode = argv[10];
     // we miss argv[11], which is nSampleLog
-    out_id = argv[12];
+    side = (size_t)sqrt(N);
     /* open out files */
     switch (MOD_SAVE)
     {
@@ -88,18 +86,18 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < Noclust; i++)
         mclus[i] = __chMalloc(sizeof(**mclus) * T_EQ_STEP);
     /* open spin initial condition  */
-    sprintf(buf, SINI_FNAME, datdir, N, in_id, run_id);
+    sprintf(buf, SINI_FNAME, datdir, N, p, run_id);
     __fopen(&f_sini, buf, "rb");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     /* open cluster indices files */
     f_cl = __chMalloc(sizeof(*f_cl) * Noclust); 
     for (size_t i = 0; i < Noclust; i++) {
-        sprintf(buf, CLID_FNAME, datdir, N, i, in_id, run_id);
+        sprintf(buf, CLID_FNAME, datdir, N, i, p, run_id);
         __fopen((f_cl + i), buf, "rb");
     }
     f_out = __chMalloc(sizeof(*f_out) * Noclust);
     for (size_t i = 0; i < Noclust; i++) {
-        sprintf(buf, CLOUT_FNAME, datdir, N, i, in_id, T, out_id, ext_save);
+        sprintf(buf, CLOUT_FNAME, datdir, N, i, p, T, out_id, ext_save);
         __fopen((f_out + i), buf, mod_save);
     }
     /* fill initial condition */
@@ -113,7 +111,7 @@ int main(int argc, char *argv[])
         cl_l[i]--;
     }
     /* fill edge list, neighbours list and neighbours lengths */
-    sprintf(buf, EDGL_FNAME, datdir, N, in_id);
+    sprintf(buf, EDGL_FNAME, datdir, N, p, run_id);
     process_edges(buf, N, &edges, &node_edges, &neigh_len);
 
     for (size_t t = 0; t < T_THERM_STEP; t++) {
@@ -128,7 +126,7 @@ int main(int argc, char *argv[])
     }
     switch (MOD_SAVE) {
     case 0:
-        sprintf(buf, ENE_FNAME, datdir, N, in_id, T, out_id);
+        sprintf(buf, ENE_FNAME, datdir, N, p, T, out_id);
         __fopen(&f_ene, buf, "ab");
         for (size_t i = 0; i < Noclust; i++)
             fwrite(mclus[i], sizeof(**mclus), T_EQ_STEP, f_out[i]);
