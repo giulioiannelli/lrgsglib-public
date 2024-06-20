@@ -39,11 +39,12 @@ class SignedGraph:
             raise ValueError(SG_ERRMSG_PFLIP)
         else:
             self.pflip = pflip
+            self.pEqStr = f"p={self.pflip:.3g}"
         self.onGraph = on_g or SG_GRAPH_REPR
         self.init_weights_val = init_weights_val
         self.slspectrum = None
         self.import_on = import_on
-        self.stdFname = self.stdFname + f"_p={self.pflip:.3g}"
+        self.stdFname = '_'.join([self.stdFname, self.pEqStr])
         self.graphPath = pth_join(self.expOutdir, self.stdFname)
         #
         if import_on:
@@ -481,22 +482,27 @@ class SignedGraph:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)
     #
-    def export_edgel_bin(self, on_g: str = SG_GRAPH_REPR, expoName: str = "",
+    def export_edgel_bin(self, on_g: str = SG_GRAPH_REPR, exName: str = "",
                          print_msg: bool = False, mode: str = 'numpy') -> None:
         edges = self.GraphReprDict[on_g].edges(data='weight')
-        exname = expoName or self.stdFname
+        exname = '_'.join([self.pEqStr, exName]) if exName else self.pEqStr
+        fname = '_'.join(["edgelist", exname])+BIN
+        edglFname = os.path.join(self.expOutdir, fname)
         match mode:
             case 'numpy':
                 edge_array = np.array(list(edges), 
-                                 dtype=[('i', np.uint64), #these has to be changed based on the repr
-                                        ('j', np.uint64), #these has to be changed based on the repr
+                                 dtype=[('i', np.uint64),
+                                        ('j', np.uint64),
                                         ('w_ij', np.float64)])
-                edge_array.tofile(f"{self.expOutdir}edgelist_{exname}.bin")
+                self.edglFile = open(edglFname, "wb")
+                edge_array.tofile(self.edglFile)
             case 'struct':
-                with open(f"{self.expOutdir}edgelist_{exname}.bin", "wb") as f:
+                with open(edglFname, "wb") as f:
                     for edge in edges:
                         f.write(struct.pack("QQd", edge[0], edge[1], edge[2]))
-
+    #
+    def remove_edgl_file(self):
+        os.remove(self.edglFile.name)
     #
     def get_edge_color(
         self,
