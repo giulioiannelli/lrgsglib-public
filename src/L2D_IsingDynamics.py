@@ -32,3 +32,4 @@ for na in range(navg):
     isdy.export_ising_clust()
     isdy.run(verbose=False)
     isdy.remove_run_c_files(remove_stderr=True)
+    l.remove_edgl_file()
