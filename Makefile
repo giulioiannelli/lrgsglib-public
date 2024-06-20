@@ -43,7 +43,7 @@ PYTHON_LIB = $(shell python3-config --ldflags)
 export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig#:$(PKG_CONFIG_PATH)
 #
 # directories
-DIRS_TO_MAKE = $(PATH_DAT)
+DIRS_TO_MAKE = $(PATH_DAT) $(PATH_CCORE_BIN)
 #
 FN_RBIMSIM0 = IsingSimulator0
 FN_RBIMSIM1 = IsingSimulator1
@@ -128,7 +128,7 @@ setup_conda_deactivate:
 	@chmod +x $(CUSTOM_DEACTIVATE_SCRIPT)
 	@echo "Setup conda environment deactivate.d complete."
 
-setup: make_rootf generate_config_script setup_conda_activate setup_conda_deactivate
+setup: make_rootf generate_config_script setup_conda_activate setup_conda_deactivate create_dirs
 	@# Find the gcc compiler binary
 	$(eval GCC_BIN := $(shell find $(CONDA_BIN) -name 'x86_64-conda_cos*-linux-gnu-cc' | head -n 1))
 	@# Find the g++ compiler binary
