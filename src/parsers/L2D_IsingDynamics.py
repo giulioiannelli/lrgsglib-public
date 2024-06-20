@@ -22,7 +22,11 @@ DEFAULT_NAVG = 500
 DEFAULT_INSFFX = ''
 DEFAULT_OUTSFFX = ''
 DEFAULT_NOCLUST = 1
+DEFAULT_REMOVE_FILES = True
 #
+phelp_remove_files = """
+    Remove the input files after the computation.
+"""
 phelp_cell = f"""
     Topological defect class: 'rand', 'randXERR', 
     'randZERR', 'ball_<R>' with type(<R>)=int. | default='{DEFAULT_CELL}'
@@ -90,7 +94,11 @@ parsDictOpt = {
                 'default': DEFAULT_NOCLUST}
 }
 #
-
+parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
+                            'help': phelp_remove_files,
+                            'action': argparse.BooleanOptionalAction,
+                            'default': DEFAULT_REMOVE_FILES}
+}
 #
 parser = argparse.ArgumentParser(description=description.strip())
 # Mandatory arguments
@@ -109,4 +117,14 @@ for ov in parsDictOpt.keys():
         default=parsDict_get(ov, 'default'),
         help=parsDict_get(ov, 'help'),
         type=parsDict_get(ov, 'type'),
+    )
+
+# Optional parameters
+def parsDict_get(var, key):
+    return parDA[var].get(key, None)
+for ov in parDA.keys():
+    parser.add_argument(*parsDict_get(ov, 'names'),
+        default=parsDict_get(ov, 'default'),
+        help=parsDict_get(ov, 'help'),
+        action=parsDict_get(ov, 'action')
     )
