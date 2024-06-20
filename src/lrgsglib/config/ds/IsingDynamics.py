@@ -11,7 +11,7 @@ class IsingDynamics:
     def __init__(
         self,
         sg: SignedGraph,
-        T: float = None,
+        T: float = 0.,
         ic: str = "uniform",
         runlang: str = "py",
         NoClust: int = 1,
@@ -19,7 +19,6 @@ class IsingDynamics:
         save_magnetization: bool = False,
         upd_mode: str = "asynchronous",
         out_suffix: str = "",
-        in_suffix: str = "",
         rndStr: bool = False,
         id_string: str = "",
     ) -> None:
@@ -32,13 +31,13 @@ class IsingDynamics:
         self.save_magnetization = save_magnetization
         self.NoClust = NoClust
         self.upd_mode = upd_mode
-        self.in_suffix = in_suffix or self.sg.stdFname
         self.randstring_OPT = rndStr
-        self.id_string_isingdyn = id_string
         randstr_tmp = randstring() if rndStr else ""
-        self.id_string_isingdyn = id_string or randstr_tmp
+        self.id_string_isingdyn = join_non_empty('_', id_string, randstr_tmp)
+        self.pflip_id = f"p={self.sg.pflip:.3g}"
+        self.in_suffix = join_non_empty('_', self.pflip_id, 
+                                        self.id_string_isingdyn)
         self.out_suffix = out_suffix
-        self.run_id = '_'.join([self.out_suffix, self.id_string_isingdyn])
     #
     def bltzmnn_fact(self, E: float) -> float:
         return np.exp(-E / (self.k_B * self.T))
@@ -101,20 +100,24 @@ class IsingDynamics:
         if T_ising:
             self.T = T_ising
         if self.runlang.startswith("C"):
+            run_id = self.id_string_isingdyn
+            self.run_id = f"_{run_id}" if run_id else ''
             arglist = [f"{self.N}",
-                f"{self.T:.3g}",
-                f"{self.sg.pflip:.3g}",
-                self.in_suffix, 
-                f"{self.NoClust}",
-                f"{thrmSTEP}",
-                f"{eqSTEP}",
-                self.sg.datPath,
-                self.run_id,
-                self.upd_mode, 
-                f"{freq}",
-                self.out_suffix]
+                       f"{self.T:.3g}",
+                       f"{self.sg.pflip:.3g}",
+                       f"{self.NoClust}",
+                       f"{thrmSTEP:.3g}",
+                       f"{eqSTEP}",
+                       self.sg.datPath,
+                       self.run_id,
+                       self.out_suffix,
+                       self.upd_mode,
+                       f"{freq}"
+                       ]
             self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
-            stderrFname = f"err{self.CbaseName}_{self.N}_{self.out_suffix}.log"
+            stderrFname = join_non_empty('_', f"err{self.CbaseName}", f"{self.N}", 
+                                    f"{self.id_string_isingdyn}", 
+                                    f"{self.out_suffix}")+LOG
             stderrFname = os.path.join(LRGSG_LOG, stderrFname)
             self.stderr = open(stderrFname, 'w')
             if verbose:
@@ -235,7 +238,7 @@ class IsingDynamics:
     #
     def export_s_init(self):
         fname = os.path.join(self.sg.isingpath,
-                     '_'.join(['s', self.in_suffix, self.run_id])+BIN)
+                     '_'.join(['s', self.in_suffix])+BIN)
         self.sfout = open(fname, "wb")
         self.s.astype("int8").tofile(self.sfout)
     #
@@ -253,15 +256,15 @@ class IsingDynamics:
             print(excpt)
         for i in range(self.NoClust):
             fname = os.path.join(self.sg.isingpath,
-                                 '_'.join([f"cl{i}", self.in_suffix,
-                                           self.run_id])+BIN)
+                                 '_'.join([f"cl{i}", self.in_suffix])+BIN)
             self.clfout = open(fname, "wb")
             np.array(list(self.sg.clusters[i])).astype(int).tofile(self.clfout)
 
-    def remove_run_c_files(self):
+    def remove_run_c_files(self, remove_stderr: bool = True):
         os.remove(self.sfout.name)
         os.remove(self.clfout.name)
-        os.remove(self.stderr.name)
+        if remove_stderr:
+            os.remove(self.stderr.name)
 
 class IsingDynamics_DEV(BinDynSys):
     dyn_UVclass = "ising_model"
