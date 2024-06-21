@@ -416,10 +416,22 @@ class SignedGraph:
                             reverse=True)
         return clusterLen
     
+
     def compute_clusters(self, k, val, on_g: str = SG_GRAPH_REPR):
         G_yes, _ = self.group_nodes_by_kv(k, val, on_g)
         self.clusters = list(nx.connected_components(G_yes))
         self.numClusters = len(self.clusters)
+    
+    def compute_gc(self, k, val, on_g: str = SG_GRAPH_REPR):
+        G_yes, _ = self.group_nodes_by_kv(k, val, on_g)
+        connected_components = list(nx.connected_components(G_yes))
+        largest_component = max(connected_components, key=len)
+        return largest_component
+    def compute_gc_signGauged(self, k, val, on_g: str = SG_GRAPH_REPR):
+        G_yes, G_no = self.group_nodes_by_kv(k, val, on_g)
+        pcc = max(nx.connected_components(G_yes), key=len)
+        ncc = max(list(nx.connected_components(G_no), key=len))
+        return max(pcc, ncc, key=len)
     def cluster_distribution(self, which: int = 0, 
                                   on_g: str = SG_GRAPH_REPR,
                                   binarize: bool = True):
