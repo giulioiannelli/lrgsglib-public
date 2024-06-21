@@ -9,6 +9,7 @@ geo = args.geometry
 cell = args.cell_type
 ic = args.init_cond
 navg = args.number_of_averages
+navg2 = int(side**(1.5))
 in_suffix = args.in_suffix
 out_suffix = args.out_suffix
 NoClust = args.NoClust
@@ -19,12 +20,34 @@ if ic.startswith('ground_state'):
     number = int(parts[-1])
     howmany = number+1
 else:
+    number  = 0
     howmany = 1
 #
-for na in range(navg):
-    l = Lattice2D(side1=side, geo=geo, pflip=p, init_nw_dict=True)
-    l.flip_sel_edges(l.nwDict[cell]['G'])
-    l.compute_k_eigvV(howmany=howmany)
+l = Lattice2D(side, geo, pflip=p, init_nw_dict=True)
+fName = os.path.join(l.expOutdir, f'GC_meanVar_{p:.3g}.txt')
+if not os.path.exists(fName):
+    lenList = []
+    for _ in range(navg2):
+        l = Lattice2D(side, geo, pflip=p, init_nw_dict=True)
+        l.flip_sel_edges(l.nwDict[cell]['G'])
+        l.compute_k_eigvV(howmany=number + 1)
+        l.load_eigV_on_g(which=number, binarize=True)
+        p_lgc = len(l.compute_gc(f'eigV{number}', +1))
+        n_lgc = len(l.compute_gc(f'eigV{number}', -1))
+        lenList.append(max(p_lgc, n_lgc))
+    meanN, stdN = np.mean(lenList)/l.N, np.std(lenList)/l.N
+    np.savetxt(fName, [meanN, stdN], fmt='%.3g')
+else:
+    meanN, stdN = np.loadtxt(fName)
+
+for _ in range(navg):
+    while True:
+        l = Lattice2D(side1=side, geo=geo, pflip=p, init_nw_dict=True)
+        l.flip_sel_edges(l.nwDict[cell]['G'])
+        l.compute_k_eigvV(howmany=howmany)
+        sizeGC = l.compute_gc_signGauged(f'eigV{number}', +1)
+        if  abs(sizeGC/l.N - meanN) < stdN:
+            break
     isdy = IsingDynamics(l, T, ic=ic, runlang=runlang, NoClust=NoClust, 
                             rndStr=True, out_suffix=out_suffix, 
                             id_string=in_suffix)
