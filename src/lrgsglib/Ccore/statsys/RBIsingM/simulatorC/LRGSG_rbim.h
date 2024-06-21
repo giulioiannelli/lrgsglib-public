@@ -8,6 +8,17 @@
 
 #define BOLTZMANN_FACTOR(DE, T) exp(-DE / T)
 
+#define ISNG_DIR "%sising/"
+#define SINI_FNAME ISNG_DIR "N=%zu/s_p=%.3g%s" BINX
+#define CLID_FNAME ISNG_DIR "N=%zu/cl%zu_p=%.3g%s" BINX
+#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_p=%.3g_T=%.3g_%s%s"
+#define ENE_FNAME ISNG_DIR "N=%zu/ene_p=%.3g_T=%.3g_%s" BINX
+#define SOUT_FNAME ISNG_DIR "N=%zu/sout_p=%.3g_T=%.3g_%s" BINX
+#define MAGN_FNAME ISNG_DIR "N=%zu/m_p=%.3g_T=%.3g_%s" BINX
+
+#define GRPH_DIR "%sgraphs/"
+#define EDGL_FNAME GRPH_DIR "N=%zu/edgelist_p=%.3g%s" BINX
+
 extern sfmt_t sfmt;
 extern uint32_t *seed_rand;
 

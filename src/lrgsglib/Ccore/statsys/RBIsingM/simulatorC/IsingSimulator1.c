@@ -2,31 +2,21 @@
 #include "LRGSG_customs.h"
 #include "sfmtrng.h"
 #include "LRGSG_rbim.h"
-
+//
+#define EXPECTED_ARGC 12
 #define MOD_SAVE 1
-
+//
 #define T_THERM_STEP  (size_t)(thrmSTEP * N)
 #define T_EQ_STEP (size_t)(eqSTEP * N)
 #define T_STEPS (T_THERM_STEP + T_EQ_STEP)
-
-#define ISNG_DIR "%sising/"
-#define SINI_FNAME ISNG_DIR "N=%zu/s_p=%.3g%s" BINX
-#define CLID_FNAME ISNG_DIR "N=%zu/cl%zu_p=%.3g%s" BINX
-#define CLOUT_FNAME ISNG_DIR "N=%zu/outcl%zu_p=%.3g_T=%.3g_%s%s"
-#define ENE_FNAME ISNG_DIR "N=%zu/ene_p=%.3g_T=%.3g_%s" BINX
-
-#define GRPH_DIR "%sgraphs/"
-#define EDGL_FNAME GRPH_DIR "N=%zu/edgelist_p=%.3g%s" BINX
-
-#define EXPECTED_ARGC 13
-
+//
 sfmt_t sfmt;
 uint32_t *seed_rand;
-
+//
 int main(int argc, char *argv[])
 {
     /* check argc */
-    if (argc > EXPECTED_ARGC) {
+    if (argc < EXPECTED_ARGC) {
         fprintf(stderr, "Usage: %s N T p Noclust thrmSTEP eqSTEP datdir run_id"\
             " out_id update_mode nSampleLog\n", argv[0]);
         exit(EXIT_FAILURE);
@@ -40,6 +30,7 @@ int main(int argc, char *argv[])
     char buf[STRL512];
     char *ptr, *datdir, *out_id, *mod_save;
     char *ext_save, *update_mode, *run_id;
+    int nSampleLog;
     double T, p, thrmSTEP;
     double *ene;
     size_t N, side, Noclust, tmp, eqSTEP;
@@ -52,6 +43,7 @@ int main(int argc, char *argv[])
     /* unused variables */
     UNUSED(p);
     UNUSED(side);
+    UNUSED(nSampleLog);
     /* init variables */
     N = strtozu(argv[1]);
     T = strtod(argv[2], &ptr);
@@ -63,7 +55,7 @@ int main(int argc, char *argv[])
     run_id = argv[8];
     out_id = argv[9];
     update_mode = argv[10];
-    // we miss argv[11], which is nSampleLog
+    nSampleLog = atoi(argv[11]);
     side = (size_t)sqrt(N);
     /* open out files */
     switch (MOD_SAVE)
@@ -100,7 +92,6 @@ int main(int argc, char *argv[])
         sprintf(buf, CLOUT_FNAME, datdir, N, i, p, T, out_id, ext_save);
         __fopen((f_out + i), buf, mod_save);
     }
-    /* fill initial condition */
     /* fill clusters indices */
     cl_l = __chCalloc(Noclust, sizeof(*cl_l));
     cl_i = __chMalloc(Noclust * sizeof(*cl_i));
@@ -140,7 +131,7 @@ int main(int argc, char *argv[])
                     sum_vs_2(T_EQ_STEP, *(mclus + i)) / T_EQ_STEP);
         break;
     }
-    fflush(stdout);  // Clear any existing buffered output
+    fflush(stdout);
     fwrite(s, sizeof(*s), N, stdout);
     /* closing files and freeing arrays*/
     fclose(f_sini);
