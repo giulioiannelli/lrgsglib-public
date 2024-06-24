@@ -1,4 +1,5 @@
-from .objects import *
+from .common import *
+from .SignedGraph import SignedGraph
 
 class ErdosRenyi(SignedGraph):
     def __init__(self, n, p, sgpath: str = "", stdFname: str = "", **kwargs):

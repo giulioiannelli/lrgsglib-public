@@ -1,4 +1,6 @@
-from .objects import *
+from .common import *
+from .SignedGraph import SignedGraph
+
 class Lattice3D(SignedGraph):
     def __init__(
         self,

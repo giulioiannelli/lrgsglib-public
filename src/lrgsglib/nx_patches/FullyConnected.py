@@ -1,5 +1,7 @@
-from .objects import *
-
+from .common import *
+from .funcs import *
+from .SignedGraph import SignedGraph
+from ..config.plotlib import Colormap
 class FullyConnected(SignedGraph):
     def __init__(self, side1: int, anigemb: str = "sle"):
         self.side1 = side1
