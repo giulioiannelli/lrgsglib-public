@@ -48,6 +48,7 @@ DIRS_TO_MAKE = $(PATH_DAT) $(PATH_CCORE_BIN)
 FN_RBIMSIM0 = IsingSimulator0
 FN_RBIMSIM1 = IsingSimulator1
 FN_RBIMSIM2 = IsingSimulator2
+FN_RBIMSIM3 = IsingSimulator3
 FN_VMSIM0   = voter_model
 FN_LRGSGLIB = LRGSG_utils sfmtrng 
 SRC_RBIM    = LRGSG_rbim
@@ -57,6 +58,7 @@ SFMTSRC     = SFMT
 RBIMSIM0.c = $(addsuffix .c, $(FN_RBIMSIM0))
 RBIMSIM1.c = $(addsuffix .c, $(FN_RBIMSIM1))
 RBIMSIM2.c = $(addsuffix .c, $(FN_RBIMSIM2))
+RBIMSIM3.c = $(addsuffix .c, $(FN_RBIMSIM3))
 VMSIM0.c   = $(addsuffix .c, $(FN_VMSIM0))
 #
 SRCCFILES.c     = $(addsuffix .c, $(FN_LRGSGLIB))
@@ -72,6 +74,7 @@ PATH_SRCC_VM    = $(addprefix $(PATH_VM), $(SRCCFILESVM.c))
 PATHSRS0.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM0.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
 PATHSRS1.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM1.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
 PATHSRS2.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM2.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
+PATHSRS3.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM3.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
 PATHSRSVM0.c := $(addprefix $(PATH_VM), $(VMSIM0.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_VM) $(PATH_SFMT_FILES)
 #
 # FILES.o = ${FILES.c:.c=.o}
@@ -79,6 +82,7 @@ PATHSRSVM0.c := $(addprefix $(PATH_VM), $(VMSIM0.c)) $(PATH_SRCC_FILES) $(PATH_S
 PROGRAMN0 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM0))
 PROGRAMN1 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM1))
 PROGRAMN2 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM2))
+PROGRAMN3 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM3))
 PROGRAMNVM0 = $(addprefix $(PATH_CCORE_BIN), $(FN_VMSIM0))
 #
 GCC := $(CONDA_PREFIX)/bin/gcc
@@ -97,7 +101,7 @@ INC_PATHS     = ${INC_PATH1} ${INC_PATH_SFMT}
 ALLFLAGS      = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS} 
 
 configure: setup chmod_scripts echo_paths create_dirs
-c_make: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} 
+c_make: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} ${PROGRAMN3}
 all: configure c_make #sub_make chmod_scripts
 
 generate_config_script:
@@ -179,6 +183,9 @@ ${PROGRAMN1}: ${PATHSRS1.c}
 ${PROGRAMN2}: ${PATHSRS2.c}
 	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
 
+${PROGRAMN3}: ${PATHSRS3.c}
+	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
+
 chmod_scripts:
 	find $(PATH_SH) -type f -name '*.sh' -exec chmod +x {} \;
 
@@ -199,6 +206,7 @@ clean:
 	${RM_FR} ${PROGRAMN0}
 	${RM_FR} ${PROGRAMN1}
 	${RM_FR} ${PROGRAMN2}
+	${RM_FR} ${PROGRAMN3}
 	$(MAKE) -C $(PATH_GTPTCH_CPP) clean
 	$(MAKE) -C $(PATH_SRW_LATT) clean
 	$(MAKE) -C $(PATH_RBIM_BASE) clean
