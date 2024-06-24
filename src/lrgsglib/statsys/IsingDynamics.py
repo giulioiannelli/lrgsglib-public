@@ -261,10 +261,20 @@ class IsingDynamics:
             np.array(list(self.sg.biggestClSet[i])).astype(int).tofile(self.clfout)
 
     def remove_run_c_files(self, remove_stderr: bool = True):
-        os.remove(self.sfout.name)
-        os.remove(self.clfout.name)
+        try:
+            os.remove(self.sfout.name)
+        except FileNotFoundError:
+            pass
+        if self.runlang == "C1":
+            try:
+                os.remove(self.clfout.name)
+            except FileNotFoundError:
+                pass
         if remove_stderr:
-            os.remove(self.stderr.name)
+            try:
+                os.remove(self.stderr.name)
+            except FileNotFoundError:
+                pass
 
 
 
