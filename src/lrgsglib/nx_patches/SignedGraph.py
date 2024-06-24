@@ -1,4 +1,4 @@
-from .objects import *
+from .common import *
 class SignedGraph:
     sgpath = "custom_graph"
     syshapePth = ""
@@ -33,7 +33,8 @@ class SignedGraph:
             plotOutdir=plotOutdir, 
             expOutdir=expOutdir
         )
-        self.__make_dirs__(make_dir_tree)
+        if make_dir_tree:
+            self.__make_dirs__()
         # pflip check
         if not is_in_range(pflip, LB_PFLIP, UB_PFLIP):
             raise ValueError(SG_ERRMSG_PFLIP)
@@ -58,6 +59,8 @@ class SignedGraph:
                 self.nwDict = self.nwContainer(self)
             else:
                 raise AttributeError(SG_ERRMSG_NW_DICT)
+        self.__make_graphCl_util__()
+
     #
     @property
     def gr(self):
@@ -100,6 +103,9 @@ class SignedGraph:
     #
     def __make_dirs__(self, exist_ok: bool = True):
         for _ in self.dirMakeList: os.makedirs(_, exist_ok=exist_ok)
+    #
+    def __make_graphCl_util__(self):
+        self.gclUtil = NestedDict()
     #
     def __init_graph_fromfile__(self):
         return pk.load(open(self.graphPath + PKL, "rb"))
@@ -411,27 +417,39 @@ class SignedGraph:
                       binarize: bool = True):
         self.load_eigV_on_g(which, on_g, binarize)
         if not hasattr(self, "clusters"):
-            self.compute_clusters(f"eigV{which}", +1, which, on_g)
-        clusterLen = sorted(list(map(lambda x: len(x), self.clusters)), 
+            self.make_clustersY(f"eigV{which}", +1, which, on_g)
+        clusterLen = sorted(list(map(lambda x: len(x), self.clustersY)), 
                             reverse=True)
         return clusterLen
     
+    def make_graphYN(self, k, val, on_g: str = SG_GRAPH_REPR):
+        self.gclUtil[k][val][on_g] = self.group_nodes_by_kv(k, val, on_g)
 
-    def compute_clusters(self, k, val, on_g: str = SG_GRAPH_REPR):
-        G_yes, _ = self.group_nodes_by_kv(k, val, on_g)
-        self.clusters = list(nx.connected_components(G_yes))
-        self.numClusters = len(self.clusters)
-    
-    def compute_gc(self, k, val, on_g: str = SG_GRAPH_REPR):
-        G_yes, _ = self.group_nodes_by_kv(k, val, on_g)
-        connected_components = list(nx.connected_components(G_yes))
-        largest_component = max(connected_components, key=len)
-        return largest_component
-    def compute_gc_signGauged(self, k, val, on_g: str = SG_GRAPH_REPR):
-        G_yes, G_no = self.group_nodes_by_kv(k, val, on_g)
-        pcc = max(nx.connected_components(G_yes), key=len)
-        ncc = max(list(nx.connected_components(G_no), key=len))
-        return max(pcc, ncc, key=len)
+    def make_clustersYN(self, k, val, on_g: str = SG_GRAPH_REPR):
+        try:
+            graphY, graphN = self.gclUtil[k][val][on_g]
+        except:
+            self.make_graphYN(k, val, on_g)
+            graphY, graphN = self.gclUtil[k][val][on_g]
+        #
+        self.clustersY = list(nx.connected_components(graphY))
+        self.clustersN = list(nx.connected_components(graphN))
+        #
+        self.numClustersY = len(self.clustersY)
+        self.numClustersN = len(self.clustersN)
+        #
+        lgcY = max(self.clustersY, key=len) if self.clustersY else []
+        lgcN = max(self.clustersN, key=len) if self.clustersN else []
+        self.biggestClSet = self.clustersY if len(lgcY) >= len(lgcN) else self.clustersN
+        self.biggestClSet.sort(key=len, reverse=True)
+        self.numClustersBig = len(self.biggestClSet)
+        self.gc = max(self.biggestClSet, key=len)
+
+    # def make_gc_binaryGauged(self, k, val, on_g: str = SG_GRAPH_REPR):
+    #     self.gcBinDict = dict(k=k, val=val, on_g=on_g)
+    #     self.gcBinNodes = self.gc
+    #     self.gcBinLen = len(self.gcBinNodes)
+        
     def cluster_distribution(self, which: int = 0, 
                                   on_g: str = SG_GRAPH_REPR,
                                   binarize: bool = True):
