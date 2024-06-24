@@ -23,6 +23,7 @@ DEFAULT_INSFFX = ''
 DEFAULT_OUTSFFX = ''
 DEFAULT_NOCLUST = 1
 DEFAULT_REMOVE_FILES = True
+DEFAULT_WORKDIR = os.getcwd()
 #
 phelp_remove_files = """
     Remove the input files after the computation.
@@ -51,6 +52,9 @@ phelp_outSuffix = f"""
 """
 phelp_NoClust = f"""
     Number of clusters to compute | default={DEFAULT_NOCLUST}
+"""
+phelp_workdir = f"""
+    Working directory | default='{DEFAULT_WORKDIR}'
 """
 #
 parsDict = {
@@ -91,7 +95,11 @@ parsDictOpt = {
     'NoClust': {'names': ['-nc', '--NoClust'],
                 'help': phelp_NoClust,
                 'type': int,
-                'default': DEFAULT_NOCLUST}
+                'default': DEFAULT_NOCLUST},
+    'workdir': {'names': ['-wd', '--workdir'],
+                'help': phelp_workdir,
+                'type': str,
+                'default': DEFAULT_WORKDIR}
 }
 #
 parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
