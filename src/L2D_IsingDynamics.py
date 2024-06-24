@@ -62,3 +62,4 @@ for _ in range(navg):
     if remove_files:
         isdy.remove_run_c_files(remove_stderr=True)
         l.remove_edgl_file()
+print("Done!")
