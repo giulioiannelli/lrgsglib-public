@@ -1,32 +1,9 @@
 #
 from ..shared import *
 from .const import *
+from .const_plotlib import *
 from .utils import *
 from .errwar import *
-#
-import matplotlib.animation as animation
-import matplotlib.cm as cm
-import matplotlib.colors as mplc
-import matplotlib.gridspec as gs
-import matplotlib.pyplot as plt
-#
-from matplotlib import gridspec, rc_context
-from matplotlib.axes import Axes
-from matplotlib.cm import hsv, twilight, ScalarMappable
-from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm
-from matplotlib.colors import LinearSegmentedColormap, Normalize
-from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
-from matplotlib.path import Path
-from matplotlib.text import Text
-from matplotlib.ticker import ScalarFormatter
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-#
-from .const_plotlib import *
-#
-#
-#
 #
 def set_new_lower_ybound(ax, new_lower_bound):
     """
@@ -47,25 +24,29 @@ def set_new_lower_ybound(ax, new_lower_bound):
 
 def set_alpha_torgb(rgbacol, alpha=0.5):
     """
-    Sets the alpha (transparency) channel of an RGBA color tuple and returns a new RGBA color tuple.
+    Sets the alpha (transparency) channel of an RGBA color tuple and returns a 
+    new RGBA color tuple.
 
     Parameters:
-        rgbacol (tuple): A tuple representing an RGBA color in the format (R, G, B, A), where R, G, B, and A
-                         are integers between 0 and 255.
-        alpha (float, optional): The alpha (transparency) value to set for the RGBA color. Default is 0.5.
+        rgbacol (tuple): A tuple representing an RGBA color in the format 
+            (R, G, B, A), where R, G, B, and A are integers between 0 and 255.
+        alpha (float, optional): The alpha (transparency) value to set for the 
+            RGBA color. Default is 0.5.
 
     Returns:
-        tuple: A new RGBA color tuple in the format (R, G, B, alpha), where R, G, B are the same as in the
-               input tuple, and alpha is the specified transparency value.
+        tuple: A new RGBA color tuple in the format (R, G, B, alpha), where 
+            R, G, B are the same as in the input tuple, and alpha is the 
+            specified transparency value.
 
     Example:
         >>> set_alpha_torgb((255, 0, 0, 255), 0.2)
         (255, 0, 0, 0.2)
 
     Note:
-        - This function creates a new RGBA color tuple with the specified alpha value while preserving the
-          original RGB color components.
-        - The alpha value should be a float between 0.0 (fully transparent) and 1.0 (fully opaque).
+        - This function creates a new RGBA color tuple with the specified alpha 
+            value while preserving the original RGB color components.
+        - The alpha value should be a float between 0.0 (fully transparent) 
+            and 1.0 (fully opaque).
     """
     return (rgbacol[0], rgbacol[1], rgbacol[2], alpha)
 
@@ -91,7 +72,8 @@ def create_custom_colormap(c1="#0000ff", c2="#fc0303", nc: int = 0):
 
     Notes:
     ------
-    - The function creates a custom colormap by defining a transition from one color to another.
+    - The function creates a custom colormap by defining a transition from 
+        one color to another.
     - It returns the colormap object that can be used for coloring plots.
 
     Example:
@@ -125,8 +107,9 @@ def generate_maxpercdiff_colormap(
 
     Notes:
     ------
-    This function generates a perceptually distinct colormap using a saw-tooth pattern in the HSV color space.
-    The number of distinct colors can be customized by providing the `number_of_distinct_colors` parameter.
+    This function generates a perceptually distinct colormap using a saw-tooth 
+        pattern in the HSV color space. The number of distinct colors can be ]
+        customized by providing the `number_of_distinct_colors` parameter.
 
     Reference:
     -----------
@@ -222,12 +205,14 @@ def imshow_colorbar_caxdivider(
 
     position : str, optional
         The position of the colorbar relative to the 'ax' parameter.
-        Default is 'right', which means the colorbar will be placed to the right of 'ax'.
-        Other options include 'top', 'bottom', 'left', and 'right'.
+        Default is 'right', which means the colorbar will be placed to the 
+        right of 'ax'. Other options include 'top', 'bottom', 'left', 
+        and 'right'.
 
     size : str or float, optional
-        The size of the colorbar relative to 'ax'. Can be specified as a percentage (e.g., "5%")
-        or as an absolute size in points (e.g., 100). Default is "5%".
+        The size of the colorbar relative to 'ax'. Can be specified as a 
+        percentage (e.g., "5%") or as an absolute size in points (e.g., 100). 
+        Default is "5%".
 
     pad : float, optional
         The padding between the colorbar and the 'ax' in relative units.
@@ -276,21 +261,23 @@ def get_complementary_color(color_name):
     """
     Calculates the complementary color for a given color.
 
-    The function takes a color name or hex value and returns the complementary color in hex format.
-    It uses the matplotlib library for color conversions and calculations.
+    The function takes a color name or hex value and returns the complementary 
+    color in hex format. It uses the matplotlib library for color conversions 
+    and calculations.
 
     Parameters:
     -----------
     color_name : str
-        The name of the color or its hex value. This can be a common color name (like 'red')
-        or a hex code (like '#FF0000'). If a common color name is provided, the function first
-        converts it to its hex equivalent.
+        The name of the color or its hex value. This can be a common color 
+        name (like 'red') or a hex code (like '#FF0000'). If a common color 
+        name is provided, the function first converts it to its hex equivalent.
 
     Returns:
     --------
     str
-        The hex code of the complementary color. The complementary color is calculated by inverting
-        the RGB values of the original color. For instance, the complementary color of 'red' ('#FF0000')
+        The hex code of the complementary color. The complementary color is 
+        calculated by inverting the RGB values of the original color. For 
+        instance, the complementary color of 'red' ('#FF0000')
         would be cyan ('#00FFFF').
 
     Example:
@@ -299,10 +286,12 @@ def get_complementary_color(color_name):
 
     Notes:
     ------
-    - The function assumes that the input color is either a valid named color in the matplotlib
-    color maps or a valid hex color code.
-    - If the color name is not recognized in the matplotlib color maps, it's treated as a hex code.
-    - The RGB values are assumed to be in the range [0, 1], as per matplotlib's color representation.
+    - The function assumes that the input color is either a valid named color
+        in the matplotlib color maps or a valid hex color code.
+    - If the color name is not recognized in the matplotlib color maps, it's 
+        treated as a hex code.
+    - The RGB values are assumed to be in the range [0, 1], as per 
+        matplotlib's color representation.
     """
 
     from matplotlib import colors as mplcol
