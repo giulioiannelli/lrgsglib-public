@@ -23,7 +23,7 @@ DEFAULT_INSFFX = ''
 DEFAULT_OUTSFFX = ''
 DEFAULT_NOCLUST = 1
 DEFAULT_REMOVE_FILES = True
-DEFAULT_WORKDIR = os.getcwd()
+DEFAULT_WORKDIR = ''
 #
 phelp_remove_files = """
     Remove the input files after the computation.
