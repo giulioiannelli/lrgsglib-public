@@ -1,21 +1,7 @@
 from .shared import *
-#
-#
-from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
-from scipy.linalg import expm, fractional_matrix_power
-from scipy.ndimage import gaussian_filter1d, gaussian_filter
-from scipy.signal import argrelextrema, medfilt
-from scipy.spatial.distance import squareform
-#
-#
-from .nx_patches.funcs import *
-from .nx_patches.objects import *
-from .config.dyns import *
-from .Ccore.statsys import *
-from .config.const import *
-from .config.errwar import *
-from .config.plotlib import *
-from .config.utils import *
+from .nx_patches import *
+from .statsys import *
+from .config import *
 #
 sys.setrecursionlimit(DEFAULT_RECURSION_LIMIT)
 warnings.simplefilter(action="ignore", category=FutureWarning)
