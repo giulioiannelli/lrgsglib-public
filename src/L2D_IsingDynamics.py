@@ -29,8 +29,9 @@ l2dDictArgs = dict(side1=side, geo=geo, sgpath=workdir, pflip=p,
 isingDictArgs = dict(T=T, ic=ic, runlang=runlang, NoClust=NoClust, rndStr=True, 
                      out_suffix=out_suffix, id_string=in_suffix)
 l = Lattice2D(**l2dDictArgs)
-fName = os.path.join(l.expOutdir, f'GC_meanVar_p={p:.3g}_{cell}_{in_suffix}.txt')
-if not os.path.exists(fName):
+Fname = f'GC_meanVar_p={p:.3g}_{cell}_{in_suffix}.txt'
+pathFname = os.path.join(l.expOutdir, Fname)
+if not os.path.exists(pathFname):
     lenList = []
     for _ in range(navg2):
         l = Lattice2D(**l2dDictArgs)
@@ -40,9 +41,9 @@ if not os.path.exists(fName):
         l.make_clustersYN(f'eigV{number}', +1)
         lenList.append(len(l.gc))
     meanN, stdN = np.mean(lenList)/l.N, np.std(lenList)
-    np.savetxt(fName, [meanN, stdN], fmt='%.3g')
+    np.savetxt(pathFname, np.atleast_2d([meanN, stdN]), fmt='%.3g')
 else:
-    meanN, stdN = np.loadtxt(fName)
+    meanN, stdN = np.loadtxt(pathFname)
 
 for _ in range(navg):
     while True:
