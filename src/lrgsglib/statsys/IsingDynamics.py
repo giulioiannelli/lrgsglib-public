@@ -256,7 +256,7 @@ class IsingDynamics:
             print(excpt)
         for i in range(self.NoClust):
             fname = os.path.join(self.sg.isingpath,
-                                 join_non_empty([f"cl{i}", self.in_suffix])+BIN)
+                                 join_non_empty('_', f"cl{i}", self.in_suffix)+BIN)
             self.clfout = open(fname, "wb")
             np.array(list(self.sg.biggestClSet[i])).astype(int).tofile(self.clfout)
 

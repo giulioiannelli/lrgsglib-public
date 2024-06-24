@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
     FILE *f_sini, *f_ene;
     FILE **f_cl, **f_out;
     char buf[STRL512];
+    char modified_out_id[STRL256];
     char *ptr, *datdir, *out_id, *mod_save;
     char *ext_save, *update_mode, *run_id;
     int nSampleLog;
@@ -87,9 +88,14 @@ int main(int argc, char *argv[])
         sprintf(buf, CLID_FNAME, datdir, N, i, p, run_id);
         __fopen((f_cl + i), buf, "rb");
     }
+    if (out_id[0] != '\0') {
+        sprintf(modified_out_id, "_%s", out_id);  // Prepend an underscore if out_id is not empty
+    } else {
+        modified_out_id[0] = '\0';  // Make sure it's an empty string if out_id is empty
+    }
     f_out = __chMalloc(sizeof(*f_out) * Noclust);
     for (size_t i = 0; i < Noclust; i++) {
-        sprintf(buf, CLOUT_FNAME, datdir, N, i, p, T, out_id, ext_save);
+        sprintf(buf, CLOUT_FNAME, datdir, N, i, p, T, modified_out_id, ext_save);
         __fopen((f_out + i), buf, mod_save);
     }
     /* fill clusters indices */
