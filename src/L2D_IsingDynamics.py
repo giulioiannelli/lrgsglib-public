@@ -59,5 +59,5 @@ for _ in range(navg):
     isdy.export_ising_clust()
     isdy.run(verbose=False)
     if remove_files:
-        isdy.remove_run_c_files(remove_stderr=True)
+        isdy.remove_run_c_files(remove_stderr=False)
         l.remove_edgl_file()
