@@ -39,7 +39,7 @@ if not os.path.exists(fName):
         l.load_eigV_on_g(which=number, binarize=True)
         l.make_clustersYN(f'eigV{number}', +1)
         lenList.append(len(l.gc))
-    meanN, stdN = np.mean(lenList)/l.N, np.std(lenList)/l.N
+    meanN, stdN = np.mean(lenList)/l.N, np.std(lenList)
     np.savetxt(fName, [meanN, stdN], fmt='%.3g')
 else:
     meanN, stdN = np.loadtxt(fName)
@@ -51,7 +51,7 @@ for _ in range(navg):
         l.compute_k_eigvV(howmany=howmany)
         l.load_eigV_on_g(which=number, binarize=True)
         l.make_clustersYN(f'eigV{number}', +1)
-        if  abs(len(l.gc)/l.N - meanN) < stdN:
+        if  abs(len(l.gc)/l.N - meanN) < stdN/2:
             break
     isdy = IsingDynamics(l, **isingDictArgs)
     isdy.init_ising_dynamics()
