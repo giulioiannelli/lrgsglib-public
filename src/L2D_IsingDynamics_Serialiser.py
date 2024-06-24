@@ -44,7 +44,8 @@ else:
 def slanzarv_str(mode, L, p, geo, c, T):
     slanzarvopt = "--nomail --jobname "
     slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
-    argstr = f"{progNameShrt}{mode}_{L}_{p:.3g}_{T:.3g}_{geo[:3]}_{c[3:]}"
+    argstr = '_'.join(progNameShrt, mode, f"{L}", f"{p:.3g}", f"{T:.3g}", 
+                      geo[:3], c[3:])
     return slanzarvstr + argstr
 #
 if execBool or printBool:
@@ -63,7 +64,8 @@ if execBool or printBool:
         elif printBool:
             print(s)
             count += 1
-    def exec_str(L, p, geo, cell, navg, T, runlang, in_suffix, out_suffix, NoClust):
+    def exec_str(L, p, geo, cell, navg, T, runlang, in_suffix, out_suffix, 
+                 NoClust):
         lnchStr = f"python src/{progName}.py"
         in_suffix = in_suffix or f"p={p:.3g}"
         outstr = f"-os {out_suffix} " if out_suffix else " "
