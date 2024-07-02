@@ -49,7 +49,7 @@ PLT_SL2DSQ_KWLINE = dict(lw=3)
 PLT_SL2DSQ_PEC = cblu
 PLT_SL2DSQ_CPEC = cred
 PLT_SL2DSQ_MODE = 'rand'
-PLT_SL2DSQ_KWTXT = dict(fontsize=20, c='k', ha='center', va='center')
+PLT_SL2DSQ_KWTXT = dict(fontsize=24, c='k', ha='center', va='center')
 PLT_SL2DSQ_VDCPEC = [(0, 2), (2, 2), (3, 2), (1, 1), (1, 0)]
 PLT_SL2DSQ_HDCPEC = [(3, 2), (3, 1), (1, 0), (2, 0)]
 PLT_SL2DSQ_PFLIP = 0.2
