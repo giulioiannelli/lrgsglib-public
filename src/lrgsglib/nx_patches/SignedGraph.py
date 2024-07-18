@@ -324,13 +324,13 @@ class SignedGraph:
     def compute_rbim_energy_eigV(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
         spins = self.bin_eigV(which)
         edges = self.GraphReprDict[on_g].edges(data=True)
-        Aij = np.array([(u, v) for u, v, data in edges])
-        Jij = np.array([data['weight'] for u, v, data in edges])
-        # Compute the product of weights and spins for each edge
-        Eij = Jij * spins[Aij[:, 0]] * spins[Aij[:, 1]]
-        # Sum the product terms
-        E = -np.sum(Eij)
-        return E/self.N
+        u_indices, v_indices, weights = zip(*[(u, v, data['weight']) for u, v, data in edges])
+        u_indices, v_indices = np.array(u_indices, dtype=int), np.array(v_indices, dtype=int)
+        weights = np.array(weights)
+
+        # Compute the energy using a single line of vectorized operations
+        E = -np.sum(weights * spins[u_indices] * spins[v_indices])
+        return E / (self.N)
 
     def bin_eigV_all(self):
         # to be reviewed must flip to positive majority
