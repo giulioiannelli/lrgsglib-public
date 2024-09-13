@@ -307,12 +307,25 @@ class Lattice3D(SignedGraph):
     #         #         G.add_edge((self.dim[0]-0.5, y+0.5, z+0.5), (-0.5, y+0.5, z+0.5))
     #         #         G.add_edge((self.dim[0]-1, y, z), (0, y, z))
     #     return G
+    def get_central_edge(self, on_g: str = L3D_ONREP):
+        cnode = (self.dimL[0]//2-1, self.dimL[1]//2, self.dimL[2]//2)
+        cnode_t = (self.dimL[0]//2, self.dimL[1]//2, self.dimL[2]//2)
+        edge_t = (cnode, cnode_t)
+        if on_g == 'G':
+            return edge_t
+        elif on_g == 'H':
+            return self.edgeMap['H']['G'][edge_t]
     class nwContainer(dict):
             def __init__(self, l: SignedGraph, iterable=[], constant=None, 
                         **kwargs):
                 super().__init__(**kwargs)
                 self.update((key, constant) for key in iterable)
                 self.l = l
+                self.rd = self.l.GraphReprs
+                #
+                self.centedge = {g: self.l.get_central_edge(g) 
+                             for g in self.rd}
                 self.reprDict = list(self.l.GraphReprDict.keys())
-                self['rand'] = {g: [e for e in self.l.rEdgeFlip[g]] 
-                            for g in self.reprDict}
+                self['single'] = {g: [self.centedge[g]] for g in self.rd}
+                self['rand'] = {g: [e for e in self.l.fleset[g]] 
+                            for g in self.rd}
