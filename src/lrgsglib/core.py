@@ -19,7 +19,6 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 #
 # renormalization group for heterogenous network functions
 class SignedLaplacianAnalysis:
-    slspectrum = None
     Sm1 = None
     VarL = None
     Cspe = None
@@ -57,14 +56,14 @@ class SignedLaplacianAnalysis:
         #
         self.t_steps = t_steps
         self.no_obs = no_obs
-        if  self.sg.slspectrum is None and self.initspect:
+        if not hasattr(self.sg, "eigv") and self.initspect:
             self.__initSpectrum__()
     #
     def __initSpectrum__(self):
-        self.sg.compute_laplacian_spectrum()
+        self.sg.compute_k_eigvV(MODE_dynspec="numpy")
     #
     def computeS(self) -> None:
-        w =  self.sg.slspectrum
+        w =  self.sg.eigv
         S = np.zeros(len(self.tTsS))
         VarL = np.zeros(len(self.tTsS))
         for i, tau in enumerate(self.tTsS):

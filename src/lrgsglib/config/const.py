@@ -125,6 +125,7 @@ L3D_GEO_SC_SHRT1 = 'cubic'
 L3D_GEO_SC_SHRT = 'sc'
 L3D_GEO_BCC_SHRT = 'bcc'
 L3D_GEO_FCC_SHRT = 'fcc'
+L3D_ONREP = 'G'
 L3D_WITH_POS = False
 L3D_THETA = np.pi/6
 L3D_PHI = np.pi/6
