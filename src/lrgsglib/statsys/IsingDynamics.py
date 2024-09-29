@@ -66,7 +66,7 @@ class IsingDynamics:
                 -self.s[node] * self.neigh_ene(self.neigh_wghtmagn(node))
                 for node in range(self.sg.N)]).sum()
     #
-    def init_ising_dynamics(self, custom: Iterable = None):
+    def init_ising_dynamics(self, custom: Any = None):
         match self.ic:
             case "uniform":
                 self.s = np.random.choice([-1, 1], size=self.sg.N)
@@ -76,6 +76,9 @@ class IsingDynamics:
                 self.s = bineigv
             case "custom":
                 self.s = custom
+            case "delta":
+                self.s = np.zeros(self.sg.N)
+                self.s[np.random.randint(self.sg.N)] = 1
             case _:
                 raise ValueError("Invalid initial condition.")
         if self.runlang.startswith("C") and not self.sg.import_on:
@@ -109,12 +112,14 @@ class IsingDynamics:
                        f"{thrmSTEP:.3g}",
                        f"{eqSTEP}",
                        self.sg.datPath,
+                       self.sg.syshapePth,
                        self.run_id,
                        self.out_suffix,
                        self.upd_mode,
                        f"{freq}"
                        ]
             self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
+            print(self.cprogram)
             stderrFname = join_non_empty('_', f"err{self.CbaseName}", f"{self.N}", 
                                     f"{self.id_string_isingdyn}", 
                                     f"{self.out_suffix}")+LOG
@@ -241,6 +246,7 @@ class IsingDynamics:
                      '_'.join(['s', self.in_suffix])+BIN)
         self.sfout = open(fname, "wb")
         self.s.astype("int8").tofile(self.sfout)
+        self.s_0 = self.s.copy()
     #
     def export_ising_clust(self, val: Any = +1, which: int = 0, 
                            on_g: str = SG_GRAPH_REPR, binarize: bool = True): 
