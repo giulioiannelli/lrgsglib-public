@@ -104,5 +104,6 @@
         "--experimental-string-processing"
         ],        
     "cmake.sourceDirectory": "/home/opisthofulax/PhD/projects/complex-networks/lrgsglib/src/lrgsglib/Ccore/SFMT",
-    "CodeGPT.apiKey": "OpenAI"
+    "CodeGPT.apiKey": "OpenAI",
+    "makefile.configureOnOpen": true
 }
