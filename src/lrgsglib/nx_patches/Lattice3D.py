@@ -15,7 +15,7 @@ class Lattice3D(SignedGraph):
         phi: float = L3D_PHI,
         **kwargs,
     ) -> None:
-        if isinstance(dim, int):
+        if isinstance(dim, (int, np.integer)):
             self.dim = (dim, dim, dim)
         elif isinstance(dim, tuple) and len(dim) == 3 and all(isinstance(x, int) for x in dim):
             self.dim = sorted(dim, reverse=True)
@@ -48,10 +48,10 @@ class Lattice3D(SignedGraph):
             raise ValueError(f"Unsupported geometry '{self.geo}'.")
         self.syshape = self.dim
         if all(x == self.dim[0] for x in self.dim):
-            self.syshapeStr = f"N={self.dim[0]**len(self.dim)}"
+            self.syshapePth = f"N={self.dim[0]**len(self.dim)}"
         else:
-            self.syshapeStr = '_'.join(["L{i}=side" for i, side in enumerate(self.dim)])        
-        self.syshapePth = f"{self.syshapeStr}/"
+            self.syshapePth = '_'.join([f"L{i}={side}" 
+                                        for i, side in enumerate(self.dim)])        
         
         self.G = nxfunc(self.dim)
         if self.with_positions:

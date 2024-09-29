@@ -3,7 +3,7 @@
 #include "sfmtrng.h"
 #include "LRGSG_rbim.h"
 //
-#define EXPECTED_ARGC 13
+#define EXPECTED_ARGC 12
 //
 #define T_THERM_STEP (thrmSTEP * N)
 #define T_EQ_STEP (eqSTEP * N)
@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     /* check argc */
     if (argc < EXPECTED_ARGC)
     {
-        fprintf(stderr, "Usage: %s N T p Noclust thrmSTEP eqSTEP datdir sshapePth run_id"\
+        fprintf(stderr, "Usage: %s N T p Noclust thrmSTEP eqSTEP datdir run_id"\
             " out_id update_mode nSampleLog\n", argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     /* variables */
     FILE *f_sini, *f_s, *f_ene;
     char buf[STRL512];
-    char *ptr, *datdir, *syshape, *out_id, *update_mode, *run_id;
+    char *ptr, *datdir, *out_id, *update_mode, *run_id;
     int nSampleLog;
     int* logspc;
     double T, p, thrmSTEP;
@@ -49,11 +49,10 @@ int main(int argc, char *argv[])
     thrmSTEP = strtod(argv[5], &ptr);
     eqSTEP = strtozu(argv[6]);
     datdir = argv[7];
-    syshape = argv[8];
-    run_id = argv[9];
-    out_id = argv[10];
-    update_mode = argv[11];
-    nSampleLog = atoi(argv[12]);
+    run_id = argv[8];
+    out_id = argv[9];
+    update_mode = argv[10];
+    nSampleLog = atoi(argv[11]);
     side = (size_t)sqrt(N);
     freq = (size_t) (T_STEPS / nSampleLog);
     logspc = logspace_int(log10(T_STEPS), &nSampleLog);
@@ -61,14 +60,14 @@ int main(int argc, char *argv[])
     s = __chMalloc(N * sizeof(*s));
     ene = __chMalloc(sizeof(*ene) * T_STEPS);
     //
-    sprintf(buf, ENE_FNAME, datdir, syshape, p, T, out_id);
+    sprintf(buf, ENE_FNAME, datdir, N, p, T, out_id);
     __fopen(&f_ene, buf, "wb");
-    sprintf(buf, SINI_FNAME, datdir, syshape, p, run_id);
+    sprintf(buf, SINI_FNAME, datdir, N, p, run_id);
     __fopen(&f_sini, buf, "rb");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
-    sprintf(buf, SOUT_FNAME, datdir, syshape, p, T, out_id);
+    sprintf(buf, SOUT_FNAME, datdir, N, p, T, out_id);
     __fopen(&f_s, buf, "wb");
-    sprintf(buf, EDGL_FNAME, datdir, syshape, p, run_id);
+    sprintf(buf, EDGL_FNAME, datdir, N, p, run_id);
     process_edges(buf, N, &edges, &node_edges, &neigh_len);
     //  
     for (size_t t = 0; t < T_STEPS; t++)

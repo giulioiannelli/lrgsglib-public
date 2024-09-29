@@ -84,15 +84,15 @@ class Lattice2D(SignedGraph):
             self.syshape = (self.side1, self.side2)
         #
         if self.side1 == self.side2:
-            self.syshapeStr = f"N={self.side1**2}"
+            self.syshapePth = f"N={self.side1**2}"
         elif self.side1 > self.side2:
-            self.syshapeStr = f"L1={self.side1}_L2={self.side2}"
+            self.syshapePth = f"L1={self.side1}_L2={self.side2}"
         elif self.side2 > self.side1:
-            self.syshapeStr = f"L1={self.side2}_L2={self.side1}"
-        self.syshapePth = f"{self.syshapeStr}/"
+            self.syshapePth = f"L1={self.side2}_L2={self.side1}"
         #
         self.p_c = L2D_P_C_DICT[self.geo]
-        self.r_c = np.sqrt(1.128/(np.pi*self.p_c))
+        self.eta_c = 1.128
+        self.r_c = np.sqrt(self.eta_c/(np.pi*self.p_c))
         #
         self.H = nxfunc(self.side1, self.side2, periodic=self.pbc, 
                         with_positions=self.with_positions)

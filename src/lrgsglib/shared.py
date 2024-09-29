@@ -40,4 +40,4 @@ from scipy.sparse import identity as scsp_identity
 from scipy.sparse.linalg import eigsh as scsp_eigsh
 
 from tqdm import tqdm
-from typing import Any, Optional, Union, List, Tuple, Dict
+from typing import Any, Optional, Union, List, Tuple, Dict, Set

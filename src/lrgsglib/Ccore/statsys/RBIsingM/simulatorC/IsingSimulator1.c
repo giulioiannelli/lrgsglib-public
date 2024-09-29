@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     FILE **f_cl, **f_out;
     char buf[STRL512];
     char modified_out_id[STRL256];
-    char *ptr, *datdir, *out_id, *mod_save;
+    char *ptr, *datdir, *syshape, *out_id, *mod_save;
     char *ext_save, *update_mode, *run_id;
     int nSampleLog;
     double T, p, thrmSTEP;
@@ -53,10 +53,11 @@ int main(int argc, char *argv[])
     thrmSTEP = strtod(argv[5], &ptr);
     eqSTEP = strtozu(argv[6]);
     datdir = argv[7];
-    run_id = argv[8];
-    out_id = argv[9];
-    update_mode = argv[10];
-    nSampleLog = atoi(argv[11]);
+    syshape = argv[8];
+    run_id = argv[9];
+    out_id = argv[10];
+    update_mode = argv[11];
+    nSampleLog = atoi(argv[12]);
     side = (size_t)sqrt(N);
     /* open out files */
     switch (MOD_SAVE)
@@ -79,13 +80,13 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < Noclust; i++)
         mclus[i] = __chMalloc(sizeof(**mclus) * T_EQ_STEP);
     /* open spin initial condition  */
-    sprintf(buf, SINI_FNAME, datdir, N, p, run_id);
+    sprintf(buf, SINI_FNAME, datdir, syshape, p, run_id);
     __fopen(&f_sini, buf, "rb");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     /* open cluster indices files */
     f_cl = __chMalloc(sizeof(*f_cl) * Noclust); 
     for (size_t i = 0; i < Noclust; i++) {
-        sprintf(buf, CLID_FNAME, datdir, N, i, p, run_id);
+        sprintf(buf, CLID_FNAME, datdir, syshape, i, p, run_id);
         __fopen((f_cl + i), buf, "rb");
     }
     if (out_id[0] != '\0') {
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
     }
     f_out = __chMalloc(sizeof(*f_out) * Noclust);
     for (size_t i = 0; i < Noclust; i++) {
-        sprintf(buf, CLOUT_FNAME, datdir, N, i, p, T, modified_out_id, ext_save);
+        sprintf(buf, CLOUT_FNAME, datdir, syshape, i, p, T, modified_out_id, ext_save);
         __fopen((f_out + i), buf, mod_save);
     }
     /* fill clusters indices */
@@ -108,7 +109,7 @@ int main(int argc, char *argv[])
         cl_l[i]--;
     }
     /* fill edge list, neighbours list and neighbours lengths */
-    sprintf(buf, EDGL_FNAME, datdir, N, p, run_id);
+    sprintf(buf, EDGL_FNAME, datdir, syshape, p, run_id);
     process_edges(buf, N, &edges, &node_edges, &neigh_len);
 
     for (size_t t = 0; t < T_THERM_STEP; t++) {
@@ -123,7 +124,7 @@ int main(int argc, char *argv[])
     }
     switch (MOD_SAVE) {
     case 0:
-        sprintf(buf, ENE_FNAME, datdir, N, p, T, out_id);
+        sprintf(buf, ENE_FNAME, datdir, syshape, p, T, out_id);
         __fopen(&f_ene, buf, "ab");
         for (size_t i = 0; i < Noclust; i++)
             fwrite(mclus[i], sizeof(**mclus), T_EQ_STEP, f_out[i]);

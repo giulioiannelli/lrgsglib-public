@@ -14,9 +14,6 @@ BIN = ".bin"
 LOG = ".log"
 MP4 = ".mp4"
 PKL = ".pkl"
-#
-LB_PFLIP = 0.
-UB_PFLIP = 1.
 # paths
 load_dotenv()
 LRGSG_ROOT = os.getenv('LRGSG_ROOT')
@@ -47,6 +44,9 @@ DIR_LRGSG = "lrgsg/"
 DIR_PHTRA = "phtra/"
 DIR_SPECT = "spect/"
 #
+LB_PFLIP = 0.
+UB_PFLIP = 1.
+#
 BSP_VAL = [-1, +1]
 BSP_STORE_MODE = ""
 BSP_STORE_MODES = [BSP_STORE_MODE, "persistent", "sequential"]
@@ -61,6 +61,10 @@ BSP_RUN_MODES_PY_DICT = {bsp: BSP_RUN_MODE_PYTHON for bsp in BSP_RUN_MODES_PY_LI
 BSP_RUN_MODES = BSP_RUN_MODES_PY_LIST + BSP_RUN_MODES_C_LIST
 BSP_RUN_MODES_DICT = {**BSP_RUN_MODES_PY_DICT, **BSP_RUN_MODES_C_DICT}
 # Signed Graph default values
+SG_PFLIP = 0.0
+SG_IMPORT_ON = False
+SG_INIT_NW_DICT = False
+SG_INIT_WVAL = 1.0
 SG_GRAPH_REPR = 'G'
 SG_GRAPHINT_REPR = SG_GRAPH_REPR
 SG_GRAPHGEO_REPR = 'H'
@@ -69,8 +73,11 @@ SG_ERRMSG_NW_DICT = f"Inheriting class must have attribute 'nwContainer'"
 SG_ERRMSG_NFLIP = """The probability of flipping an edge times the 
                              number of edges is < 1, then no edges would be
                              flipped. No flip will be performed."""
-#
-DEFErdosReny_pthabb = "er/"
+# erdos renyi default values
+ER_PHTABB = "er"
+ER_ONREP = 'G'
+ER_STDFN = ""
+ER_SGPATH = ""
 # 2D Lattice default values
 L2D_FBCV = 1.
 L2D_PBC = True
@@ -91,26 +98,20 @@ L2D_WITH_POS = False
 # 
 L2D_GEO = L2D_GEO_SQR
 # 
-L2D_GEO_LIST = [L2D_GEO_TRI, 
-                        L2D_GEO_SQR, 
-                        L2D_GEO_HEX]
-L2D_GEO_SHRT_LIST = [L2D_GEO_TRI_SHRT, 
-                        L2D_GEO_SQR_SHRT, 
-                        L2D_GEO_HEX_SHRT]
+L2D_GEO_LIST = [L2D_GEO_TRI, L2D_GEO_SQR, L2D_GEO_HEX]
+L2D_GEO_SHRT_LIST = [L2D_GEO_TRI_SHRT, L2D_GEO_SQR_SHRT, L2D_GEO_HEX_SHRT]
 L2D_SINGLE_CELL_LIST = ['single', 'singleXERR', 'singleZERR']
 L2D_RAND_CELL_LIST = ['rand', 'randXERR', 'randZERR']
 #
 L2D_P_C_DICT = {g: p for g,p in zip(L2D_GEO_LIST, L2D_P_C_LIST)}
-L2D_PATH_DICT = {g: f"{L2D_PHTABB}{g}/" for a,g in 
-                        zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST)}
-L2D_GEO_SHRT_DICT = {s: a for a,s in 
-                        zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST)}
-L2D_SHRT_GEO_DICT = {a: s for a,s in 
-                        zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST)}
-
+L2D_PATH_DICT = {g: L2D_PHTABB + g for g in L2D_GEO_LIST}
+L2D_ZIP_GEO_SHRT = zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST)
+L2D_GEO_SHRT_DICT = {s: a for a,s in L2D_ZIP_GEO_SHRT}
+L2D_SHRT_GEO_DICT = {a: s for a,s in L2D_ZIP_GEO_SHRT}
+#
 L2D_WARNMSG_GEO = """The selected geometry of the 2D lattice is not available. Setting it to 'squared' for a 2d regular grid."""
 L2D_ERRMSG_GEO = """Invalid side value for hexagonal lattice. In order to implement PBC on hexagonal lattice you need to provide an even value for side1 and side2."""
-
+#
 L3D_DIM0 = 16
 L3D_DIM = tuple(L3D_DIM0 for _ in range(3))
 L3D_PBC = True
@@ -153,7 +154,6 @@ DEFAULT_NUNMBER_AVERAGES = 100
 DEFAULT_SPIKE_THRESHOLD = 0.05
 DEFAULT_MAX_THRESHOLD = 2 * DEFAULT_SPIKE_THRESHOLD
 
-# default lists
-DEFAULT_ERGRAPH_ABBRV = "randGraph"
+
 
 COUNT_XERR_PATTERNS = True

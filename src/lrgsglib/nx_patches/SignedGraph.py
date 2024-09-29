@@ -6,10 +6,11 @@ class SignedGraph:
 
     def __init__(
         self,
-        G: Graph, pflip: float = 0.0,
-        import_on: bool = False,
-        init_nw_dict: bool = False,
-        init_weights_val: float = 1,
+        G: Graph, 
+        pflip: float = SG_PFLIP,
+        import_on: bool = SG_IMPORT_ON,
+        init_nw_dict: bool = SG_INIT_NW_DICT,
+        init_weights_val: float = SG_INIT_WVAL,
         make_dir_tree: bool = True,
         on_g: str = "",
         expOutdir: str = "",
@@ -22,6 +23,7 @@ class SignedGraph:
         self.edgeMap = {}
         self.eset = {}
         self.fleset = {}
+        self.lfeset = {}
         self.nodesIn = {}
         #
         self.seed = seed or int(time.time() * 1000) + os.getpid()
@@ -81,8 +83,8 @@ class SignedGraph:
         self.dataOutdir = dataOutdir or DIR_DAT
         self.plotOutdir = plotOutdir or DIR_PLT
         #
-        self.datPath = f"{self.dataOutdir}{self.sgpath}"
-        self.pltPath = f"{self.dataOutdir}{self.plotOutdir}{self.sgpath}"
+        self.datPath = pth_join(self.dataOutdir, self.sgpath, '')
+        self.pltPath = pth_join(self.dataOutdir, self.plotOutdir, self.sgpath, '')
         #
         self.DEFAULT_GRAPHDIR = pth_join(self.datPath, DIR_GRAPH)
         self.DEFAULT_ISINGDIR = pth_join(self.datPath, DIR_ISING)
@@ -91,13 +93,14 @@ class SignedGraph:
         self.DEFAULT_PHTRADIR = pth_join(self.datPath, DIR_PHTRA)
         self.DEFAULT_SPECTDIR = pth_join(self.datPath, DIR_SPECT)
         #
-        self.expOutdir = expOutdir or pth_join(self.DEFAULT_GRAPHDIR, self.syshapePth)
+        self.expOutdir = expOutdir or pth_join(self.DEFAULT_GRAPHDIR, 
+                                               self.syshapePth, '')
         #
-        self.isingpath = pth_join(self.DEFAULT_ISINGDIR, self.syshapePth)
-        self.voterpath = pth_join(self.DEFAULT_VOTERDIR, self.syshapePth)
-        self.lrgsgpath = pth_join(self.DEFAULT_LRGSGDIR, self.syshapePth)
-        self.phtrapath = pth_join(self.DEFAULT_PHTRADIR, self.syshapePth)
-        self.spectpath = pth_join(self.DEFAULT_SPECTDIR, self.syshapePth)
+        self.isingpath = pth_join(self.DEFAULT_ISINGDIR, self.syshapePth, '')
+        self.voterpath = pth_join(self.DEFAULT_VOTERDIR, self.syshapePth, '')
+        self.lrgsgpath = pth_join(self.DEFAULT_LRGSGDIR, self.syshapePth, '')
+        self.phtrapath = pth_join(self.DEFAULT_PHTRADIR, self.syshapePth, '')
+        self.spectpath = pth_join(self.DEFAULT_SPECTDIR, self.syshapePth, '')
         self.dirMakeList = [self.expOutdir, self.isingpath, self.voterpath,
                 self.phtrapath, self.lrgsgpath, self.spectpath]
     #
@@ -134,16 +137,16 @@ class SignedGraph:
             self.neflip = self.Ne_n
             self.pflip = self.neflip / self.Ne
             edgesWithData = self.gr[self.onGraph].edges(data=True)
-            self.fleset[self.onGraph] = [(u, v) for u, v, _ in edgesWithData 
-                                         if _.get('weight', 1) < 0]
+            self.fleset[self.onGraph] = set([(u, v) for u, v, _ in edgesWithData 
+                                         if _.get('weight', 1) < 0])
         else:
             self.neflip = int(self.pflip * self.Ne)
             self.nflip = int(self.pflip * self.N)
             self.__init_weights__(init_weights_val)
             edges = self.gr[self.onGraph].edges
-            self.eset[self.onGraph] = list(edges())
-            self.fleset[self.onGraph] = random.sample(self.eset[self.onGraph], 
-                                                      self.neflip)
+            self.eset[self.onGraph] = set(list(edges()))
+            self.fleset[self.onGraph] = set(self.get_random_links(self.neflip, self.onGraph))
+            self.lfeset[self.onGraph] = self.eset[self.onGraph].difference(self.fleset[self.onGraph])
         self.upd_GraphRepr_All(self.onGraph)
         self.upd_graphMtr()
     #
@@ -201,9 +204,9 @@ class SignedGraph:
                 self.upd_GraphRelabel(on_g, i)
                 edges = self.gr[i].edges
                 self.nodesIn[i] = list(self.gr[i].nodes())
-                self.eset[i] = list(edges())
-                self.fleset[i] = [(u, v) for u, v, _ in edges(data=True) 
-                                         if _.get('weight', 1) < 0]
+                self.eset[i] = set(list(edges()))
+                self.fleset[i] = set([(u, v) for u, v, _ in edges(data=True) 
+                                         if _.get('weight', 1) < 0])
                 self.upd_Nen(i)
     #
     def get_degMtrx(self, A: csr_array, fmt: str = 'csr') -> csr_array:
@@ -247,11 +250,22 @@ class SignedGraph:
         self.sDeg = self.absolute_degree_matrix(self.Adj)
         self.Lap = self.laplacian_matrix()
         self.sLp = self.signed_laplacian()
-
+        self.upd_Nen(on_g)
+        self.upd_Degree(on_g)
+        
+    def get_random_links(self, n: int, on_g: str = SG_GRAPH_REPR, only: str = ""):
+        match only:
+            case "":
+                return random.sample(tuple(self.eset[on_g]), n)
+            case "+":
+                return random.sample(tuple(self.lfeset[on_g]), n)
+            case "-":
+                return random.sample(tuple(self.fleset[on_g]), n)
+    
     def get_edge_weight(self, u: Any, v: Any, on_g: str = SG_GRAPH_REPR):
         return self.gr[on_g].get_edge_data(u, v)['weight']
     #
-    def flip_sel_edges(self, links: List[Any] = [], on_g: str = SG_GRAPH_REPR):
+    def flip_sel_edges(self, links: Iterable = None, on_g: str = SG_GRAPH_REPR):
         """Flips specific edges of a graph G."""
         #
         neg_weights_dict = {}
@@ -263,6 +277,8 @@ class SignedGraph:
         nx.set_edge_attributes(
             self.gr[on_g], values=neg_weights_dict, name='weight'
         )
+        self.fleset[on_g].update(links)
+        self.lfeset[on_g].difference_update(links)
         self.upd_GraphRepr_All(on_g)
         self.upd_graphMtr(on_g)
 
@@ -270,12 +286,19 @@ class SignedGraph:
     def check_pflip(self):
         if self.neflip < 1: raise NflipError(SG_ERRMSG_NFLIP)
     #
-    def flip_random_fract_edges(self, on_g: str = SG_GRAPH_REPR):
+    def flip_random_fract_edges(self, pflip: float = None, on_g: str = SG_GRAPH_REPR):
         """Flips a fraction p of edges (+1 to -1) of a graph G."""
         #
         try:
-            self.check_pflip()
-            self.flip_sel_edges(self.fleset[on_g], on_g)
+            if pflip:
+                self.pflip = pflip
+                self.neflip = int(self.pflip * (self.Ne-self.Ne_n))
+                self.check_pflip()
+                links = self.get_random_links(self.neflip, on_g)
+                self.flip_sel_edges(links, on_g)
+            else:
+                self.check_pflip()
+                self.flip_sel_edges(self.fleset[on_g], on_g)
         except NflipError:
             pass
     #
@@ -317,8 +340,11 @@ class SignedGraph:
             np.sign(np.where(self.eigV[which] == 0, +1, self.eigV[which])))
     
     def bin_eigV(self, which: int = 0):
-        if not hasattr(self, f"eigV[{which}]]"):
-            self.compute_k_eigvV(howmany=which+1)
+        if not hasattr(self, f"eigV") or which >= len(self.eigV):
+            if which > self.N//2:
+                self.compute_k_eigvV(MODE_dynspec="numpy")
+            else:
+                self.compute_k_eigvV(howmany=which+1)
         return self.eigVbin(which)
     
     def compute_rbim_energy_eigV(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
