@@ -8,12 +8,13 @@ ColorType = Union[
     str
 ]
 # extensions
-PDF = ".pdf"
-TXT = ".txt"
 BIN = ".bin"
+GML = ".gml"
 LOG = ".log"
 MP4 = ".mp4"
+PDF = ".pdf"
 PKL = ".pkl"
+TXT = ".txt"
 # paths
 load_dotenv()
 LRGSG_ROOT = os.getenv('LRGSG_ROOT')
@@ -65,6 +66,8 @@ SG_PFLIP = 0.0
 SG_IMPORT_ON = False
 SG_INIT_NW_DICT = False
 SG_INIT_WVAL = 1.0
+SG_XPRT_MODE = 'pk'
+SG_MPRT_MODE = 'pk'
 SG_GRAPH_REPR = 'G'
 SG_GRAPHINT_REPR = SG_GRAPH_REPR
 SG_GRAPHGEO_REPR = 'H'
@@ -105,7 +108,7 @@ L2D_RAND_CELL_LIST = ['rand', 'randXERR', 'randZERR']
 #
 L2D_P_C_DICT = {g: p for g,p in zip(L2D_GEO_LIST, L2D_P_C_LIST)}
 L2D_PATH_DICT = {g: L2D_PHTABB + g for g in L2D_GEO_LIST}
-L2D_ZIP_GEO_SHRT = zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST)
+L2D_ZIP_GEO_SHRT = list(zip(L2D_GEO_SHRT_LIST, L2D_GEO_LIST))
 L2D_GEO_SHRT_DICT = {s: a for a,s in L2D_ZIP_GEO_SHRT}
 L2D_SHRT_GEO_DICT = {a: s for a,s in L2D_ZIP_GEO_SHRT}
 #

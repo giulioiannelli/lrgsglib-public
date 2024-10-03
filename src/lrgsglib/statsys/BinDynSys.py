@@ -32,7 +32,7 @@ class BinDynSys:
             self.s = np.random.choice([-1, 1], size=self.sg.N)
         elif self.ic.startswith("ground_state"):
             neig = int(self.ic.split("_")[-1])
-            self.s = self.sg.bin_eigV(which=neig)
+            self.s = self.sg.get_eigV_bin_check(which=neig)
         if self.runlang != "py" and not self.sg.import_on:
             self.export_sinit()
 

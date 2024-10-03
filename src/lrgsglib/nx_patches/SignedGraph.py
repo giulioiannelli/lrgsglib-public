@@ -4,18 +4,19 @@ class SignedGraph:
     syshapePth = ""
     stdFname = ""
 
-    def __init__(
-        self,
+    def __init__(self,
         G: Graph, 
         pflip: float = SG_PFLIP,
         import_on: bool = SG_IMPORT_ON,
         init_nw_dict: bool = SG_INIT_NW_DICT,
         init_weights_val: float = SG_INIT_WVAL,
+        xprt_modeL: str = SG_XPRT_MODE,
+        mprt_modeL: str = SG_MPRT_MODE,
         make_dir_tree: bool = True,
         on_g: str = "",
-        expOutdir: str = "",
-        dataOutdir: str = "",
-        plotOutdir: str = "",
+        expOut: str = "",
+        dataOut: str = "",
+        plotOut: str = "",
         seed: int = None,
     ):
         self.GraphReprDict = {}
@@ -31,9 +32,9 @@ class SignedGraph:
         np.random.seed(seed)
         #
         self.__init_paths__(
-            dataOutdir=dataOutdir, 
-            plotOutdir=plotOutdir, 
-            expOutdir=expOutdir
+            dataOut=dataOut, 
+            plotOut=plotOut, 
+            expOut=expOut
         )
         if make_dir_tree:
             self.__make_dirs__()
@@ -48,10 +49,10 @@ class SignedGraph:
         self.slspectrum = None
         self.import_on = import_on
         self.stdFname = '_'.join([self.stdFname, self.pEqStr])
-        self.graphPath = pth_join(self.expOutdir, self.stdFname)
+        self.graphPath = pth_join(self.expOut, self.stdFname)
         #
         if import_on:
-            self.G = self.__init_graph_fromfile__()
+            self.G = self.__init_graph_fromfile__(mprt_modeL)
         else:
             self.G = G
         self.__init_reprdict__()
@@ -76,33 +77,40 @@ class SignedGraph:
     @property
     def slp(self):
         return self.sLp
+    @property
+    def degm(self):
+        return self.Deg
+    @property
+    def sdeg(self):
+        return self.sDeg
+    @property
+    def gcl(self):
+        return self.gclUtil
     #
     def __init_paths__(
-        self, dataOutdir: str = "", plotOutdir: str = "", expOutdir: str = ""
+        self, dataOut: str = "", plotOut: str = "", expOut: str = ""
     ):
-        self.dataOutdir = dataOutdir or DIR_DAT
-        self.plotOutdir = plotOutdir or DIR_PLT
         #
-        self.datPath = pth_join(self.dataOutdir, self.sgpath, '')
-        self.pltPath = pth_join(self.dataOutdir, self.plotOutdir, self.sgpath, '')
+        pthSffx = pth_join(self.syshapePth, '')
         #
-        self.DEFAULT_GRAPHDIR = pth_join(self.datPath, DIR_GRAPH)
-        self.DEFAULT_ISINGDIR = pth_join(self.datPath, DIR_ISING)
-        self.DEFAULT_VOTERDIR = pth_join(self.datPath, DIR_VOTER)
-        self.DEFAULT_LRGSGDIR = pth_join(self.datPath, DIR_LRGSG)
-        self.DEFAULT_PHTRADIR = pth_join(self.datPath, DIR_PHTRA)
-        self.DEFAULT_SPECTDIR = pth_join(self.datPath, DIR_SPECT)
+        self.dataOut = dataOut or DIR_DAT
+        self.plotOut = plotOut or DIR_PLT
+        self.datPath = pth_join(self.dataOut, self.sgpath, '')
+        self.pltPath = pth_join(self.dataOut, self.plotOut, self.sgpath, '')
+        self.expOut = expOut or pth_join(self.datPath, DIR_GRAPH, pthSffx)
         #
-        self.expOutdir = expOutdir or pth_join(self.DEFAULT_GRAPHDIR, 
-                                               self.syshapePth, '')
+        self.isingpath = pth_join(self.datPath, DIR_ISING, pthSffx)
+        self.voterpath = pth_join(self.datPath, DIR_VOTER, pthSffx)
+        self.lrgsgpath = pth_join(self.datPath, DIR_LRGSG, pthSffx)
+        self.phtrapath = pth_join(self.datPath, DIR_PHTRA, pthSffx)
+        self.spectpath = pth_join(self.datPath, DIR_SPECT, pthSffx)
         #
-        self.isingpath = pth_join(self.DEFAULT_ISINGDIR, self.syshapePth, '')
-        self.voterpath = pth_join(self.DEFAULT_VOTERDIR, self.syshapePth, '')
-        self.lrgsgpath = pth_join(self.DEFAULT_LRGSGDIR, self.syshapePth, '')
-        self.phtrapath = pth_join(self.DEFAULT_PHTRADIR, self.syshapePth, '')
-        self.spectpath = pth_join(self.DEFAULT_SPECTDIR, self.syshapePth, '')
-        self.dirMakeList = [self.expOutdir, self.isingpath, self.voterpath,
-                self.phtrapath, self.lrgsgpath, self.spectpath]
+        self.dirMakeList = [self.expOut, 
+                            self.isingpath, 
+                            self.voterpath,
+                            self.phtrapath, 
+                            self.lrgsgpath, 
+                            self.spectpath]
     #
     def __make_dirs__(self, exist_ok: bool = True):
         for _ in self.dirMakeList: os.makedirs(_, exist_ok=exist_ok)
@@ -110,8 +118,12 @@ class SignedGraph:
     def __make_graphCl_util__(self):
         self.gclUtil = NestedDict()
     #
-    def __init_graph_fromfile__(self):
-        return pk.load(open(self.graphPath + PKL, "rb"))
+    def __init_graph_fromfile__(self, mprt_modeL: str = SG_MPRT_MODE):
+        match mprt_modeL:
+            case 'pkl'|'pk'|'pickle':
+                return pk.load(open(self.graphPath+PKL, "rb"))
+            case 'gml':
+                return nx.read_gml(self.graphPath+GML)
     #
     def __init_reprdict__(self):
         self.GraphReprDict[self.onGraph] = self.G
@@ -133,41 +145,114 @@ class SignedGraph:
     #
     def __init_sgraph__(self, init_weights_val: Union[float, List] = 1) -> None:
         self.__init_nNodesEdges__()
+        on_g = self.onGraph
         if self.import_on:
             self.neflip = self.Ne_n
             self.pflip = self.neflip / self.Ne
-            edgesWithData = self.gr[self.onGraph].edges(data=True)
-            self.fleset[self.onGraph] = set([(u, v) for u, v, _ in edgesWithData 
+            edgesWithData = self.gr[on_g].edges(data=True)
+            self.fleset[on_g] = set([(u, v) for u, v, _ in edgesWithData 
                                          if _.get('weight', 1) < 0])
+            self.lfeset[on_g] = self.eset[on_g].difference(self.fleset[on_g])
         else:
             self.neflip = int(self.pflip * self.Ne)
             self.nflip = int(self.pflip * self.N)
+            edges = self.gr[on_g].edges
+            self.eset[on_g] = set(list(edges()))
+            self.fleset[on_g] = set(self.get_random_links(n=self.neflip, on_g=on_g))
+            self.lfeset[on_g] = self.eset[on_g].difference(self.fleset[on_g])
             self.__init_weights__(init_weights_val)
-            edges = self.gr[self.onGraph].edges
-            self.eset[self.onGraph] = set(list(edges()))
-            self.fleset[self.onGraph] = set(self.get_random_links(self.neflip, self.onGraph))
-            self.lfeset[self.onGraph] = self.eset[self.onGraph].difference(self.fleset[self.onGraph])
-        self.upd_GraphRepr_All(self.onGraph)
-        self.upd_graphMtr()
+        self.upd_GraphRepr_All(on_g)
+        self.upd_graph_matrices()
     #
+    # graph get attributes
+    #
+    def get_node_attributes(self, attr: str = 'pos', on_g: str = SG_GRAPH_REPR):
+        return nx.get_node_attributes(self.gr[on_g], attr)
+    #
+    def get_edge_data(self, u: Any, v: Any, thedata: str = 'weight',
+                      on_g: str = SG_GRAPH_REPR):
+        return self.gr[on_g].get_edge_data(u, v)[thedata]
+    def get_edge_color(self, pec: ColorType = "blue", nec: ColorType = "red",
+                       thedata: str = 'weight',
+                       on_g: str = SG_GRAPH_REPR):
+        def map_values(value):
+            return nec if value == -1 else pec if value == 1 else value
+        arr = nx.get_edge_attributes(self.gr[on_g], thedata)
+        return list(map(map_values, arr.values()))
+    #
+    def get_graph_neighbors(self, node: Any, on_g: str = SG_GRAPH_REPR):
+        return list(self.gr[on_g].neighbors(node))
+    #
+    def get_adjacency_matrix(self, on_g: str = SG_GRAPH_REPR, 
+                             weight: str = 'weight', format: str = 'csr'):
+        argDict = dict()
+        return nx.to_scipy_sparse_array(self.gr[on_g], weight=weight, format=format)
+    #
+    def get_degree_matrix(self, format: str = 'csr'):
+        return spdiags(self.adj.sum(axis=1), 0, *self.adj.shape, format=format)
+    #
+    def get_abs_degree_matrix(self, format: str = 'csr'):
+        return spdiags(abs(self.adj).sum(axis=1), 0, *self.adj.shape, 
+                       format=format)
+    #
+    def get_laplacian(self):
+        return self.degm - self.adj
+    def get_signed_laplacian(self):
+        return self.sdeg - self.adj
+    #
+    def get_random_links(self, only_in: str = '', n: int = 1,
+                         on_g: str = SG_GRAPH_REPR):
+        match only_in:
+            case ''|'all':
+                return random.sample(tuple(self.eset[on_g]), n)
+            case '+'|'positive'|'+1'|'plus':
+                return random.sample(tuple(self.lfeset[on_g]), n)
+            case '-'|'negative'|'-1'|'minus':
+                return random.sample(tuple(self.fleset[on_g]), n)
+    #
+    def get_eigV_binarized(self, which: int = 0):
+        eigV = self.eigV[which].squeeze()
+        return flip_to_positive_majority(regbin_ndarr(eigV)).squeeze()
+    #
+    def get_eigV_bin_check(self, which: int = 0):
+        if not hasattr(self, f"eigV") or which >= len(self.eigV):
+            if which > self.N//2:
+                self.compute_k_eigvV(howmany=self.N)
+            else:
+                self.compute_k_eigvV(howmany=which+1)
+        return self.get_eigV_binarized(which)
+    def get_bineigV_all(self):
+        try:
+            eigVbin = regbin_ndarr(self.eigV)
+        except (AttributeError, IndexError):
+            self.compute_k_eigvV()
+            eigVbin = regbin_ndarr(self.eigV)
+        for i in range(len(eigVbin)):
+            eigVbin[i] = flip_to_positive_majority(eigVbin[i])
+        return eigVbin
+    #
+    # update graph methods
+    #
+    def upd_graph_matrices(self, format: str = 'csr', 
+                           on_g: str = SG_GRAPH_REPR):
+        self.Adj = self.get_adjacency_matrix(on_g=on_g)
+        self.Deg = self.get_degree_matrix()
+        self.sDeg = self.get_abs_degree_matrix()
+        self.Lap = self.get_laplacian()
+        self.sLp = self.get_signed_laplacian()
+        self.upd_Nen(on_g)
+        self.upd_Degree(on_g)
     def upd_Degree(self, on_g: str = SG_GRAPH_REPR):
         self.degrees = list(dict(self.gr[on_g].degree).values())
     #
     def upd_Nen(self, on_g: str = SG_GRAPH_REPR):
         self.Ne_n = len(self.fleset[on_g])
     #
-    def get_adjMtrx(self, on_g: str = SG_GRAPH_REPR, weight: str = 'weight',
-                    format: str = 'csr') -> csr_array:
-        return nx.to_scipy_sparse_array(self.GraphReprDict[on_g], 
-                                        weight=weight, format=format)
-    #
     def zip_reprNodes(self, x, on_g: str = SG_GRAPH_REPR):
-        graph = self.gr[on_g]
-        return dict(zip(graph, self.gr[x]))
+        return dict(zip(self.gr[on_g], self.gr[x]))
     #
     def zip_reprEdges(self, x, on_g: str = SG_GRAPH_REPR):
-        graph = self.gr[on_g]
-        return dict(zip(graph.edges(), self.gr[x].edges()))
+        return dict(zip(self.gr[on_g].edges(), self.gr[x].edges()))
     #
     def upd_NodeMap(self, on_g: str = SG_GRAPH_REPR):
         self.nodeMap[on_g] = {x: 
@@ -180,8 +265,11 @@ class SignedGraph:
         self.edgeMap[on_g] = {x: {v: k for k, v in egraph_to(x).items()} 
                                    for x in self.GraphReprs if x != on_g}
     #
-    def upd_GraphRelabel(self, on_g: str = SG_GRAPH_REPR, to_graph: str = SG_GRAPHINT_REPR):
-        self.gr[to_graph] = nx.relabel_nodes(self.gr[on_g], self.nodeMap[to_graph][on_g])
+    def upd_GraphRelabel(self, on_g: str = SG_GRAPH_REPR, 
+                         to_graph: str = SG_GRAPHINT_REPR):
+        self.gr[to_graph] = nx.relabel_nodes(self.gr[on_g], 
+                                             self.nodeMap[to_graph][on_g],
+                                             copy=True)
     #
     def upd_ReprMaps(self, on_g: str = SG_GRAPH_REPR):
         graph = self.gr[on_g]
@@ -195,84 +283,27 @@ class SignedGraph:
     def upd_GraphRepr(self, on_g: str = SG_GRAPH_REPR):
         self.upd_ReprMaps(on_g)
     #
-    def upd_GraphRepr_All(self, on_g: str = SG_GRAPH_REPR, also_itself: bool = True):
+    def upd_GraphRepr_All(self, on_g: str = SG_GRAPH_REPR, 
+                          also_itself: bool = True):
         if also_itself:
             self.upd_GraphRepr(on_g)
         for i in self.GraphReprs:
             if i != on_g:
                 self.upd_GraphRepr(i)
                 self.upd_GraphRelabel(on_g, i)
-                edges = self.gr[i].edges
                 self.nodesIn[i] = list(self.gr[i].nodes())
-                self.eset[i] = set(list(edges()))
-                self.fleset[i] = set([(u, v) for u, v, _ in edges(data=True) 
-                                         if _.get('weight', 1) < 0])
+                self.eset[i] = {self.edgeMap[i][on_g][e] for e in self.eset[on_g]}
+                self.fleset[i] = {self.edgeMap[i][on_g][e] for e in self.fleset[on_g]}
+                self.lfeset[i] = {self.edgeMap[i][on_g][e] for e in self.lfeset[on_g]}
                 self.upd_Nen(i)
     #
-    def get_degMtrx(self, A: csr_array, fmt: str = 'csr') -> csr_array:
-        return csr_array(spdiags(A.sum(axis=1), 0, *A.shape, format="csr"))
-
-    #
-    def absolute_degree_matrix(self, A: csr_array) -> csr_array:
-        return csr_array(spdiags(abs(A).sum(axis=1), 0, *A.shape, format="csr"))
-
-    #
-    def laplacian_matrix(self) -> csr_array:
-        """Returns the signed Laplacian matrix of G.
-        The graph Laplacian is the matrix L = D - A, where
-        A is the adjacency matrix and D is the diagonal matrix of node degrees
-
-        Returns
-        -------
-        L : SciPy sparse array
-        The Laplacian matrix of G.
-        """
-        return self.Deg - self.Adj
-
-    #
-    def signed_laplacian(self) -> csr_array:
-        """Returns the signed Laplacian matrix of G.
-        The graph Laplacian is the matrix L = |D| - A, where
-        A is the adjacency matrix and |D| is the diagonal matrix of absolute
-        values of node degrees
-
-        Returns
-        -------
-        L : SciPy sparse array
-        The Laplacian matrix of G.
-        """
-        return self.sDeg - self.Adj
-
-    #
-    def upd_graphMtr(self, on_g: str = SG_GRAPH_REPR):
-        self.Adj = self.get_adjMtrx(on_g=on_g)
-        self.Deg = self.get_degMtrx(self.Adj)
-        self.sDeg = self.absolute_degree_matrix(self.Adj)
-        self.Lap = self.laplacian_matrix()
-        self.sLp = self.signed_laplacian()
-        self.upd_Nen(on_g)
-        self.upd_Degree(on_g)
-        
-    def get_random_links(self, n: int, on_g: str = SG_GRAPH_REPR, only: str = ""):
-        match only:
-            case "":
-                return random.sample(tuple(self.eset[on_g]), n)
-            case "+":
-                return random.sample(tuple(self.lfeset[on_g]), n)
-            case "-":
-                return random.sample(tuple(self.fleset[on_g]), n)
-    
-    def get_edge_weight(self, u: Any, v: Any, on_g: str = SG_GRAPH_REPR):
-        return self.gr[on_g].get_edge_data(u, v)['weight']
+    # graph operations
     #
     def flip_sel_edges(self, links: Iterable = None, on_g: str = SG_GRAPH_REPR):
-        """Flips specific edges of a graph G."""
-        #
         neg_weights_dict = {}
         if links:
             neg_weights_dict = {
-                (u, v): -1 * self.get_edge_weight(u, v)
-                for u, v in links
+                (u, v): -1 * self.get_edge_data(u, v, on_g=on_g) for u, v in links
             }
         nx.set_edge_attributes(
             self.gr[on_g], values=neg_weights_dict, name='weight'
@@ -280,8 +311,7 @@ class SignedGraph:
         self.fleset[on_g].update(links)
         self.lfeset[on_g].difference_update(links)
         self.upd_GraphRepr_All(on_g)
-        self.upd_graphMtr(on_g)
-
+        self.upd_graph_matrices(on_g)
     #
     def check_pflip(self):
         if self.neflip < 1: raise NflipError(SG_ERRMSG_NFLIP)
@@ -304,68 +334,32 @@ class SignedGraph:
     #
     def unflip_all(self, on_g: str = SG_GRAPH_REPR):
         self.flip_sel_edges(1, on_g)
-
     #
-    def compute_k_eigvV(
-        self,
-        howmany: int = 1,
-        MODE_dynspec: str = "scipy",
-        which: str = "SM",
-        typf: type = np.float64,
-    ):
+    # computations
+    #
+    def compute_k_eigvV(self, howmany: int = 1, MODE_dynspec: str = "scipy",
+        which: str = "SM", typf: type = np.float64):
         if MODE_dynspec == "numpy" or howmany == self.N:
             self.eigv, self.eigV = np.linalg.eigh(
                 self.sLp.astype(typf).todense()
             )
             self.eigV = self.eigV.T
         if MODE_dynspec.startswith("scipy"):
-            # scsp_eigshMode = MODE_dynspec.split('_')
-            # if len(scsp_eigshMode) == 1:
-            #     scsp_eigshMode = 'normal'
-            #     sigma = None
-            # else:
-            #     scsp_eigshMode = scsp_eigshMode[-1]
-            #     sigma = 0
-            # self.eigv, self.eigV = scsp_eigsh(
-            #     self.sLp.astype(typf), k=howmany, which=which, sigma=sigma, mode=scsp_eigshMode
-            # )
             self.eigv, self.eigV = scsp_eigsh(
                 self.sLp.astype(typf), k=howmany, which=which, mode="caley"
             )
             self.eigV = self.eigV.T
-
     #
-    def eigVbin(self, which: int = 0):
-        return flip_to_positive_majority(
-            np.sign(np.where(self.eigV[which] == 0, +1, self.eigV[which])))
-    
-    def bin_eigV(self, which: int = 0):
-        if not hasattr(self, f"eigV") or which >= len(self.eigV):
-            if which > self.N//2:
-                self.compute_k_eigvV(MODE_dynspec="numpy")
-            else:
-                self.compute_k_eigvV(howmany=which+1)
-        return self.eigVbin(which)
-    
-    def compute_rbim_energy_eigV(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
-        spins = self.bin_eigV(which)
-        edges = self.GraphReprDict[on_g].edges(data=True)
-        u_indices, v_indices, weights = zip(*[(u, v, data['weight']) for u, v, data in edges])
-        u_indices, v_indices = np.array(u_indices, dtype=int), np.array(v_indices, dtype=int)
-        weights = np.array(weights)
+    def compute_rbim_energy_eigV(self, which: int = 0):
+        spins = self.get_eigV_bin_check(which)
+        edges = self.gr[SG_GRAPH_REPR].edges(data=True)
+        ui, vi, w = zip(*[(u, v, data['weight']) for u, v, data in edges])
+        ui, vi = np.int(ui), np.array(vi, dtype=int)
+        w = np.array(w)
+        Energy = -np.sum(w * spins[ui] * spins[vi])
+        return Energy / (self.N)
 
-        # Compute the energy using a single line of vectorized operations
-        E = -np.sum(weights * spins[u_indices] * spins[v_indices])
-        return E / (self.N)
 
-    def bin_eigV_all(self):
-        # to be reviewed must flip to positive majority
-        try:
-            eigVbin = np.sign(np.where(self.eigV == 0, +1, self.eigV))
-        except (AttributeError, IndexError):
-            self.compute_k_eigvV()
-            eigVbin = np.sign(np.where(self.eigV == 0, +1, self.eigV))
-        return eigVbin
 
     def calc_Pinf(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
         cd = self.eigV_Cluster_sizes(which, on_g)
@@ -397,16 +391,7 @@ class SignedGraph:
             self.resLp = self.resLp - new_eigv0 * np.identity(self.N)
 
 
-    def graph_neighbors(self, node, on_g: str = SG_GRAPH_REPR):
-        graph = self.GraphReprDict[on_g]
-        return list(graph.neighbors(node))
 
-    def get_node_attr(self, attr, on_g: str = SG_GRAPH_REPR):
-        node_attr = nx.get_node_attributes(self.GraphReprDict[on_g], attr)
-        node_attrs = [
-            node_attr[node] for node in self.GraphReprDict[on_g].nodes()
-        ]
-        return node_attrs
 
     def load_vec_on_nodes(self, vec: np.ndarray, attr: str, on_g: str = SG_GRAPH_REPR):
         vecNodeAttr = {
@@ -421,7 +406,7 @@ class SignedGraph:
             self.compute_k_eigvV(howmany=which + 1)
             eigV = self.eigV[which]
         if binarize:
-            eigV = self.bin_eigV(which=which)
+            eigV = self.get_eigV_bin_check(which=which)
         eigVNodeAttr = {
             nd: v for v, nd in zip(eigV, self.GraphReprDict[on_g].nodes)
         }
@@ -443,7 +428,7 @@ class SignedGraph:
                       binarize: bool = True):
         self.load_eigV_on_g(which, on_g, binarize)
         if not hasattr(self, "clusters"):
-            self.make_clustersY(f"eigV{which}", +1, which, on_g)
+            self.make_clustersYN(f"eigV{which}", +1, which, on_g)
         clusterLen = sorted(list(map(lambda x: len(x), self.clustersY)), 
                             reverse=True)
         return clusterLen
@@ -470,11 +455,24 @@ class SignedGraph:
         self.biggestClSet.sort(key=len, reverse=True)
         self.numClustersBig = len(self.biggestClSet)
         self.gc = max(self.biggestClSet, key=len)
+    
+    def make_connected_component_by_edge(self, edge_attr='weight', value=1, on_g: str = SG_GRAPH_REPR):
+        connected_components = nx.connected_components
+        value_edges = [
+            (u, v) for u, v, attrs in self.gr[on_g].edges(data=True)
+            if attrs.get(edge_attr) == value
+        ]
+        if not value_edges:
+            raise ValueError("No positive edges found in the graph.")
+        G_pos = self.gr[on_g].edge_subgraph(value_edges).copy()
+        all_connected_components = list(connected_components(G_pos))
+        if not all_connected_components:
+            raise ValueError("No connected components found with positive edges.")
+        self.largest_cc = max(all_connected_components, key=len)
+        self.largest_cc_subgraph = G_pos.subgraph(self.largest_cc).copy()
 
-    # def make_gc_binaryGauged(self, k, val, on_g: str = SG_GRAPH_REPR):
-    #     self.gcBinDict = dict(k=k, val=val, on_g=on_g)
-    #     self.gcBinNodes = self.gc
-    #     self.gcBinLen = len(self.gcBinNodes)
+    def signed_laplacian_embedding(self, k: int = 2):
+        return self.eigV[:k]
         
     def cluster_distribution(self, which: int = 0, 
                                   on_g: str = SG_GRAPH_REPR,
@@ -518,20 +516,10 @@ class SignedGraph:
         
     #     return antiGroup, ferroGroup
     #
-    def export_graph(self, MODE: str = "pickle"):
-        if MODE == "pickle":
-            pk.dump(
-                self.G,
-                open(f"{self.graphPath}.pkl", "wb"),
-                pk.HIGHEST_PROTOCOL,
-            )
-        elif MODE == "gml":
-            nx.write_gml(self.G, f"{self.graphPath}.gml")
-
     #
     def export_adj_bin(self, print_msg: bool = False) -> None:
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
-        exname = f"{self.expOutdir}adj_{self.stdFname}.bin"
+        exname = f"{self.expOut}adj_{self.stdFname}.bin"
         if print_msg:
             print(f"exporting {exname}\n")
         with open(exname, "wb") as f:
@@ -543,7 +531,7 @@ class SignedGraph:
         edges = self.GraphReprDict[on_g].edges(data='weight')
         exname = '_'.join([self.pEqStr, exName]) if exName else self.pEqStr
         fname = '_'.join(["edgelist", exname])+BIN
-        edglFname = os.path.join(self.expOutdir, fname)
+        edglFname = os.path.join(self.expOut, fname)
         match mode:
             case 'numpy':
                 edge_array = np.array(list(edges), 
@@ -560,24 +548,20 @@ class SignedGraph:
     def remove_edgl_file(self):
         os.remove(self.edglFile.name)
     #
-    def get_edge_color(
-        self,
-        on_g: str = "G",
-        pec: ColorType = "blue",
-        nec: ColorType = "red",
-    ):
-        def map_values(value):
-            if value == -1:
-                return nec
-            elif value == 1:
-                return pec
-            else:
-                return value
 
-        arr = nx.get_edge_attributes(self.GraphReprDict[on_g], 'weight')
-        return list(map(map_values, arr.values()))
         # return list(map(lambda x: pec if x == 1 else nec, nx.get_edge_attributes(self.GraphReprDict[on_g], 'weight').values()))
-
     #
-    def get_node_pos(self, on_g: str = "G"):
-        return nx.get_node_attributes(self.GraphReprDict[on_g], "pos")
+    # export graph tools
+    #
+    def export_graphPKL(self):
+        pk.dump(self.G, open(self.graphPath+PKL, "wb"), pk.HIGHEST_PROTOCOL)
+    #
+    def export_graphGML(self):
+        nx.write_gml(self.G, self.graphPath+GML)
+    #
+    def __export_graph__(self, xprt_modeL: str = SG_XPRT_MODE):
+        match xprt_modeL:
+            case 'pk'|'pickle'|'pkl':
+                self.export_graphPKL()
+            case 'gml':
+                self.export_graphGML()

@@ -146,7 +146,7 @@ class Lattice2D(SignedGraph):
                                    for g in self.rd}
         #
         def get_links_XERR(self, node: Any, on_g: str = L2D_ONREP):
-            return [(node, nn) for nn in self.l.graph_neighbors(node, on_g)]
+            return [(node, nn) for nn in self.l.get_graph_neighbors(node, on_g)]
         #
         def get_links_ZERR(self, node: Any, on_g: str = L2D_ONREP, 
                            geometry: str = L2D_GEO):
@@ -156,7 +156,7 @@ class Lattice2D(SignedGraph):
             return dd[geometry](node, on_g)
         #
         def get_links_triangle(self, node: Any, on_g = L2D_ONREP):
-            node2 = list(self.l.graph_neighbors(node, on_g))[0]
+            node2 = list(self.l.get_graph_neighbors(node, on_g))[0]
             common_neighbors = list(nx.common_neighbors(
                 self.l.gr[on_g], node, node2))
             try:

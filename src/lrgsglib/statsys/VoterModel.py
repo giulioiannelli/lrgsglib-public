@@ -8,7 +8,7 @@ class VoterModel(BinDynSys):
 
     def __init__(self, sg: SignedGraph = Lattice2D, **kwargs) -> None:
         self.sg = sg
-        self.dynpath = pth_join(self.sg.DEFAULT_VOTERDIR, self.sg.syshapePth, '')
+        self.dynpath = self.voterpath
         super(BinDynSys, self).__init__(self.sg, **kwargs)
 
     def ds1step(self, nd: int):

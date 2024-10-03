@@ -72,7 +72,7 @@ class IsingDynamics:
                 self.s = np.random.choice([-1, 1], size=self.sg.N)
             case _ if self.ic.startswith("ground_state"):
                 number = int(self.ic.split("_")[-1])
-                bineigv = self.sg.bin_eigV(which=number)
+                bineigv = self.sg.get_eigV_bin_check(which=number)
                 self.s = bineigv
             case "custom":
                 self.s = custom
@@ -173,7 +173,7 @@ class IsingDynamics:
             return
         #
         self.sg.compute_k_eigvV(howmany=self.NoClust)
-        eigVbin = self.sg.bin_eigV_all()
+        eigVbin = self.sg.get_bineigV_all()
         #
         self.Ising_clusters = []
         for j in range(self.NoClust):
@@ -331,7 +331,7 @@ class IsingDynamics_DEV(BinDynSys):
     ) -> None:
         self.T = T
         self.sg = sg
-        self.dynpath = f"{self.sg.DEFAULT_ISINGDIR}{self.sg.syshapePth}"
+        self.dynpath = self.isingpath
         super(IsingDynamics_DEV, self).__init__(self.sg, **kwargs)
         self.nstepsIsing = nstepsIsing
         self.save_magnetization = save_magnetization

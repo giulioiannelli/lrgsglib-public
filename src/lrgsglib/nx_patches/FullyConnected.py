@@ -15,7 +15,7 @@ class FullyConnected(SignedGraph):
 
     def init_graph(self):
         self.H = self.G
-        self.upd_graphMtr()
+        self.upd_graph_matrices()
 
     def init_paths(self):
         self.sgpath = f"fc/"
