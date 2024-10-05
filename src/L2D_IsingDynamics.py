@@ -37,7 +37,7 @@ if not os.path.exists(pathFname):
         l = Lattice2D(**l2dDictArgs)
         l.flip_sel_edges(l.nwDict[cell]['G'])
         l.compute_k_eigvV(howmany=number + 1)
-        l.load_eigV_on_g(which=number, binarize=True)
+        l.load_eigV_on_graph(which=number, binarize=True)
         l.make_clustersYN(f'eigV{number}', +1)
         lenList.append(len(l.gc))
     meanN, stdN = np.mean(lenList)/l.N, np.std(lenList)
@@ -50,7 +50,7 @@ for _ in range(navg):
         l = Lattice2D(**l2dDictArgs)
         l.flip_sel_edges(l.nwDict[cell]['G'])
         l.compute_k_eigvV(howmany=howmany)
-        l.load_eigV_on_g(which=number, binarize=True)
+        l.load_eigV_on_graph(which=number, binarize=True)
         l.make_clustersYN(f'eigV{number}', +1)
         if  abs(len(l.gc)/l.N - meanN) < stdN/2:
             break

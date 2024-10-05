@@ -79,7 +79,7 @@ if mode == 'pCluster':
             l = Lattice3D(side, pflip=p, geo=geo, init_nw_dict=True)
             l.flip_sel_edges(geometry_func(l))
             #
-            dist_dict = l.cluster_distribution()
+            dist_dict = l.get_cluster_distribution()
             merged_dict += dist_dict
         navgCurr = nAvgDone + (current_period + 1) * period
         fnameNew = file_path_maker(mpath[mode], napath=navgCurr)
@@ -102,7 +102,7 @@ elif mode == 'ordParam':
         #
         l.compute_k_eigvV(typf=typf)
         try:
-            l.calc_Pinf()
+            l.compute_pinf()
         except IndexError:
             continue
         #

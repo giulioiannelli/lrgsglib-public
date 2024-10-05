@@ -77,12 +77,18 @@ SG_ERRMSG_NFLIP = """The probability of flipping an edge times the
                              number of edges is < 1, then no edges would be
                              flipped. No flip will be performed."""
 # erdos renyi default values
+WS_PHTABB = "ws"
+WS_ONREP = 'G'
+WS_STDFN = ""
+WS_SGPATH = ""
+# erdos renyi default values
 ER_PHTABB = "er"
 ER_ONREP = 'G'
 ER_STDFN = ""
 ER_SGPATH = ""
 # 2D Lattice default values
 L2D_FBCV = 1.
+L2D_PREW = 0.
 L2D_PBC = True
 L2D_STDFN = ""
 L2D_SIDE1 = 32
@@ -93,16 +99,18 @@ L2D_PHTABB = 'l2d_'
 L2D_GEO_TRI = 'triangular'
 L2D_GEO_SQR = 'squared'
 L2D_GEO_HEX = 'hexagonal'
+L2D_GEO_SQRSW = 'squared_sw'
 L2D_GEO_TRI_SHRT = 'tri'
 L2D_GEO_SQR_SHRT = 'sqr'
 L2D_GEO_HEX_SHRT = 'hex'
-L2D_P_C_LIST = [0.146, 0.103, 0.065] 
+L2D_GEO_SQRSW_SHRT = 'sqr_sw'
+L2D_P_C_LIST = [0.146, 0.103, 0.065, np.nan] 
 L2D_WITH_POS = False
 # 
 L2D_GEO = L2D_GEO_SQR
 # 
-L2D_GEO_LIST = [L2D_GEO_TRI, L2D_GEO_SQR, L2D_GEO_HEX]
-L2D_GEO_SHRT_LIST = [L2D_GEO_TRI_SHRT, L2D_GEO_SQR_SHRT, L2D_GEO_HEX_SHRT]
+L2D_GEO_LIST = [L2D_GEO_TRI, L2D_GEO_SQR, L2D_GEO_HEX, L2D_GEO_SQRSW]
+L2D_GEO_SHRT_LIST = [L2D_GEO_TRI_SHRT, L2D_GEO_SQR_SHRT, L2D_GEO_HEX_SHRT, L2D_GEO_SQRSW_SHRT]
 L2D_SINGLE_CELL_LIST = ['single', 'singleXERR', 'singleZERR']
 L2D_RAND_CELL_LIST = ['rand', 'randXERR', 'randZERR']
 #
@@ -119,6 +127,7 @@ L3D_DIM0 = 16
 L3D_DIM = tuple(L3D_DIM0 for _ in range(3))
 L3D_PBC = True
 L3D_FBCV = 1.
+L3D_PDIL = 0.
 L3D_SGPATH = ""
 L3D_STDFN = ""
 L3D_PHTABB = "l3d_"

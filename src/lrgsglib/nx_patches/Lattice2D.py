@@ -15,9 +15,11 @@ class Lattice2D(SignedGraph):
         stdFnameSFFX: str = L2D_STDFN,
         sgpath: str = L2D_SGPATH,
         with_positions: bool = L2D_WITH_POS,
+        prew: float = L2D_PREW,
         **kwargs,
     ) -> None:
         self.pbc = pbc
+        self.prew = prew
         self.__init_side__(side1, side2)
         self.__init_geo__(geo)
         self.fbc_val = fbc_val
@@ -47,6 +49,8 @@ class Lattice2D(SignedGraph):
     #
     def __init_geo__(self, geo: str) -> None:
         self.geo = geo
+        if self.prew > 0.:
+            self.geo = geo + '_sw'
         if geo not in L2D_GEO_LIST:
             if geo not in L2D_GEO_SHRT_LIST:
                 warnings.warn(L2D_WARNMSG_GEO, Lattice2DWarning)
@@ -70,14 +74,21 @@ class Lattice2D(SignedGraph):
     #
     def __init_lattice__(self) -> None:
         #
+        more_args = {}
         if self.geo == L2D_SHRT_GEO_DICT['tri']:
             nxfunc = triangular_lattice_graph_FastPatch
             self.z = 6
             self.syshape = (self.side1, self.side2)
-        elif self.geo == L2D_SHRT_GEO_DICT['sqr']:
-            nxfunc = squared_lattice_graph_FastPatch
-            self.z = 4
-            self.syshape = (self.side1, self.side2)
+        elif self.geo.startswith(L2D_SHRT_GEO_DICT['sqr']):
+            if self.prew == 0.:
+                nxfunc = squared_lattice_graph_FastPatch
+                self.z = 4
+                self.syshape = (self.side1, self.side2)
+            else:
+                nxfunc = squared_lattice_SW_graph_FastPatch
+                self.z = 4
+                self.syshape = (self.side1, self.side2)
+                more_args.update(dict(prew=self.prew))
         elif self.geo == L2D_SHRT_GEO_DICT['hex']:
             self.z = 3
             nxfunc = hexagonal_lattice_graph_FastPatch
@@ -89,13 +100,15 @@ class Lattice2D(SignedGraph):
             self.syshapePth = f"L1={self.side1}_L2={self.side2}"
         elif self.side2 > self.side1:
             self.syshapePth = f"L1={self.side2}_L2={self.side1}"
+        if self.prew > 0.:
+            self.syshapePth = self.syshapePth + f"_prew={self.prew:.3g}"
         #
         self.p_c = L2D_P_C_DICT[self.geo]
         self.eta_c = 1.128
         self.r_c = np.sqrt(self.eta_c/(np.pi*self.p_c))
         #
         self.H = nxfunc(self.side1, self.side2, periodic=self.pbc, 
-                        with_positions=self.with_positions)
+                        with_positions=self.with_positions, **more_args)
         self.G = nx.convert_node_labels_to_integers(self.H)
     #
     def degree_check(self, degree):
