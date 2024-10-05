@@ -1445,6 +1445,37 @@ def find_largest_cluster_circle2D(circles, radius):
 
     largest_cluster = max(clusters.values(), key=len)
     return largest_cluster
+
+def compose(f: callable, g: callable, g_args: tuple = (), g_kwargs: dict = None) -> callable:
+    """
+    Compose two functions f and g to create a new function that represents g(f(x)), 
+    optionally passing additional arguments to g.
+
+    Parameters:
+    - f (callable): The first function to apply.
+    - g (callable): The second function to apply to the result of f.
+    - g_args (tuple, optional): Positional arguments to pass to function g.
+    - g_kwargs (dict, optional): Keyword arguments to pass to function g.
+
+    Returns:
+    - callable: A new function that takes an input x and returns g(f(x), *g_args, **g_kwargs).
+
+    Example:
+    >>> def f1(x):
+    ...     return x + 1
+    >>> def f2(x, factor=2):
+    ...     return x * factor
+    >>> composed_function = compose(f1, f2, g_args=(), g_kwargs={'factor': 3})
+    >>> composed_function(3)
+    12  # f2(f1(3), factor=3) = f2(4, factor=3) = 12
+    """
+    g_kwargs = g_kwargs or {}
+
+    def composed_function(*args, **kwargs):
+        f_result = f(*args, **kwargs)  # Execute the first function with all arguments
+        return g(f_result, *g_args, **g_kwargs)  # Pass the result of f to g, with any additional args/kwargs
+
+    return composed_function
 def regbin_ndarr(eigV: NDArray) -> NDArray:
     """
     Regularizes and binarizes a NumPy array by setting all zero elements to +1 and taking the sign of each element.
@@ -1485,3 +1516,50 @@ def regbin_ndarr(eigV: NDArray) -> NDArray:
 
     """
     return np.sign(np.where(eigV == 0, +1, eigV))
+
+def project_3d_to_2d(x, y, z, theta=None, phi=None):
+    """
+    Projects a 3D point (x, y, z) onto a 2D plane using specified rotation angles.
+
+    Parameters
+    ----------
+    x : float
+        The x-coordinate of the 3D point.
+    y : float
+        The y-coordinate of the 3D point.
+    z : float
+        The z-coordinate of the 3D point.
+    theta : float, optional
+        Rotation angle around the y-axis, in radians. If not provided, uses self.theta.
+    phi : float, optional
+        Rotation angle around the x-axis, in radians. If not provided, uses self.phi.
+
+    Returns
+    -------
+    tuple of float
+        The (x, y) coordinates of the point projected onto the 2D plane.
+    """
+    # Rotation matrix around the y-axis (theta)
+    R_theta = np.array([
+        [np.cos(theta), 0, np.sin(theta)],
+        [0, 1, 0],
+        [-np.sin(theta), 0, np.cos(theta)]
+    ])
+
+    # Rotation matrix around the x-axis (phi)
+    R_phi = np.array([
+        [1, 0, 0],
+        [0, np.cos(phi), -np.sin(phi)],
+        [0, np.sin(phi), np.cos(phi)]
+    ])
+
+    # Initial position vector
+    position = np.array([x, y, z])
+
+    # Apply rotations (order matters)
+    position_rotated = R_phi @ R_theta @ position
+
+    # Project onto 2D plane (ignore z after rotation)
+    x2, y2 = position_rotated[0], position_rotated[1]
+
+    return x2, y2

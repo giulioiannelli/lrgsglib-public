@@ -1,5 +1,6 @@
 from .common import *
-from .funcs import _project_3d_to_2d, cProd_Iter, cProd_Iter_adj, cProdSel_Iter, generate_cubic_lattice
+from ..config.utils import project_3d_to_2d
+from .funcs import *
 from .SignedGraph import SignedGraph
 
 class Lattice3D(SignedGraph):
@@ -42,7 +43,12 @@ class Lattice3D(SignedGraph):
 
     def __init_lattice__(self) -> None:
         if self.geo == L3D_GEO_SC:
-            nxfunc = generate_cubic_lattice
+            if self.pdil == 0.:
+                nxfunc = LatticeND_graph_FastPatch
+            else:
+                nxfunc = compose(LatticeND_graph_FastPatch, 
+                                 remove_edges, 
+                                 g_kwargs={'pdil': self.pdil})
         elif self.geo == L3D_GEO_BCC:
             nxfunc = self._generate_bcc_lattice
         elif self.geo == L3D_GEO_FCC:
@@ -62,7 +68,7 @@ class Lattice3D(SignedGraph):
 
 
     def _set_positions(self, theta = None, phi = None):
-        pos = {node: _project_3d_to_2d(*node, theta, phi) for node in self.G.nodes()}
+        pos = {node: project_3d_to_2d(*node, theta, phi) for node in self.G.nodes()}
         nx.set_node_attributes(self.G, pos, 'pos')
 
 

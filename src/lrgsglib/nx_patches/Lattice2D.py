@@ -85,10 +85,11 @@ class Lattice2D(SignedGraph):
                 self.z = 4
                 self.syshape = (self.side1, self.side2)
             else:
-                nxfunc = squared_lattice_SW_graph_FastPatch
+                nxfunc = compose(squared_lattice_graph_FastPatch, 
+                                 rewire_edges_optimized, 
+                                 g_kwargs={'prew': self.prew})
                 self.z = 4
                 self.syshape = (self.side1, self.side2)
-                more_args.update(dict(prew=self.prew))
         elif self.geo == L2D_SHRT_GEO_DICT['hex']:
             self.z = 3
             nxfunc = hexagonal_lattice_graph_FastPatch
@@ -108,7 +109,7 @@ class Lattice2D(SignedGraph):
         self.r_c = np.sqrt(self.eta_c/(np.pi*self.p_c))
         #
         self.H = nxfunc(self.side1, self.side2, periodic=self.pbc, 
-                        with_positions=self.with_positions, **more_args)
+                        with_positions=self.with_positions)
         self.G = nx.convert_node_labels_to_integers(self.H)
     #
     def degree_check(self, degree):
