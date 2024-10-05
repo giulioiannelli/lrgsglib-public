@@ -250,7 +250,7 @@ class IsingDynamics:
     #
     def export_ising_clust(self, val: Any = +1, which: int = 0, 
                            on_g: str = SG_GRAPH_REPR, binarize: bool = True): 
-        self.sg.load_eigV_on_g(which, on_g, binarize)
+        self.sg.load_eigV_on_graph(which, on_g, binarize)
         self.sg.make_clustersYN(f"eigV{which}", val, on_g=on_g)
         try:
             if self.NoClust > self.sg.numClustersBig:

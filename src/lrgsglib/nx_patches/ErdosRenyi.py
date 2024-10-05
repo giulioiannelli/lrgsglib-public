@@ -16,7 +16,7 @@ class ErdosRenyi(SignedGraph):
         super(ErdosRenyi, self).__init__(self.G, **kwargs)
     #
     def __init_stdFname__(self, SFFX: str = "") -> None:
-        self.stdFname = "er" + SFFX
+        self.stdFname = ER_PHTABB + SFFX
     #
     def __init_network__(self, n, p):
         G = nx.erdos_renyi_graph(n, p)

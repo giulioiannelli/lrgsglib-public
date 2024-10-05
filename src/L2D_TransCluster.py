@@ -94,7 +94,7 @@ match mode:
                 l.flip_sel_edges(geometry_func(l))
                 #
                 l.compute_k_eigvV(typf=typf)
-                dist_dict = l.cluster_distribution()
+                dist_dict = l.get_cluster_distribution()
                 merged_dict += dist_dict
             navgCurr = nAvgDone + (current_period + 1) * sfreq
             fnameNew = file_path_maker(mpath[mode], napath=navgCurr)
@@ -117,7 +117,7 @@ match mode:
             #
             l.compute_k_eigvV(typf=typf)
             try:
-                l.calc_Pinf()
+                l.compute_pinf()
             except IndexError:
                 continue
             #

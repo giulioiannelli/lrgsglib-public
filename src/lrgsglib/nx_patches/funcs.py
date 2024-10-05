@@ -610,12 +610,144 @@ def squared_lattice_graph_FastPatch(m, n, periodic=False, create_using=None, wit
         # calc position in embedded space
         ii = (i for i in rows for j in cols)
         jj = (j for i in rows for j in cols)
-        xx = (i for i in rows for j in cols)  # x position matches column index
-        yy = (j for i in rows for j in cols)
+        xx = ii
+        yy = jj
         if periodic:
+            xx = (i for i in rows for j in cols)  # x position matches column index
+            yy = (j for i in rows for j in cols)
             xx = (i + 0.02 * j * j for i in rows for j in cols)  # x position matches column index
             yy = (j + 0.02 * i * i for i in rows for j in cols)
         # exclude nodes not in G
         pos = {(i, j): (x, y) for i, j, x, y in zip(ii, jj, xx, yy) if (i, j) in G}
         set_node_attributes(G, pos, "pos")
     return G
+def squared_lattice_SW_graph_FastPatch(m: int, n: int, prew: float = 0, periodic: bool = False, 
+                                       create_using: Any = None, 
+                                       with_positions: bool = True) -> nx.Graph:
+    G = squared_lattice_graph_FastPatch(m, n, periodic, 
+                                        create_using, with_positions)
+    nodes = list(G.nodes())  # Ensure nodes are converted to a 1-dimensional list
+    # Convert the graph edges to a list once for iteration
+    edges = list(G.edges())
+    # Pre-compute which edges will be rewired
+    num_edges = len(edges)
+    rewire_flags = np.random.rand(num_edges) < prew  # Boolean array indicating which edges to rewire
+    # Rewiring process where only one end of each edge is rewired
+    new_neighbors = [nodes[i] for i in np.random.choice(len(nodes), size=num_edges, replace=True)]
+    # Rewiring process where only one end of each edge is rewired
+    for i, edge in enumerate(edges):
+        if rewire_flags[i]:
+            # Choose one of the nodes in the current edge to remain fixed
+            u, v = edge
+            fixed_node = u  # Keep `u` fixed
+            # Remove the original edge
+            G.remove_edge(u, v)
+            # Select a new neighbor from the pre-computed list
+            new_neighbor = new_neighbors[i]
+            while new_neighbor == fixed_node or G.has_edge(fixed_node, new_neighbor):
+                new_neighbor = nodes[np.random.choice(len(nodes))]
+            # Add the new edge with the fixed node
+            G.add_edge(fixed_node, new_neighbor)
+    return G
+
+
+def _project_3d_to_2d(self, x, y, z, theta=None, phi=None):
+    """
+    Projects a 3D point (x, y, z) onto a 2D plane using specified rotation angles.
+
+    Parameters
+    ----------
+    x : float
+        The x-coordinate of the 3D point.
+    y : float
+        The y-coordinate of the 3D point.
+    z : float
+        The z-coordinate of the 3D point.
+    theta : float, optional
+        Rotation angle around the y-axis, in radians. If not provided, uses self.theta.
+    phi : float, optional
+        Rotation angle around the x-axis, in radians. If not provided, uses self.phi.
+
+    Returns
+    -------
+    tuple of float
+        The (x, y) coordinates of the point projected onto the 2D plane.
+    """
+    # Set default values for theta and phi if not provided
+    if theta is None:
+        theta = self.theta
+    if phi is None:
+        phi = self.phi
+
+    # Rotation matrix around the y-axis (theta)
+    R_theta = np.array([
+        [np.cos(theta), 0, np.sin(theta)],
+        [0, 1, 0],
+        [-np.sin(theta), 0, np.cos(theta)]
+    ])
+
+    # Rotation matrix around the x-axis (phi)
+    R_phi = np.array([
+        [1, 0, 0],
+        [0, np.cos(phi), -np.sin(phi)],
+        [0, np.sin(phi), np.cos(phi)]
+    ])
+
+    # Initial position vector
+    position = np.array([x, y, z])
+
+    # Apply rotations (order matters)
+    position_rotated = R_phi @ R_theta @ position
+
+    # Project onto 2D plane (ignore z after rotation)
+    x2, y2 = position_rotated[0], position_rotated[1]
+
+    return x2, y2
+
+def LatticeND_graph_FastPatch(dim: Tuple[int, ...], periodic: bool = False):
+    """
+    Generates an N-dimensional cubic lattice graph with optional periodic boundary conditions.
+
+    Parameters
+    ----------
+    dim : tuple of int
+        A tuple where each element specifies the size of the grid along a particular dimension.
+        For example, (2, 3, 4) represents a 3D grid with dimensions 2x3x4.
+
+    periodic : bool
+        If True, apply periodic boundary conditions along all dimensions.
+
+    Returns
+    -------
+    NetworkX Graph
+        An N-dimensional cubic lattice graph.
+    """
+    # Raise an error if there's a dimension of size 2 in a 2D grid
+    if len(dim) == 2 and 2 in dim:
+        raise ValueError("A dimension of size 2 in a 2D grid can cause incorrect periodic edge handling.")
+
+    G = nx.Graph()  # Create an empty undirected graph
+    num_dimensions = len(dim)
+
+    # Generate all nodes in the grid
+    nodes = list(cProd_Iter(dim))
+    G.add_nodes_from(nodes)
+
+    # Direction vectors for creating edges to neighboring nodes
+    e_i = [tuple(1 if i == j else 0 for j in range(num_dimensions)) for i in range(num_dimensions)]
+
+    # Add edges between each node and its neighbors, including periodic boundaries if required
+    for pt in nodes:
+        for drt in e_i:
+            # Calculate the neighbor's coordinates by adding the direction vector
+            neighbor = tuple((d + p) for d, p in zip(pt, drt))
+            # Handle non-periodic boundaries
+            if all(0 <= n < dim[i] for i, n in enumerate(neighbor)):
+                G.add_edge(pt, neighbor)
+            # Handle periodic boundaries if enabled
+            elif periodic:
+                neighbor = tuple((n % dim[i]) for i, n in enumerate(neighbor))
+                G.add_edge(pt, neighbor)
+
+    return G
+

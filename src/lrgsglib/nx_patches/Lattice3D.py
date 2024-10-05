@@ -1,4 +1,5 @@
 from .common import *
+from .funcs import _project_3d_to_2d, cProd_Iter, cProd_Iter_adj, cProdSel_Iter, generate_cubic_lattice
 from .SignedGraph import SignedGraph
 
 class Lattice3D(SignedGraph):
@@ -13,6 +14,7 @@ class Lattice3D(SignedGraph):
         with_positions: bool = L3D_WITH_POS,
         theta: float = L3D_THETA,
         phi: float = L3D_PHI,
+        pdil: float = L3D_PDIL,
         **kwargs,
     ) -> None:
         if isinstance(dim, (int, np.integer)):
@@ -23,6 +25,7 @@ class Lattice3D(SignedGraph):
             raise ValueError("dim must be an integer or a tuple of three integers")
         self.dimL = list(self.dim)
         self.pbc = pbc
+        self.pdil = pdil
         self.fbc_val = fbc_val
         self.geo = L3D_GEO_DICT[geo]
         self.theta = theta
@@ -39,7 +42,7 @@ class Lattice3D(SignedGraph):
 
     def __init_lattice__(self) -> None:
         if self.geo == L3D_GEO_SC:
-            nxfunc = self._generate_cubic_lattice
+            nxfunc = generate_cubic_lattice
         elif self.geo == L3D_GEO_BCC:
             nxfunc = self._generate_bcc_lattice
         elif self.geo == L3D_GEO_FCC:
@@ -53,64 +56,15 @@ class Lattice3D(SignedGraph):
             self.syshapePth = '_'.join([f"L{i}={side}" 
                                         for i, side in enumerate(self.dim)])        
         
-        self.G = nxfunc(self.dim)
+        self.G = nxfunc(self.dim, periodic=self.pbc)
         if self.with_positions:
             self._set_positions()
 
-    def _project_3d_to_2d(self, x, y, z, theta = None, phi = None):
-        if theta == None:
-            theta = self.theta
-        if phi == None:
-            phi = self.phi
-        
-        # Rotation matrix around the y-axis (theta)
-        R_theta = np.array([
-            [np.cos(theta), 0, np.sin(theta)],
-            [0, 1, 0],
-            [-np.sin(theta), 0, np.cos(theta)]
-        ])
-        
-        # Rotation matrix around the x-axis (phi)
-        R_phi = np.array([
-            [1, 0, 0],
-            [0, np.cos(phi), -np.sin(phi)],
-            [0, np.sin(phi), np.cos(phi)]
-        ])
-        
-        # Initial position vector
-        position = np.array([x, y, z])
-        
-        # Apply rotations
-        position_rotated = R_phi @ R_theta @ position  # Order matters
-        
-        # Project onto 2D plane (ignore z after rotation)
-        x2, y2 = position_rotated[0], position_rotated[1]
-        
-        return x2, y2
 
     def _set_positions(self, theta = None, phi = None):
-        pos = {node: self._project_3d_to_2d(*node, theta, phi) for node in self.G.nodes()}
+        pos = {node: _project_3d_to_2d(*node, theta, phi) for node in self.G.nodes()}
         nx.set_node_attributes(self.G, pos, 'pos')
 
-    def _generate_cubic_lattice(self, dim):
-        G = Graph()
-        e_i = [tuple(1 if i == j else 0 for j in range(len(dim)))
-               for i in range(len(dim))]
-        nodes = list(cProd_Iter(dim))
-        G.add_nodes_from(nodes)
-
-        edges = [(pt, pte) for pt in nodes for drt in e_i
-            if (pte := tuple(d + p for d, p in zip(drt, pt))) in G.nodes()]
-        G.add_edges_from(edges)
-        
-        if self.pbc:
-            G.add_edges_from([((x, y, 0), (x, y, dim[2]-1)) 
-                              for x, y in cProdSel_Iter(dim, (0, 1))])
-            G.add_edges_from([((x, 0, z), (x, dim[1]-1, z)) 
-                              for x, z in cProdSel_Iter(dim, (0, 2))])
-            G.add_edges_from([((0, y, z), (dim[0]-1, y, z))
-                              for y, z in cProdSel_Iter(dim, (1, 2))])
-        return G
 
     def _generate_bcc_lattice(self, dim):
         G = Graph()

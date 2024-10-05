@@ -225,7 +225,7 @@ class SignedLaplacianAnalysis:
                     lambda t: np.exp(- self.sg.eigv[0] * t) *  self.sg.sLp
                 )
             else:
-                self.sg.rescaled_signed_laplacian(rescaled)
+                self.sg.make_rescaled_signed_laplacian(rescaled)
                 lap = lambda _:  self.sg.resLp
         else:
             lap = lambda _:  self.sg.sLp
