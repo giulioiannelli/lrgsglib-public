@@ -650,60 +650,6 @@ def squared_lattice_SW_graph_FastPatch(m: int, n: int, prew: float = 0, periodic
             G.add_edge(fixed_node, new_neighbor)
     return G
 
-
-def _project_3d_to_2d(self, x, y, z, theta=None, phi=None):
-    """
-    Projects a 3D point (x, y, z) onto a 2D plane using specified rotation angles.
-
-    Parameters
-    ----------
-    x : float
-        The x-coordinate of the 3D point.
-    y : float
-        The y-coordinate of the 3D point.
-    z : float
-        The z-coordinate of the 3D point.
-    theta : float, optional
-        Rotation angle around the y-axis, in radians. If not provided, uses self.theta.
-    phi : float, optional
-        Rotation angle around the x-axis, in radians. If not provided, uses self.phi.
-
-    Returns
-    -------
-    tuple of float
-        The (x, y) coordinates of the point projected onto the 2D plane.
-    """
-    # Set default values for theta and phi if not provided
-    if theta is None:
-        theta = self.theta
-    if phi is None:
-        phi = self.phi
-
-    # Rotation matrix around the y-axis (theta)
-    R_theta = np.array([
-        [np.cos(theta), 0, np.sin(theta)],
-        [0, 1, 0],
-        [-np.sin(theta), 0, np.cos(theta)]
-    ])
-
-    # Rotation matrix around the x-axis (phi)
-    R_phi = np.array([
-        [1, 0, 0],
-        [0, np.cos(phi), -np.sin(phi)],
-        [0, np.sin(phi), np.cos(phi)]
-    ])
-
-    # Initial position vector
-    position = np.array([x, y, z])
-
-    # Apply rotations (order matters)
-    position_rotated = R_phi @ R_theta @ position
-
-    # Project onto 2D plane (ignore z after rotation)
-    x2, y2 = position_rotated[0], position_rotated[1]
-
-    return x2, y2
-
 def LatticeND_graph_FastPatch(dim: Tuple[int, ...], periodic: bool = False):
     """
     Generates an N-dimensional cubic lattice graph with optional periodic boundary conditions.
@@ -751,3 +697,132 @@ def LatticeND_graph_FastPatch(dim: Tuple[int, ...], periodic: bool = False):
 
     return G
 
+def LatticeND_graph_with_dilution(dim: Tuple[int, ...], periodic: bool = False, pdil: float = 0.0) -> nx.Graph:
+    """
+    Generates an N-dimensional cubic lattice graph with optional periodic boundary conditions and dilution.
+
+    Parameters
+    ----------
+    dim : tuple of int
+        A tuple where each element specifies the size of the grid along a particular dimension.
+        For example, (2, 3, 4) represents a 3D grid with dimensions 2x3x4.
+
+    periodic : bool
+        If True, apply periodic boundary conditions along all dimensions.
+    
+    pdil : float
+        Probability of dilution, representing the fraction of links to be removed from the lattice.
+
+    Returns
+    -------
+    NetworkX Graph
+        An N-dimensional cubic lattice graph with optional dilution.
+    """
+    G = LatticeND_graph_FastPatch(dim, periodic)  # Generate the basic lattice graph
+
+    # Dilution process - remove a fraction of the edges based on pdil
+    edges = list(G.edges())
+    num_edges = len(edges)
+    num_edges_to_remove = int(pdil * num_edges)
+    edges_to_remove = np.random.choice(num_edges, size=num_edges_to_remove, replace=False)
+
+    for edge_idx in edges_to_remove:
+        G.remove_edge(*edges[edge_idx])
+
+    return G
+def rewire_edges_optimized(G: nx.Graph, prew: float) -> nx.Graph:
+    """
+    Optimized version of the function to rewire the edges of a given graph with a specified probability for each edge.
+
+    Parameters:
+    - G (nx.Graph): The input graph whose edges will be rewired.
+    - prew (float): The probability (0 <= prew <= 1) of rewiring each edge.
+
+    Returns:
+    - nx.Graph: The modified graph with some of its edges rewired based on the given probability.
+    
+    Notes:
+    - For each edge in the graph, one of its nodes is kept fixed while the other is rewired.
+    - Rewiring occurs such that no self-loops or duplicate edges are introduced.
+    - Nodes are selected such that no node becomes disconnected and no new edges are formed with nodes already connected to the selected node.
+    
+    """
+    # Get the list of nodes and edges from the graph
+    nodes = list(G.nodes())
+    edges = list(G.edges())
+    num_edges = len(edges)
+
+    # Boolean array indicating which edges to rewire, based on the given probability
+    rewire_flags = np.random.rand(num_edges) < prew
+
+    # Use a set to track existing edges for fast lookup
+    existing_edges = set(G.edges())
+
+    # Iterate through each edge to potentially rewire it
+    for i, edge in enumerate(edges):
+        if rewire_flags[i]:
+            u, v = edge
+            G.remove_edge(u, v)  # Remove the original edge
+            existing_edges.remove((u, v))  # Update the set of edges
+
+            # Select a new neighbor for `u` that is not `u`, `v`, or already connected to `u`
+            new_neighbor = nodes[np.random.randint(0, len(nodes))]
+            attempts = 0
+            while (new_neighbor == u or new_neighbor == v or
+                   (u, new_neighbor) in existing_edges or
+                   (new_neighbor, u) in existing_edges):
+                new_neighbor = nodes[np.random.randint(0, len(nodes))]
+                attempts += 1
+                if attempts > len(nodes):  # Prevent infinite loops in dense graphs
+                    break
+
+            # Add the new edge between `u` and the new neighbor if it's valid
+            if new_neighbor != u and not G.has_edge(u, new_neighbor):
+                G.add_edge(u, new_neighbor)
+                existing_edges.add((u, new_neighbor))
+
+    return G
+def remove_edges(G: nx.Graph, pdil: float) -> nx.Graph:
+    """
+    Remove a fraction of edges from a given graph and ensure the graph remains connected.
+
+    Parameters:
+    - G (nx.Graph): The input graph from which edges will be removed.
+    - pdil (float): The fraction (0 <= pdil <= 1) of edges to remove.
+
+    Returns:
+    - nx.Graph: The modified graph with a fraction of its edges removed.
+    
+    Raises:
+    - ValueError: If the resulting graph is no longer connected.
+    """
+    """
+    Remove a fraction of edges from a given graph.
+
+    Parameters:
+    - G (nx.Graph): The input graph from which edges will be removed.
+    - pdil (float): The fraction (0 <= pdil <= 1) of edges to remove.
+
+    Returns:
+    - nx.Graph: The modified graph with a fraction of its edges removed.
+    
+    """
+    # Get the list of edges from the graph
+    edges = list(G.edges())
+    num_edges_to_remove = int(len(edges) * pdil)
+    rndE = np.random.choice(len(edges), size=num_edges_to_remove, replace=False)
+    # Randomly select edges to remove
+    edges_to_remove = [edges[i] for i in rndE]
+
+    # Remove the selected edges from the graph
+    G.remove_edges_from(edges_to_remove)
+
+    # Raise an error if the resulting graph is not connected
+    if not nx.is_connected(G):
+        warnings.warn("The resulting graph is no longer connected. Returning \
+                      the largest connected component.")
+        giant_component = max(nx.connected_components(G), key=len)
+        G = G.subgraph(giant_component).copy()
+        return G
+
+    return G
