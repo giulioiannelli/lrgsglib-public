@@ -1517,7 +1517,7 @@ def regbin_ndarr(eigV: NDArray) -> NDArray:
     """
     return np.sign(np.where(eigV == 0, +1, eigV))
 
-def project_3d_to_2d(x, y, z, theta=None, phi=None):
+def project_3d_to_2d(x, y, z, theta=0., phi=0.):
     """
     Projects a 3D point (x, y, z) onto a 2D plane using specified rotation angles.
 

@@ -293,7 +293,7 @@ class SignedGraph:
                       binarize: bool = True, on_g: str = SG_GRAPH_REPR):
         self.load_eigV_on_graph(which, on_g, binarize)
         if not hasattr(self, "clusters"):
-            self.make_clustersYN(f"eigV{which}", +1, which, on_g)
+            self.make_clustersYN(f"eigV{which}", +1, on_g)
         clusterLen = sorted(list(map(lambda x: len(x), self.clustersY)), 
                             reverse=True)
         return clusterLen
@@ -432,7 +432,8 @@ class SignedGraph:
     #
     def load_eigV_on_graph(self, which: int = 0, on_g: str = SG_GRAPH_REPR, 
                            binarize: bool = False):
-        if binarize: eigV = self.get_eigV_bin_check(which=which)
+        if binarize: 
+            eigV = self.get_eigV_bin_check(which=which)
         else:
             try:
                 eigV = self.eigV[which]
