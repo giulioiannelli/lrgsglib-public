@@ -67,8 +67,9 @@ class Lattice3D(SignedGraph):
             self._set_positions()
 
 
-    def _set_positions(self, theta = None, phi = None):
-        pos = {node: project_3d_to_2d(*node, theta, phi) for node in self.G.nodes()}
+    def _set_positions(self):
+        pos = {node: project_3d_to_2d(*node, self.theta, self.phi) 
+               for node in self.G.nodes()}
         nx.set_node_attributes(self.G, pos, 'pos')
 
 
