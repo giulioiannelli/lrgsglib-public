@@ -278,7 +278,7 @@ class Lattice2D(SignedGraph):
             graph = self.l.gr[on_g]
             if not center:
                 center = self.centedge[on_g][0]
-            neighs_to_flip = get_neighbors_within_distance(graph, center, R)
+            neighs_to_flip = get_neighbors_at_distance(graph, center, R)
             links = {(node, neighbor) for node in neighs_to_flip 
                      for neighbor in graph.neighbors(node)}
             return links

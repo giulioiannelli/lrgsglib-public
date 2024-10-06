@@ -4,7 +4,24 @@ from .errwar import *
 #
 def do_nothing(*args, **kwargs):
     pass
-
+def get_numerical_precision(dtype: Type[np.floating] = float) -> float:
+    """
+    Returns the smallest positive number that can be represented in floating-point arithmetic
+    for the specified data type. This value, known as machine epsilon, provides a measure 
+    of the numerical precision or the difference between 1 and the smallest floating point 
+    number greater than 1 for the given data type.
+    
+    Args:
+        dtype (Type[np.floating]): The floating-point data type to get the precision for 
+                                   (e.g., np.float32, np.float64).
+                                   Defaults to float (typically equivalent to np.float64).
+    
+    Returns:
+        float: The machine epsilon for the given data type.
+    """
+    precision = np.finfo(dtype).eps
+    print(f"The numerical precision on the resolution of 0 for {dtype} is: {precision}")
+    return precision
 def join_non_empty(symb: str, *args):
     """
     Joins non-empty strings with an underscore.
