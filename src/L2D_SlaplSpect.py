@@ -15,8 +15,8 @@ howmany = args.howmany
 #
 l = Lattice2D(side1=side, pflip=p, geo=geo, sgpath=args.workDir)
 workDir = l.spectpath
-fnameBase = f"dist{howmany}_{p:.3g}_{eigmode}"
-fname = f"{workDir}{fnameBase}_{navg}.pkl"
+fnameBase = '_'.join([f"dist{howmany}", f"{p:.3g}", eigmode])
+fname = workDir+fnameBase+f"_{navg}.pkl"
 #
 #
 initial_eig = np.abs(eigV_for_lattice2D_ptch(side=side, pflip=p, geo=geo, 
@@ -55,7 +55,7 @@ if not os.path.exists(fname):
 
     # At the end, save the final state if needed
     if nAvgNeed % period:
-        fnameNew = f"{workDir}{fnameBase}_{navg}.pkl"
+        fnameNew = workDir+fnameBase+f"_{navg}.pkl"
         os.rename(fnameOld, fnameNew)
         with open(fnameNew, "wb") as f:
             pk.dump(bin_counter, f)
