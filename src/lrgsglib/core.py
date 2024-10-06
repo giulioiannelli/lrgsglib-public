@@ -600,13 +600,6 @@ def logpsace_prob_erconn(N, pHigh=0.5, pstart=0.1, halving=0.8, testset=100):
     return lsp
 
 
-def get_graph_lapl(G, is_signed=True):
-    if is_signed:
-        lapl = slaplacian_matrix(G)
-    else:
-        lapl = nx.laplacian_matrix(G)
-    return lapl
-
 
 def get_graph_lspectrum(G, is_signed=False):
     if is_signed:

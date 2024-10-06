@@ -1,10 +1,8 @@
-import scipy.sparse as scsp
+# -*- coding: utf-8 -*-
+from ..shared import *
+from .common import *
 #
-from ..config.const import *
-from ..config.utils import *
-from networkx.drawing.layout import _process_params, rescale_layout
-#
-def get_kth_order_neighbours(G: nx.Graph, node: int, order: int = 1) -> list:
+def get_kth_order_neighbours(G: nx.Graph, node: Any, order: int = 1) -> List:
     """
     Returns the kth-order neighbors of a given node in a networkx graph.
 
@@ -12,7 +10,7 @@ def get_kth_order_neighbours(G: nx.Graph, node: int, order: int = 1) -> list:
     ----------
     G : Graph
         A NetworkX graph.
-    node : int
+    node : Any
         The node for which kth-order neighbors are to be found.
     order : int, optional
         The order of neighbors to be considered (default is 1).
@@ -25,7 +23,9 @@ def get_kth_order_neighbours(G: nx.Graph, node: int, order: int = 1) -> list:
     Notes
     -----
     - The graph G should be connected.
-    - The function uses the single_source_shortest_path_length function of networkx to compute the shortest path lengths from the given node to all other nodes in the graph.
+    - The function uses the single_source_shortest_path_length function of
+      networkx to compute the shortest path lengths from the given node to
+      all other nodes in the graph.
     - The kth-order neighbors are selected based on the condition d == order.
 
     Example
@@ -36,19 +36,20 @@ def get_kth_order_neighbours(G: nx.Graph, node: int, order: int = 1) -> list:
     >>> get_kth_order_neighbours(G, 1, 2)
     [4]
     """
-    neighbor_dict = nx.single_source_shortest_path_length(G, node, cutoff=order)
-    kth_order_neighbors = [n for n, d in neighbor_dict.items() if d == order]
-    return kth_order_neighbors
-#
-def get_neighbors_at_distance(G: nx.Graph, node: int, distance: int) -> list:
+    n_dict = nx.single_source_shortest_path_length(G, node, cutoff=order)
+    kth_order_neigh = [n for n, d in n_dict.items() if d == order]
+    return kth_order_neigh
+
+def get_neighbors_at_distance(G: nx.Graph, node: Any, distance: int) -> List:
     """
-    Returns the neighbors of a given node at a specific distance in a networkx graph.
+    Returns the neighbors of a given node at a specific distance in a networkx
+    graph.
 
     Parameters
     ----------
     G : Graph
         A NetworkX graph.
-    node : int
+    node : Any
         The node for which neighbors are to be found.
     distance : int
         The specific distance from the node.
@@ -61,7 +62,9 @@ def get_neighbors_at_distance(G: nx.Graph, node: int, distance: int) -> list:
     Notes
     -----
     - The graph G should be connected.
-    - The function uses the single_source_shortest_path_length function of networkx to compute the shortest path lengths from the given node to all other nodes in the graph.
+    - The function uses the single_source_shortest_path_length function of
+      networkx to compute the shortest path lengths from the given node to
+      all other nodes in the graph.
     - The neighbors are selected based on the condition d == distance.
 
     Example
@@ -72,57 +75,23 @@ def get_neighbors_at_distance(G: nx.Graph, node: int, distance: int) -> list:
     >>> get_neighbors_at_distance(G, 1, 2)
     [4]
     """
-    neighbor_dict = nx.single_source_shortest_path_length(G, node)
-    neighbors_at_distance = [n for n, d in neighbor_dict.items() if d == distance]
-    return neighbors_at_distance
+    n_dict = nx.single_source_shortest_path_length(G, node)
+    neigh_at_distance = [n for n, d in n_dict.items() if d == distance]
+    return neigh_at_distance
 #
-def get_neighbors_within_distance(G: nx.Graph, node: Any, distance: int) -> list:
+def get_sparse_slaplacian_from_G(
+    G: nx.Graph, nodelist: List = None, weight: str = "weight"
+) -> csr_array:
     """
-    Returns the neighbors of a given node within a specific distance in a networkx graph.
+    Returns the signed Laplacian matrix of G.
+
+    The graph Laplacian is the matrix L = |D| - A, where
+    A is the adjacency matrix and |D| is the diagonal matrix of absolute values
+    of node degrees.
 
     Parameters
     ----------
     G : Graph
-        A NetworkX graph.
-    node : Any
-        The node for which neighbors are to be found.
-    distance : int
-        The maximum distance from the node.
-
-    Returns
-    -------
-    neighbors : list
-        A list of neighbors within the given distance from the given node.
-
-    Notes
-    -----
-    - The graph G should be connected.
-    - The function uses the single_source_shortest_path_length function of networkx to compute the shortest path lengths from the given node to all other nodes in the graph.
-    - The neighbors are selected based on the condition d <= distance.
-
-    Example
-    -------
-    >>> import networkx as nx
-    >>> G = nx.Graph()
-    >>> G.add_edges_from([(1, 2), (1, 3), (2, 4), (3, 4), (4, 5)])
-    >>> get_neighbors_within_distance(G, 1, 2)
-    [2, 3, 4]
-    """
-    neighbor_dict = nx.single_source_shortest_path_length(G, node)
-    neighbors_within_distance = [n for n, d in neighbor_dict.items() if d <= distance]
-    return neighbors_within_distance
-#
-def slaplacian_matrix_fromA(G: Graph, nodelist: list = None, weight: str = "weight"
-                      ) -> csr_array:
-    """Returns the signed Laplacian matrix of G.
-
-    The graph Laplacian is the matrix L = |D| - A, where
-    A is the adjacency matrix and |D| is the diagonal matrix of absolute values
-    of node degrees.
-
-    Parameters
-    ----------
-    G : graph
        A NetworkX graph
 
     nodelist : list, optional
@@ -136,50 +105,17 @@ def slaplacian_matrix_fromA(G: Graph, nodelist: list = None, weight: str = "weig
     Returns
     -------
     L : SciPy sparse array
-      The Laplacian matrix of G.
+      The Signed Laplacian matrix of G.
     """
-    if nodelist is None:
-        nodelist = list(G)
-    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight,
-                                 format="csr")
-    D = csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape,
-                                    format="csr"))
-    return D - A
+    nodelist = nodelist or list(G)
+    adj = nx.to_scipy_sparse_array(
+        G, nodelist=nodelist, weight=weight, format="csr"
+    )
+    deg = csr_array(
+        scsp.spdiags(np.abs(adj).sum(axis=1), 0, *adj.shape, format="csr")
+    )
+    return deg - adj
 #
-def slaplacian_matrix(G: Graph, nodelist: list = None, weight: str = "weight"
-                      ) -> csr_array:
-    """Returns the signed Laplacian matrix of G.
-
-    The graph Laplacian is the matrix L = |D| - A, where
-    A is the adjacency matrix and |D| is the diagonal matrix of absolute values
-    of node degrees.
-
-    Parameters
-    ----------
-    G : graph
-       A NetworkX graph
-
-    nodelist : list, optional
-       The rows and columns are ordered according to the nodes in nodelist.
-       If nodelist is None, then the ordering is produced by G.nodes().
-
-    weight : string or None, optional (default='weight')
-       The edge data key used to compute each value in the matrix.
-       If None, then each edge has weight 1.
-
-    Returns
-    -------
-    L : SciPy sparse array
-      The Laplacian matrix of G.
-    """
-    if nodelist is None:
-        nodelist = list(G)
-    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight,
-                                 format="csr")
-    D = csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, *A.shape,
-                                    format="csr"))
-    return D - A
-
 def signed_spectral_layout(G, weight="weight", scale=1, center=None, dim=2):
     """Position nodes using the eigenvectors of the graph signed Laplacian.
 
@@ -224,10 +160,7 @@ def signed_spectral_layout(G, weight="weight", scale=1, center=None, dim=2):
     For larger graphs (>500 nodes) this will use the SciPy sparse
     eigenvalue solver (ARPACK).
     """
-    # handle some special cases that break the eigensolvers
-    import numpy as np
-
-    G, center = _process_params(G, center, dim)
+    G, center = nx.drawing.layout._process_params(G, center, dim)
 
     if len(G) <= 2:
         if len(G) == 0:
@@ -330,8 +263,7 @@ def signedlaplacian_spectrum(G, weight="weight"):
     --------
     laplacian_matrix
     """
-    from scipy.linalg import eigvalsh
-    return eigvalsh(slaplacian_matrix(G, weight=weight).todense())
+    return seigvalsh(get_sparse_slaplacian_from_G(G, weight=weight).todense())
 
 
 def triangular_lattice_graph_modified(
