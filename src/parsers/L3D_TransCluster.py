@@ -11,6 +11,7 @@ DEFAULT_MODE = "ordParam"
 DEFAULT_GEO = "sc"
 DEFAULT_CELL = "rand"
 DEFAULT_FLOAT_TYPE = "float64"
+DEFAULT_PDIL = 0.
 
 # Helpers for argparse descriptions
 HELP_L = """
@@ -18,6 +19,9 @@ HELP_L = """
 """
 HELP_p = """
     Flipping probability for edges.
+"""
+HELP_pdil = """
+    Dilution probability of links. | default={DEFAULT_PDIL}
 """
 HELP_geo = f"""
     Geometry of the lattice. | default={DEFAULT_GEO}
@@ -56,6 +60,12 @@ parser.add_argument(
     type=float,
 )
 # Optional parameters
+parser.add_argument(
+    "--pdil",
+    default=DEFAULT_PDIL,
+    help=HELP_pdil,
+    type=float
+)
 parser.add_argument(
     "--mode",
     default=DEFAULT_MODE,

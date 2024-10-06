@@ -13,8 +13,11 @@ DEFAULT_EXEC = "no"
 DEFAULT_mMB = 2**10
 DEFAULT_MMB = 2**14
 DEFAULT_FLOAT_TYPE = "float64"
-
+DEFAULT_PDIL = 0.
 # Helpers for argparse descriptions
+HELP_pdil = """
+    Dilution probability of links. | default={DEFAULT_PDIL}
+"""
 HELP_print = f"""
     Option to print the output of the Serialiser. | default={DEFAULT_PRINT}
 """
@@ -59,6 +62,12 @@ parser.add_argument(
     "--exec",
     help=HELP_exc,
     action=argparse.BooleanOptionalAction,
+)
+parser.add_argument(
+    "--pdil",
+    default=DEFAULT_PDIL,
+    help=HELP_pdil,
+    type=float
 )
 parser.add_argument(
     "-mMB", "--slanzarv_minMB",
