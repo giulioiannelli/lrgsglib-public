@@ -5,6 +5,9 @@ args = parser.parse_args()
 side = args.L
 p = args.p
 pdil = args.pdil
+mu = args.mu
+sigma = args.sigma
+edge_weight = args.edge_weight
 geo = args.geometry
 cell = args.cell_type
 mode = args.mode
@@ -97,7 +100,11 @@ match mode:
             avg1 = avg+1
             l = Lattice3D(side, pflip=p, geo=geo, pdil=pdil, 
                 init_nw_dict=True)
-            l.flip_sel_edges(geometry_func(l))
+            match edge_weight:
+                case 'flip':
+                    l.flip_sel_edges(geometry_func(l))
+                case 'normal':
+                    l.make_edges_random_normal(mu, sigma)
             neglinks += l.Ne_n
             #
             l.compute_k_eigvV(typf=typf)
@@ -109,16 +116,16 @@ match mode:
             Pinf.append(l.Pinf)
             Pinf2.append(l.Pinf**2)
             #
-            Pinf_tot = sum(Pinf)/avg1
-            Pinf2_tot = sum(Pinf2)/avg1
-            data=[avg1,
-                l.pflip,
-                neglinks/avg1,
-                Pinf_tot,
-                Pinf2_tot,
-                Pinf2_tot-Pinf_tot**2]
-            #
             if (avg1 % sfreq == 0):
+                #
+                Pinf_tot = sum(Pinf)/avg1
+                Pinf2_tot = sum(Pinf2)/avg1
+                data=[avg1,
+                    l.pflip,
+                    neglinks/avg1,
+                    Pinf_tot,
+                    Pinf2_tot,
+                    Pinf2_tot-Pinf_tot**2]
                 try:
                     filenameold = file_path_maker(mpath[mode], 
                                                   napath=avg1-sfreq)

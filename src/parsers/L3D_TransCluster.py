@@ -12,7 +12,9 @@ DEFAULT_GEO = "sc"
 DEFAULT_CELL = "rand"
 DEFAULT_FLOAT_TYPE = "float64"
 DEFAULT_PDIL = 0.
-
+DEFAULT_MU = 1.
+DEFAULT_SIGMA = 0.
+DEFAULT_EDGE_WEIGHT = 'flip'
 # Helpers for argparse descriptions
 HELP_L = """
     Size of the 3D lattice.
@@ -46,6 +48,15 @@ HELP_svfreq = f"""
 HELP_t = f"""
     Floating point arithmetic depth. | default='{DEFAULT_FLOAT_TYPE}'
 """
+HELP_mu = f"""
+    Mean of the normal distribution for the edge weights. | default='{DEFAULT_MU}'
+"""
+HELP_sigma = f"""
+    Standard deviation of the normal distribution for the edge weights. | default='{DEFAULT_SIGMA}'
+"""
+HELP_edge_weight = f"""
+    Edge weight mode for the links. | default='{DEFAULT_EDGE_WEIGHT}'
+"""
 # Setup the argument parser
 parser = argparse.ArgumentParser(description=description.strip())
 # Required parameters
@@ -65,6 +76,24 @@ parser.add_argument(
     default=DEFAULT_PDIL,
     help=HELP_pdil,
     type=float
+)
+parser.add_argument(
+    "--mu",
+    default=DEFAULT_MU,
+    help=HELP_mu,
+    type=float
+)
+parser.add_argument(
+    "--sigma",
+    default=DEFAULT_SIGMA,
+    help=HELP_sigma,
+    type=float
+)
+parser.add_argument(
+    "--edge_weight",
+    default=DEFAULT_EDGE_WEIGHT,
+    help=HELP_edge_weight,
+    type=str
 )
 parser.add_argument(
     "--mode",

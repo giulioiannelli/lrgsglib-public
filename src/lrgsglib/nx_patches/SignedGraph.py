@@ -219,13 +219,22 @@ class SignedGraph:
                       on_g: str = SG_GRAPH_REPR):
         return self.gr[on_g].get_edge_data(u, v)[thedata]
     def get_edge_color(self, pec: ColorType = "blue", nec: ColorType = "red",
-                       thedata: str = 'weight',
-                       on_g: str = SG_GRAPH_REPR):
+                    thedata: str = 'weight', on_g: str = SG_GRAPH_REPR,
+                    continuous: bool = False, cmap: str = 'coolwarm'):
         def map_values(value):
+            if continuous:
+                norm_value = (value - min_val) / (max_val - min_val)  # Normalize value to [0, 1]
+                return plt.get_cmap(cmap)(norm_value)  # Get color from colormap
             return nec if value == -1 else pec if value == 1 else value
+        
         arr = nx.get_edge_attributes(self.gr[on_g], thedata)
+
+        if continuous:
+            values = np.array(list(arr.values()))
+            min_val, max_val = values.min(), values.max()
+
         return list(map(map_values, arr.values()))
-    #
+    #  
     def get_graph_neighbors(self, node: Any, on_g: str = SG_GRAPH_REPR):
         return list(self.gr[on_g].neighbors(node))
     #
@@ -377,6 +386,7 @@ class SignedGraph:
                           also_itself: bool = True):
         if also_itself:
             self.upd_GraphRepr(on_g)
+            self.upd_Nen(on_g)
         for i in self.GraphReprs:
             if i != on_g:
                 self.upd_GraphRepr(i)
@@ -424,6 +434,20 @@ class SignedGraph:
     #
     def unflip_all(self, on_g: str = SG_GRAPH_REPR):
         self.flip_sel_edges(1, on_g)
+    #
+    def make_edges_random_normal(self, mu: float = 1.0, sigma: float = 1.0, 
+                                 on_g: str = SG_GRAPH_REPR):
+        weights = {
+            edge: random.normalvariate(mu, sigma) 
+            for edge in self.gr[on_g].edges()
+        }
+        nx.set_edge_attributes(self.gr[on_g], values=weights, name='weight')
+        self.fleset[on_g] = set([(u, v) 
+                                 for u, v, _ in self.gr[on_g].edges(data=True)
+                                 if _.get('weight', 1) < 0])
+        self.lfeset[on_g] = self.eset[on_g].difference(self.fleset[on_g])
+        self.upd_GraphRepr_All(on_g)
+        self.upd_graph_matrices(on_g)
     #
     def load_vec_on_nodes(self, vec: NDArray, attr: str,
                           on_g: str = SG_GRAPH_REPR):
