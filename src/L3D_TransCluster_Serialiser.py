@@ -13,7 +13,6 @@ typf = args.float_type
 outsx = args.out_suffix
 pdil  = args.pdil
 mu = args.mu
-sigma = args.sigma
 edge_weight = args.edge_weight
 #
 match fullMode:
@@ -21,14 +20,21 @@ match fullMode:
         List = [10, 20, 30]
         geo = args.geometry
         cell = args.cell_type
-        plist = np.linspace(0.06, .3, num=20)
+        if mu != parser.get_default('mu'):
+            siglist = np.linspace(0, 1.5 * mu, 100)
+        else:
+            plist = np.linspace(0.06, .3, num=20)
     case s if s.endswith('ordParam'):
         List = [10, 20, 30, 40]
         def linspacepfunc(*_):
             return np.linspace(0, 0.5, 100)
         geometry_cell_dict = {'simple_cubic': ['rand']}
-        plist = {geo: {cell: linspacepfunc(geo, cell) for cell in cells}  
-                for geo,cells in geometry_cell_dict.items()}
+        if mu != parser.get_default('mu'):
+            siglist = {geo: {cell: np.linspace(0, 1.5 * mu, 100) for cell in cells}  
+                    for geo, cells in geometry_cell_dict.items()}
+        else:
+            plist = {geo: {cell: linspacepfunc(geo, cell) for cell in cells}  
+                    for geo, cells in geometry_cell_dict.items()}
     case _:
         raise ValueError("Invalid mode specified")
 #
@@ -63,7 +69,7 @@ if execBool or printBool:
     elif printBool:
         def operate(s, *args):
             print(s)
-    def exec_str(L, p, geo, cell, navg=navg, mode=progMode, pdil=pdil):
+    def exec_str(L, p, geo, cell, sigma=0, navg=navg, mode=progMode, pdil=pdil):
         lnchStr = f"python src/{progName}.py"
         optStr = f"-o {outsx}" if outsx else ""
         argstr = (f"{L} {p:.3g} -g {geo} -c {cell} -n {navg} -t {typf} {optStr}"+
@@ -77,17 +83,29 @@ else:
 count = 0
 if fullMode.endswith('pCluster'):
     for L in List:
-        for p in plist:
-            estring = exec_str(L, p, geo, cell)
-            count = operate(estring, count)
+        match edge_weight:
+            case 'normal':
+                for sigma in siglist:
+                    estring = exec_str(L, 0, geo, cell, sigma=sigma)
+                    count = operate(estring, count)
+            case 'flip':
+                for p in plist:
+                    estring = exec_str(L, p, geo, cell)
+                    count = operate(estring, count)
 elif fullMode.endswith('ordParam'):
     for L in List:
         for geo, cellst in geometry_cell_dict.items():
             for cell in cellst:
-                for p in plist[geo][cell]:
-                    estring = exec_str(L, p, geo, cell)
-                    count = operate(estring, count)
+                match edge_weight:
+                    case 'normal':
+                        for sigma in siglist[geo][cell]:
+                            estring = exec_str(L, 0, geo, cell, sigma=sigma)
+                            count = operate(estring, count)
+                    case 'flip':
+                        for p in plist[geo][cell]:
+                            estring = exec_str(L, p, geo, cell)
+                            count = operate(estring, count)
 else:
-    print(f"no program executed, unkonw mode provided: {fullMode}")
+    print(f"no program executed, unknown mode provided: {fullMode}")
     exit(0)         
 print("submitted jobs: ", count)
