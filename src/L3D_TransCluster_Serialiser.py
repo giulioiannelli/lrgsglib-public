@@ -12,6 +12,9 @@ printBool = args.print
 typf = args.float_type
 outsx = args.out_suffix
 pdil  = args.pdil
+mu = args.mu
+sigma = args.sigma
+edge_weight = args.edge_weight
 #
 match fullMode:
     case s if s.endswith('pCluster'):
@@ -64,7 +67,8 @@ if execBool or printBool:
         lnchStr = f"python src/{progName}.py"
         optStr = f"-o {outsx}" if outsx else ""
         argstr = (f"{L} {p:.3g} -g {geo} -c {cell} -n {navg} -t {typf} {optStr}"+
-                  f" --mode={mode}" + f" --pdil={pdil:.3g}")
+                  f" --mode={mode}" + f" --pdil={pdil:.3g}" + f" --mu={mu:.3g}" + 
+                  f" --sigma={sigma:.3g}" + f" --edge_weight={edge_weight}")
         return (f"{slanzarv_str(mode, L, p, geo, cell)} "
                         f"{lnchStr} {argstr}")
 else:
