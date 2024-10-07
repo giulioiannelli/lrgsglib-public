@@ -14,6 +14,9 @@ DEFAULT_mMB = 2**10
 DEFAULT_MMB = 2**14
 DEFAULT_FLOAT_TYPE = "float64"
 DEFAULT_PDIL = 0.
+DEFAULT_MU = 0.
+DEFAULT_SIGMA = 0.
+DEFAULT_EDGE_WEIGHT = 'flip'
 # Helpers for argparse descriptions
 HELP_pdil = """
     Dilution probability of links. | default={DEFAULT_PDIL}
@@ -44,6 +47,15 @@ HELP_mode = f"""
 """
 HELP_o = f"""
     Suffix for the output file name (optional) | default='{DEFAULT_OUT_SUFFIX}'
+"""
+HELP_mu = f"""
+    Mean of the normal distribution for the edge weights. | default='{DEFAULT_MU}'
+"""
+HELP_sigma = f"""
+    Standard deviation of the normal distribution for the edge weights. | default='{DEFAULT_SIGMA}'
+""" 
+HELP_edge_weight = f"""
+    Edge weight mode for the links. | default='{DEFAULT_EDGE_WEIGHT}'
 """
 HELP_t = f"""
     Floating point arithmetic depth. | default='{DEFAULT_FLOAT_TYPE}'
@@ -107,6 +119,24 @@ parser.add_argument(
     default=DEFAULT_OUT_SUFFIX,
     help=HELP_o,
     type=str,
+)
+parser.add_argument(
+    "--mu",
+    default=DEFAULT_MU,
+    help=HELP_mu,
+    type=float
+)
+parser.add_argument(
+    "--sigma",
+    default=DEFAULT_SIGMA,
+    help=HELP_sigma,
+    type=float
+)
+parser.add_argument(
+    "--edge_weight",
+    default=DEFAULT_EDGE_WEIGHT,
+    help=HELP_edge_weight,
+    type=str
 )
 parser.add_argument(
     "--mode",
