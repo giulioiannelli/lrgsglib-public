@@ -11,12 +11,16 @@ DEFAULT_MODE = "ordParam"
 DEFAULT_GEO = "squared"
 DEFAULT_CELL = "rand"
 DEFAULT_FLOAT_TYPE = "float64"
+DEFAULT_PREW = 0.
 # Helpers for argparse descriptions
 HELP_L = """
     Size of the square lattice.
 """
 HELP_p = """
     Flipping probability for edges.
+"""
+HELP_prew = f"""
+    Rewiring probability for edges. | default={DEFAULT_PREW}
 """
 HELP_geo = f"""
     Geometry of the lattice. | default={DEFAULT_GEO}
@@ -60,6 +64,12 @@ parser.add_argument(
     default=DEFAULT_MODE,
     help=HELP_mode,
     type=str,
+)
+parser.add_argument(
+    "--prew",
+    default=DEFAULT_PREW,
+    help=HELP_prew,
+    type=float,
 )
 parser.add_argument(
     "-g",

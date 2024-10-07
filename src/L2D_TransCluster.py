@@ -1,4 +1,4 @@
-from parsers.L2D_TransCluster_Parser import *
+from parsers.L2D_TransCluster import *
 #
 args = parser.parse_args()
 #
@@ -11,6 +11,7 @@ navg = args.number_of_averages
 sfreq = args.save_frequency if args.save_frequency else navg // 20
 outsx = args.out_suffix
 typf = args.float_type
+prew = args.prew
 #
 match typf:
     case 'float32':
@@ -44,18 +45,17 @@ def get_geometry_func(cell: str):
 
     return geometry_func
 #
-def file_path_maker(mpath, mode=mode, ppath = p, 
-                    napath = navg, 
-                    spath = outsx,
-                    ctpath = cell):
+def file_path_maker(mpath, mode=mode, ppath = p, napath = navg, spath = outsx,
+                    ctpath = cell, extout = extout, prew = prew):
     match mode:
         case 'pCluster':
             extout = PKL
         case 'ordParam':
             extout = TXT
-    if spath:
-        spath = "_"+spath
-    return f'{mpath}{mode}_p={ppath:.3g}_{ctpath}_na={napath}{spath}{extout}'
+    prewStr = f"prew={prew:.3g}" if prew != 0. else ""
+    strName = '_'.join(filter(None, [mode, f"p={ppath:.3g}", ctpath, 
+                     f"na={napath}", prewStr, spath]))
+    return os.path.join(mpath, strName) + extout
 #
 geometry_func = get_geometry_func(cell)
 testLattice = Lattice2D(side, pflip=p, geo=geo)
