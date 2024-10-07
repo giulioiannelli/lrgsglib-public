@@ -12,7 +12,7 @@ DEFAULT_GEO = "sc"
 DEFAULT_CELL = "rand"
 DEFAULT_FLOAT_TYPE = "float64"
 DEFAULT_PDIL = 0.
-DEFAULT_MU = 1.
+DEFAULT_MU = 0.
 DEFAULT_SIGMA = 0.
 DEFAULT_EDGE_WEIGHT = 'flip'
 # Helpers for argparse descriptions

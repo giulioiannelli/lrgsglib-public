@@ -24,11 +24,18 @@ elif mode == 'ordParam':
 else:
     raise ValueError("Invalid mode specified")
 #
-def file_path_maker(mpath, mode=mode, ppath = p, napath = navg, spath = outsx,
-                    ctpath = cell, extout = extout, pdil = pdil):
-    pdilStr = f"pdil={pdil:.3g}" if pdil != 0. else ""
-    strName = '_'.join(filter(None, [mode, f"p={ppath:.3g}", ctpath, 
-                     f"na={napath}", pdilStr, spath]))
+def file_path_maker(mpath, mode=mode, ppath=p, napath=navg, spath=outsx,
+                    ctpath = cell, extout = extout, pdil = pdil, mu = mu, 
+                    sigma = sigma):
+    pdilStr = f"pdil={pdil:.3g}" if pdil else None
+    match edge_weight:
+        case 'flip':
+            pflipStr = f"p={ppath:.3g}"
+        case 'normal':
+            pflipStr = f"mu={mu:.3g}_sigma={sigma:.3g}"
+    navgStr = f"na={napath}"
+    listStr = [mode, pdilStr, pflipStr, ctpath, navgStr, spath]
+    strName = '_'.join(filter(None, listStr))
     return os.path.join(mpath, strName) + extout
 #
 lattice = Lattice3D(dim=tuple(side for _ in range(3)), pflip=p, geo=geo)
