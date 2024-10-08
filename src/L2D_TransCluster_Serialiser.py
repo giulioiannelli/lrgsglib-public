@@ -11,7 +11,7 @@ execBool = args.exec
 printBool = args.print
 typf = args.float_type
 outsx = args.out_suffix
-
+prew = args.prew
 #
 if fullMode.endswith('pCluster'):
     List = [16, 32, 64, 96, 128]
@@ -30,8 +30,8 @@ elif fullMode.endswith('ordParam'):
     # geometry_cell_dict = {'squared': L2D_RAND_CELL_LIST,
     #                     'triangular': L2D_RAND_CELL_LIST,
     #                     'hexagonal': L2D_RAND_CELL_LIST}
-    geometry_cell_dict = {'squared': ['rand', 'randZERR'],
-                          'triangular': ['rand', 'randZERR']}
+    geometry_cell_dict = {'squared': ['rand'],
+                          'triangular': ['rand']}
     plist = {geo: {cell: linspacepfunc(geo, cell) for cell in cells}  
             for geo,cells in geometry_cell_dict.items()}
 #
@@ -65,11 +65,12 @@ if execBool or printBool:
     elif printBool:
         def operate(s, *args):
             print(s)
-    def exec_str(L, p, geo, cell, navg, mode):
+            return count +1
+    def exec_str(L, p, geo, cell, navg=navg, mode=progMode):
         lnchStr = f"python src/{progName}.py"
         optStr = f"-o {outsx}" if outsx else ""
         argstr = (f"{L} {p:.3g} -g {geo} -c {cell} -n {navg} -t {typf} {optStr} "+
-                  f"--mode={mode}")
+                  f"--mode={mode} --prew={prew}")
         return (f"{slanzarv_str(mode, L, p, geo, cell)} "
                         f"{lnchStr} {argstr}")
 else:
@@ -79,14 +80,14 @@ count = 0
 if fullMode.endswith('pCluster'):
     for L in List:
         for p in plist:
-            estring = exec_str(L, p, geo, cell, navg, progMode)
+            estring = exec_str(L, p)
             count = operate(estring, count)
 elif fullMode.endswith('ordParam'):
     for L in List:
         for geo, cellst in geometry_cell_dict.items():
             for cell in cellst:
                 for p in plist[geo][cell]:
-                    estring = exec_str(L, p, geo, cell, navg, progMode)
+                    estring = exec_str(L, p, geo, cell)
                     count = operate(estring, count)
 else:
     print(f"no program executed, unkonw mode provided: {fullMode}")
