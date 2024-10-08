@@ -30,7 +30,7 @@ isingDictArgs = dict(T=T, ic=ic, runlang=runlang, NoClust=NoClust, rndStr=True,
                      out_suffix=out_suffix, id_string=in_suffix)
 l = Lattice2D(**l2dDictArgs)
 Fname = f'GC_meanVar_p={p:.3g}_{cell}_{in_suffix}.txt'
-pathFname = os.path.join(l.expOutdir, Fname)
+pathFname = os.path.join(l.expOut, Fname)
 if not os.path.exists(pathFname):
     lenList = []
     for _ in range(navg2):
