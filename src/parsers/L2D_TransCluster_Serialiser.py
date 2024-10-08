@@ -13,7 +13,7 @@ DEFAULT_EXEC = "no"
 DEFAULT_mMB = 2**10
 DEFAULT_MMB = 2**14
 DEFAULT_FLOAT_TYPE = "float64"
-
+DEFAULT_PREW = 0.
 # Helpers for argparse descriptions
 HELP_print = f"""
     Option to print the output of the Serialiser.
@@ -27,7 +27,9 @@ HELP_mMB = f"""
 HELP_MMB = f"""
     Maximum MB quantity to be allocated for the single process | default={DEFAULT_MMB}
 """
-
+HELP_prew = f"""
+    Probability of rewiring edges in the lattice. | default={DEFAULT_PREW}
+"""
 HELP_geo = f"""
     Geometry of the lattice. | default={DEFAULT_GEO}
 """
@@ -72,6 +74,12 @@ parser.add_argument(
     help=HELP_MMB,
     default=DEFAULT_MMB,
     type=int,
+)
+parser.add_argument(
+    "--prew",
+    default=DEFAULT_PREW,
+    help=HELP_prew,
+    type=float,
 )
 parser.add_argument(
     "-g",

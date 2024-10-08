@@ -74,7 +74,6 @@ class Lattice2D(SignedGraph):
     #
     def __init_lattice__(self) -> None:
         #
-        more_args = {}
         if self.geo == L2D_SHRT_GEO_DICT['tri']:
             nxfunc = triangular_lattice_graph_FastPatch
             self.z = 6
