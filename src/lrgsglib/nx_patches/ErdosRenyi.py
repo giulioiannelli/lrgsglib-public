@@ -1,4 +1,5 @@
 from .common import *
+from .funcs import *
 from .SignedGraph import SignedGraph
 
 class ErdosRenyi(SignedGraph):
@@ -39,11 +40,21 @@ class ErdosRenyi(SignedGraph):
                                     list(self.er.nodesIn[g]), 
                                     self.er.nflip
                                 ) for g in self.rd}
+            self['rand'] = {g: [e for e in self.er.fleset[g]] 
+                            for g in self.rd}
             self['randXERR'] = {g: self.get_rand_pattern('XERR', on_g=g) 
                                    for g in self.rd}
         #
         def get_links_XERR(self, node: Any, on_g: str = ER_ONREP):
             return [(node, nn) for nn in self.er.get_graph_neighbors(node, on_g)]
+        #
+        def get_links_ZERR(self, node: Any, on_g: str = ER_ONREP):
+            smallest_cycle = get_smallest_cycle_graph_node(self.rd[on_g], node)
+            edges = []
+            if smallest_cycle:
+                # Convert the cycle to a list of edges and add to patternList
+                edges = [(smallest_cycle[i], smallest_cycle[i + 1]) for i in range(len(smallest_cycle) - 1)]
+            return edges
         #
         def get_rand_pattern(self, mode: str, on_g: str = ER_ONREP):
             match mode:
@@ -67,4 +78,11 @@ class ErdosRenyi(SignedGraph):
                                                              on_g)
                                 patternList.extend([k for k in glXERR])
                                 _ += 1
+                case 'ZERR':
+                    tmplst = self.rNodeFlip[on_g]
+                    grph = self.er.gr[on_g]
+                    _ = 0
+                    patternList = [links for node in tmplst if (links := self.get_links_ZERR(node, on_g))]
+                    # for node in tmplst:
+                    #     patternList.extend(self.get_links_XERR(node, on_g))
             return patternList

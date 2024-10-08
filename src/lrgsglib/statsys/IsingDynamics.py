@@ -119,7 +119,7 @@ class IsingDynamics:
                        f"{freq}"
                        ]
             self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
-            print(self.cprogram)
+            # print(self.cprogram)
             stderrFname = join_non_empty('_', f"err{self.CbaseName}", f"{self.N}", 
                                     f"{self.id_string_isingdyn}", 
                                     f"{self.out_suffix}")+LOG
