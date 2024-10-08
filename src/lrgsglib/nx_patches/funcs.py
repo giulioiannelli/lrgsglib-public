@@ -39,7 +39,38 @@ def get_kth_order_neighbours(G: nx.Graph, node: Any, order: int = 1) -> List:
     n_dict = nx.single_source_shortest_path_length(G, node, cutoff=order)
     kth_order_neigh = [n for n, d in n_dict.items() if d == order]
     return kth_order_neigh
+#
+def get_smallest_cycle_graph_node(graph, start_node):
+    visited = {start_node: None}
+    queue = deque([(start_node, None)])
+    smallest_cycle = None
 
+    while queue:
+        current_node, parent = queue.popleft()
+
+        for neighbor in graph.neighbors(current_node):
+            if neighbor == parent:
+                continue
+            if neighbor in visited:
+                # Cycle detected
+                cycle = []
+                node = current_node
+                while node is not None and node != neighbor:
+                    cycle.append(node)
+                    node = visited[node]
+                cycle.append(neighbor)
+                cycle.append(current_node)
+                if smallest_cycle is None or len(cycle) < len(smallest_cycle):
+                    smallest_cycle = cycle
+                    # Early exit if we find a cycle of length 3 (minimum possible cycle)
+                    if len(smallest_cycle) == 3:
+                        return smallest_cycle
+            else:
+                visited[neighbor] = current_node
+                queue.append((neighbor, current_node))
+
+    return smallest_cycle
+#
 def get_neighbors_at_distance(G: nx.Graph, node: Any, distance: int) -> List:
     """
     Returns the neighbors of a given node at a specific distance in a networkx
@@ -299,10 +330,6 @@ def triangular_lattice_graph_modified(
     NetworkXError
         If periodic is True and m < 3 or n < 5.
     """
-
-
-
-
     from networkx import empty_graph, NetworkXError, set_node_attributes
     G = empty_graph(0, create_using)
     if n == 0 or m == 0:
