@@ -19,7 +19,7 @@ import pickle as pk
 import matplotlib.pyplot as plt
 import scipy.sparse as scsp
 #
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, deque
 from collections.abc import Iterable
 from cycler import cycler
 from dotenv import load_dotenv
