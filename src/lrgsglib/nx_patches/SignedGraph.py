@@ -25,7 +25,7 @@ class SignedGraph:
         self.eset = {}
         self.fleset = {}
         self.lfeset = {}
-        self.nodesIn = {}
+        self.nodes_in = {}
         #
         self.seed = seed or int(time.time() * 1000) + os.getpid()
         random.seed(seed)
@@ -117,8 +117,8 @@ class SignedGraph:
     def __make_graphCl_util__(self):
         self.gclUtil = NestedDict()
     #
-    def __init_graph_fromfile__(self, mprt_modeL: str = SG_MPRT_MODE):
-        match mprt_modeL:
+    def __init_graph_fromfile__(self, import_mode: str = SG_MPRT_MODE):
+        match import_mode:
             case 'pkl'|'pk'|'pickle':
                 return pk.load(open(self.graphPath+PKL, "rb"))
             case 'gml':
@@ -126,7 +126,7 @@ class SignedGraph:
     #
     def __init_reprdict__(self):
         self.GraphReprDict[self.onGraph] = self.G
-        for grd in ['H', 'I', 'J', 'K', 'L', 'M', 'N']:
+        for grd in SG_LIST_REPR:
             try:
                 self.GraphReprDict[grd] = getattr(self, grd)
             except AttributeError:
@@ -135,12 +135,13 @@ class SignedGraph:
     #
     def __init_weights__(self, values: Union[float, List] = 1) -> None:
         nx.set_edge_attributes(self.gr[self.onGraph], values, 'weight')
-        self.upd_GraphRepr_All(self.onGraph)
+        if type(values) is list:
+            self.upd_GraphRepr_All(self.onGraph)
     #
     def __init_nNodesEdges__(self) -> None:
         self.N = self.gr[self.onGraph].number_of_nodes()
         self.Ne = self.gr[self.onGraph].number_of_edges()
-        self.nodesIn[self.onGraph] = list(self.gr[self.onGraph].nodes())
+        self.nodes_in[self.onGraph] = list(self.gr[self.onGraph].nodes())
     #
     def __init_sgraph__(self, init_weights_val: Union[float, List] = 1) -> None:
         self.__init_nNodesEdges__()
@@ -391,7 +392,7 @@ class SignedGraph:
             if i != on_g:
                 self.upd_GraphRepr(i)
                 self.upd_GraphRelabel(on_g, i)
-                self.nodesIn[i] = list(self.gr[i].nodes())
+                self.nodes_in[i] = list(self.gr[i].nodes())
                 self.eset[i] = {self.edgeMap[i][on_g][tuple(sorted(e))] 
                                 for e in self.eset[on_g]}
                 self.fleset[i] = {self.edgeMap[i][on_g][tuple(sorted(e))] 

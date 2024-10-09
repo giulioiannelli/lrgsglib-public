@@ -140,7 +140,7 @@ class Lattice2D(SignedGraph):
             self.l = l
             self.rd = self.l.GraphReprs
             self.rNodeFlip = {g: random.sample(
-                                    list(self.l.nodesIn[g]), 
+                                    list(self.l.nodes_in[g]), 
                                     self.l.nflip
                                 ) for g in self.rd}
             #
