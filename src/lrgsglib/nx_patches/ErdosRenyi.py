@@ -34,7 +34,7 @@ class ErdosRenyi(SignedGraph):
             self.er = er
             self.rd = self.er.GraphReprs
             self.rNodeFlip = {g: random.sample(
-                                    list(self.er.nodesIn[g]), 
+                                    list(self.er.nodes_in[g]), 
                                     self.er.nflip
                                 ) for g in self.rd}
             self['rand'] = {g: [e for e in self.er.fleset[g]] 
