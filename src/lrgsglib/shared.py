@@ -39,6 +39,7 @@ from scipy.ndimage import gaussian_filter1d, gaussian_filter
 from scipy.signal import argrelextrema, medfilt
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_array, spdiags
+from scipy.sparse import coo_matrix, csr_matrix
 from scipy.sparse import identity as scsp_identity
 from scipy.sparse.linalg import eigsh as scsp_eigsh
 

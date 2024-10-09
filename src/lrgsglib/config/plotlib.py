@@ -2,7 +2,7 @@
 from ..shared import *
 from .const import *
 from .const_plotlib import *
-from .utils import *
+from .funcs import *
 from .errwar import *
 #
 def set_new_lower_ybound(ax, new_lower_bound):
@@ -701,7 +701,7 @@ def defects_on_lattice_plot(sizes, lattices, ax, direction: str = 'parallel',
                             geometry: str = 'squared', cell: str = 'single', 
                             fit_mode: str = 'lmfit'):
     #
-    from .utils import flip_to_positive_majority
+    from .funcs import flip_to_positive_majority
     from scipy.optimize import curve_fit
     #
     newLowerBound = None

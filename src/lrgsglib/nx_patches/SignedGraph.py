@@ -247,9 +247,8 @@ class SignedGraph:
         return spdiags(self.adj.sum(axis=1), 0, *self.adj.shape, format=format)
     #
     def get_abs_degree_matrix(self, format: str = 'csr'):
-        # Use NumPy conversion for faster summation of absolute values
-        row_sums = np.array(abs(self.adj).sum(axis=1)).ravel()
-        return spdiags(row_sums, 0, *self.adj.shape, format=format)
+        return spdiags(abs(self.adj).sum(axis=1), 0, *self.adj.shape, 
+                       format=format)
     #
     def get_laplacian(self):
         return self.degm - self.adj

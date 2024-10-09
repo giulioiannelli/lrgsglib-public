@@ -1,4 +1,4 @@
 from ..shared import *
 from ..config.const import *
-from ..config.utils import *
-from ..config.classes import *
+from ..config.funcs import *
+from ..config.tools import *

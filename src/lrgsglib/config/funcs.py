@@ -1,9 +1,34 @@
 from ..shared import *
 from .const import *
 from .errwar import *
+from .tools import *
 #
 def do_nothing(*args, **kwargs):
     pass
+# Global dictionary to store timing data
+chronometer_instances = {}
+
+def time_function_accumulate(func):
+    def wrapper(*args, **kwargs):
+        # Create a new chronometer instance for the function
+        chrono = Chronometer(func.__name__)
+        chronometer_instances[func.__name__] = chrono
+        
+        # Execute the function
+        result = func(*args, **kwargs)
+        
+        # End the chronometer
+        chrono.end()
+        
+        return result
+    return wrapper
+
+def print_accumulated_timings():
+    print("\nSummary of accumulated function timings:")
+    for func_name, chrono in chronometer_instances.items():
+        elapsed_time = chrono.get_elapsed_time()
+        formatted_time = f"{elapsed_time:.4g}"
+        print(f"Function '{func_name}' (Chronometer ID: {chrono.id}) elapsed time: {formatted_time} seconds")
 def get_numerical_precision(dtype: Type[np.floating] = float) -> float:
     """
     Returns the smallest positive number that can be represented in floating-point arithmetic
