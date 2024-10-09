@@ -94,11 +94,12 @@ DSFMTFLAG     = -DSFMT_MEXP=19937
 LMFLAG        = -lm
 WFLAG1        = -Wall
 WFLAG2        = -Wextra
+OPENMPFLAG    = -fopenmp
 WFLAGS        = ${WFLAG1} ${WFLAG2}
 INC_PATH1     = -I${PATH_CCORE}
 INC_PATH_SFMT = -I${PATH_SFMT}
 INC_PATHS     = ${INC_PATH1} ${INC_PATH_SFMT}
-ALLFLAGS      = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS} 
+ALLFLAGS      = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS} ${OPENMPFLAG}
 
 configure: setup chmod_scripts echo_paths create_dirs
 c_make: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} ${PROGRAMN3}
@@ -202,18 +203,26 @@ sub_make:
 DEBRIS = a.out *~ 
 RM_FR  = rm -fr
 
-clean:
+clean_programs:
 	${RM_FR} ${PROGRAMN0}
 	${RM_FR} ${PROGRAMN1}
 	${RM_FR} ${PROGRAMN2}
 	${RM_FR} ${PROGRAMN3}
+
+clean_directories:
 	$(MAKE) -C $(PATH_GTPTCH_CPP) clean
 	$(MAKE) -C $(PATH_SRW_LATT) clean
 	$(MAKE) -C $(PATH_RBIM_BASE) clean
 	$(MAKE) -C $(PATH_RBIM_STORE) clean
+
+clean_files:
 	rm -f $(RW_TARGET)
 	rm -f *.o main
+
+clean_activations:
 	@rm -rf $(ACTIVATE_D) $(DEACTIVATE_D)
+
+clean: clean_programs clean_directories clean_files clean_activations
 
 
 
