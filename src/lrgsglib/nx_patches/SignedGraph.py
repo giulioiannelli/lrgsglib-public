@@ -240,7 +240,6 @@ class SignedGraph:
     #
     def get_adjacency_matrix(self, on_g: str = SG_GRAPH_REPR, 
                              weight: str = 'weight', format: str = 'csr'):
-        argDict = dict()
         return nx.to_scipy_sparse_array(self.gr[on_g], 
                                         weight=weight, format=format)
     #
@@ -248,11 +247,13 @@ class SignedGraph:
         return spdiags(self.adj.sum(axis=1), 0, *self.adj.shape, format=format)
     #
     def get_abs_degree_matrix(self, format: str = 'csr'):
-        return spdiags(abs(self.adj).sum(axis=1), 0, *self.adj.shape, 
-                       format=format)
+        # Use NumPy conversion for faster summation of absolute values
+        row_sums = np.array(abs(self.adj).sum(axis=1)).ravel()
+        return spdiags(row_sums, 0, *self.adj.shape, format=format)
     #
     def get_laplacian(self):
         return self.degm - self.adj
+    #
     def get_signed_laplacian(self):
         return self.sdeg - self.adj
     #
