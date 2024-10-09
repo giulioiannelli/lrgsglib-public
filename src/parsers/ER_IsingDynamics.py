@@ -47,31 +47,31 @@ phelp_print_chrono = """
     Print the chronometer.
 """
 phelp_cell = f"""
-    Topological defect class: 'rand', 'randXERR'. | default='{DEFAULT_CELL}'
+    Topological defect class: 'rand', 'randXERR'.
 """
 phelp_navg = f"""
-    Number of averages to compute | default={DEFAULT_NAVG}
+    Number of averages to compute.
 """
 phelp_initCond = f"""
-    Initial condition for the Ising model | default='{DEFAULT_INIT_COND}'
+    Initial condition for the Ising model.
 """
 phelp_runlang = f"""
-    Language for running the Ising model | default='{DEFAULT_RUNLANG}'
+    Language for running the Ising model
 """
 phelp_inSuffix = f"""
-    Suffix for the input files | default='{DEFAULT_INSFFX}'
+    Suffix for the input files
 """
 phelp_outSuffix = f"""
-    Suffix for the output files | default='{DEFAULT_OUTSFFX}'
+    Suffix for the output files
 """
 phelp_NoClust = f"""
-    Number of clusters to compute | default={DEFAULT_NOCLUST}
+    Number of clusters to compute
 """
 phelp_workdir = f"""
-    Working directory | default='{DEFAULT_WORKDIR}'
+    Working directory
 """
 phelp_navg2 = f"""
-    Number of averages for the cluster statistic | default={DEFAULT_NAVG2}
+    Number of averages for the cluster statistic
 """
 #
 parsDict = {
@@ -117,17 +117,17 @@ parsDictOpt = {
     'navg2': {'names': ['-n2', '--number_of_averages2'],
                 'help': phelp_navg2,
                 'type': int,
-                'default': DEFAULT_NAVG2},
-    'print_chrono': {'names': ['-pc', '--print_chrono'],
-                    'help': phelp_print_chrono,
-                    'action': argparse.BooleanOptionalAction,
-                    'default': DEFAULT_PRINT_CHRONO}
+                'default': DEFAULT_NAVG2}
 }
 #
 parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
                             'help': phelp_remove_files,
                             'action': argparse.BooleanOptionalAction,
-                            'default': DEFAULT_REMOVE_FILES}
+                            'default': DEFAULT_REMOVE_FILES},
+        'print_chrono': {'names': ['-pc', '--print_chrono'],
+                        'help': phelp_print_chrono,
+                        'action': argparse.BooleanOptionalAction,
+                        'default': DEFAULT_PRINT_CHRONO}
 }
 parser = argparse.ArgumentParser(description=description.strip())
 # Mandatory arguments
