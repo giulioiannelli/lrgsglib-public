@@ -38,9 +38,13 @@ DEFAULT_NOCLUST = 1
 DEFAULT_REMOVE_FILES = True
 DEFAULT_WORKDIR = ''
 DEFAULT_MAX_ITER_ER_GC = 20
+DEFAULT_PRINT_CHRONO = False
 #
 phelp_remove_files = """
     Remove the input files after the computation.
+"""
+phelp_print_chrono = """
+    Print the chronometer.
 """
 phelp_cell = f"""
     Topological defect class: 'rand', 'randXERR'. | default='{DEFAULT_CELL}'
@@ -113,7 +117,11 @@ parsDictOpt = {
     'navg2': {'names': ['-n2', '--number_of_averages2'],
                 'help': phelp_navg2,
                 'type': int,
-                'default': DEFAULT_NAVG2}
+                'default': DEFAULT_NAVG2},
+    'print_chrono': {'names': ['-pc', '--print_chrono'],
+                    'help': phelp_print_chrono,
+                    'action': argparse.BooleanOptionalAction,
+                    'default': DEFAULT_PRINT_CHRONO}
 }
 #
 parDA = {'remove_files': {'names': ['-rf', '--remove_files'],

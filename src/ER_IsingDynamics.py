@@ -17,6 +17,7 @@ NoClust = args.NoClust
 runlang = args.runlang
 remove_files = args.remove_files
 workdir = args.workdir
+print_chrono = args.print_chrono
 if ic.startswith('ground_state'):
     parts = ic.split('_')
     number = int(parts[-1])
