@@ -10,7 +10,7 @@ T = args.T
 cell = args.cell_type
 ic = args.init_cond
 navg = args.number_of_averages
-navg2 = 10
+navg2 = args.number_of_averages2
 in_suffix = args.in_suffix
 out_suffix = args.out_suffix
 NoClust = args.NoClust
@@ -45,7 +45,6 @@ if not os.path.exists(pathFname):
     np.savetxt(pathFname, np.atleast_2d([meanN, stdN]), fmt='%.3g')
 else:
     meanN, stdN = np.loadtxt(pathFname)
-print("halfway, meanN, stdN:", meanN, stdN)
 for _ in range(navg):
     iter_gen = 0
     while True:
@@ -58,7 +57,8 @@ for _ in range(navg):
         if  abs(len(er.gc)/er.N - meanN) < stdN/2:
             break
         elif iter_gen > DEFAULT_MAX_ITER_ER_GC:
-            raise ValueError(f"Exceeded maximum number of iterations {DEFAULT_MAX_ITER_ER_GC}")
+            raise ValueError(f"Exceeded maximum number of iterations\
+                              {DEFAULT_MAX_ITER_ER_GC}")
         iter_gen += 1
     isdy = IsingDynamics(er, **isingDictArgs)
     isdy.init_ising_dynamics()
@@ -68,4 +68,6 @@ for _ in range(navg):
     if remove_files:
         isdy.remove_run_c_files(remove_stderr=True)
         er.remove_edgl_file()
+Chronometer.print_all_chronometers()
+
 print("Done!")

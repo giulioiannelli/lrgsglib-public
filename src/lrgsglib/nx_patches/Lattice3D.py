@@ -1,5 +1,5 @@
 from .common import *
-from ..config.utils import project_3d_to_2d
+from ..config.funcs import project_3d_to_2d
 from .funcs import *
 from .SignedGraph import SignedGraph
 
