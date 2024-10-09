@@ -23,9 +23,9 @@ execBool = args.exec
 printBool = args.print
 #
 N_list = [256, 512, 1024, 2048]
-pflip_list = np.linspace(0.01, 0.7, num=15)
+pflip_list = np.linspace(0.05, 0.7, num=15)
 Tlist = np.concatenate([
-    np.linspace(0.5, 10, 50),
+    np.linspace(0.4, 10, 50),
 ])
 
 if args.slanzarv_minMB == args.slanzarv_maxMB:
