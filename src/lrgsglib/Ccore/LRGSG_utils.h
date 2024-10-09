@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
+#include <omp.h>
 #include "LRGSG_customs.h"
 #include "sfmtrng.h"
 

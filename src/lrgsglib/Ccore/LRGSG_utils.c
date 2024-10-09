@@ -47,6 +47,14 @@ double neighWeight_magn(NodeEdges ne, spin_tp s, size_t n_nn) {
         sum += *(ne.weights + i) * *(s + *(ne.neighbors + i));
     return sum;
 }
+double calc_totEnergy(size_t N, spin_tp s, size_tp nlen, NodesEdges ne) {
+    double sum = 0.;
+    for (size_t i = 0; i < N; i++) {
+        double tmp = *(s + i) * neighWeight_magn(ne[i], s, nlen[i]);
+        sum += tmp;
+    }
+    return - sum / N;
+}
 double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
                         double_p *edgl) {
     double sum = 0., tmp = 0.;
@@ -55,14 +63,6 @@ double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
         sum += tmp;
     }
     return -sum / N;
-}
-double calc_totEnergy(size_t N, spin_tp s, size_tp nlen, NodesEdges ne) {
-    double sum = 0., tmp = 0.;
-    for (size_t i = 0; i < N; i++) {
-        tmp = *(s + i) * neighWeight_magn(ne[i], s, nlen[i]);
-        sum += tmp;
-    }
-    return - sum / N;
 }
 /**
  * @brief Generate a logarithmically-spaced vector
