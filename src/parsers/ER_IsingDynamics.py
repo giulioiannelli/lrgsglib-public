@@ -1,4 +1,14 @@
 from lrgsglib.core import *
+from fractions import Fraction
+#
+def parse_fraction(value):
+    try:
+        if '/' in value:
+            return float(Fraction(value))
+        else:
+            return float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid number: {value}")
 #
 description = """
     Computational resourses regarding the Ising Dynamics on signed Erdos-Renyi 
@@ -21,6 +31,7 @@ DEFAULT_INIT_COND = 'ground_state_0'
 DEFAULT_CELL = 'rand'
 DEFAULT_RUNLANG = 'C1'
 DEFAULT_NAVG = 500
+DEFAULT_NAVG2 = 10
 DEFAULT_INSFFX = ''
 DEFAULT_OUTSFFX = ''
 DEFAULT_NOCLUST = 1
@@ -55,10 +66,13 @@ phelp_NoClust = f"""
 phelp_workdir = f"""
     Working directory | default='{DEFAULT_WORKDIR}'
 """
+phelp_navg2 = f"""
+    Number of averages for the cluster statistic | default={DEFAULT_NAVG2}
+"""
 #
 parsDict = {
     'N': {'help': phelp_N, 'type': int},
-    'p': {'help': phelp_p, 'type': float},
+    'p': {'help': phelp_p, 'type': parse_fraction},
     'pflip' : {'help': phelp_pflip, 'type': float},
     'T': {'help': phelp_T, 'type': float}
 }
@@ -95,7 +109,11 @@ parsDictOpt = {
     'workdir': {'names': ['-wd', '--workdir'],
                 'help': phelp_workdir,
                 'type': str,
-                'default': DEFAULT_WORKDIR}
+                'default': DEFAULT_WORKDIR},
+    'navg2': {'names': ['-n2', '--number_of_averages2'],
+                'help': phelp_navg2,
+                'type': int,
+                'default': DEFAULT_NAVG2}
 }
 #
 parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
@@ -103,7 +121,6 @@ parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
                             'action': argparse.BooleanOptionalAction,
                             'default': DEFAULT_REMOVE_FILES}
 }
-#
 parser = argparse.ArgumentParser(description=description.strip())
 # Mandatory arguments
 def parsDict_get(var, key):
