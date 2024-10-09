@@ -69,6 +69,7 @@ for _ in range(navg):
     if remove_files:
         isdy.remove_run_c_files(remove_stderr=True)
         er.remove_edgl_file()
-# Chronometer.print_all_chronometers()
+if print_chrono:
+    Chronometer.print_all_chronometers()
 
 print("Done!")
