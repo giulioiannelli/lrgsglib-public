@@ -21,11 +21,8 @@ class ErdosRenyi(SignedGraph):
     #
     def __init_network__(self, n, p):
         G = nx.erdos_renyi_graph(n, p)
-        # Get the connected components (returns a list of sets of nodes)
         CC = nx.connected_components(G)
-        # Find the largest connected component
         GC = max(CC, key=len)
-        # Create a subgraph from the nodes in the largest component
         self.G = G.subgraph(GC).copy()
         self.syshape = self.G.number_of_nodes()
         self.syshapePth = f"N={n}_p={p:.3g}"
