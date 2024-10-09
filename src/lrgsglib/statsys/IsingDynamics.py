@@ -85,77 +85,80 @@ class IsingDynamics:
             self.export_s_init()
             self.CbaseName = f"IsingSimulator{self.runlang[-1]}"
     #
-    def run(  #
-        self,
-        tqdm_on: bool = True,
-        thrmSTEP: int = 2,
-        eqSTEP: int = 10,
-        freq: int = 10,
-        T_ising: float = None,
-        verbose: bool = False,
-    ):
-        # name C0 and C1 to be modified, in C0 -> CS that is a single eigenstate is studied with all of his subclusters
-        # name C1 -> CM where one studies the largest component of all the clusters
+    def check_attribute(self):
         try:
             getattr(self, f"CbaseName")
         except AttributeError:
             self.init_ising_dynamics()
+
+    def initialize_run_parameters(self, T_ising):
         if T_ising:
             self.T = T_ising
-        if self.runlang.startswith("C"):
-            run_id = self.id_string_isingdyn
-            self.run_id = f"_{run_id}" if run_id else ''
-            arglist = [f"{self.N}",
-                       f"{self.T:.3g}",
-                       f"{self.sg.pflip:.3g}",
-                       f"{self.NoClust}",
-                       f"{thrmSTEP:.3g}",
-                       f"{eqSTEP}",
-                       self.sg.datPath,
-                       self.sg.syshapePth,
-                       self.run_id,
-                       self.out_suffix,
-                       self.upd_mode,
-                       f"{freq}"
-                       ]
-            self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
-            # print(self.cprogram)
-            stderrFname = join_non_empty('_', f"err{self.CbaseName}", f"{self.N}", 
-                                    f"{self.id_string_isingdyn}", 
-                                    f"{self.out_suffix}")+LOG
-            stderrFname = os.path.join(LRGSG_LOG, stderrFname)
-            self.stderr = open(stderrFname, 'w')
-            if verbose:
-                print('\rExecuting: ', ' '.join(self.cprogram), end='', 
-                      flush=True)
-            result = subprocess.run(self.cprogram, stderr=self.stderr, 
-                                    stdout=subprocess.PIPE)
-            output = result.stdout
-            self.s = np.frombuffer(output, dtype=np.int8)
+
+    def build_cprogram_command(self, thrmSTEP, eqSTEP, freq):
+        run_id = self.id_string_isingdyn
+        self.run_id = f"_{run_id}" if run_id else ''
+        arglist = [
+            f"{self.N}",
+            f"{self.T:.3g}",
+            f"{self.sg.pflip:.3g}",
+            f"{self.NoClust}",
+            f"{thrmSTEP:.3g}",
+            f"{eqSTEP}",
+            self.sg.datPath,
+            self.sg.syshapePth,
+            self.run_id,
+            self.out_suffix,
+            self.upd_mode,
+            f"{freq}"
+        ]
+        self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
+
+    def setup_stderr_logging(self):
+        stderrFname = join_non_empty('_', f"err{self.CbaseName}", f"{self.N}",
+                                    f"{self.id_string_isingdyn}",
+                                    f"{self.out_suffix}") + LOG
+        stderrFname = os.path.join(LRGSG_LOG, stderrFname)
+        self.stderr = open(stderrFname, 'w')
+
+    def run_cprogram(self, verbose):
+        if verbose:
+            print('\rExecuting: ', ' '.join(self.cprogram), end='', flush=True)
+        result = subprocess.run(self.cprogram, stderr=self.stderr,
+                                stdout=subprocess.PIPE)
+        output = result.stdout
+        self.s = np.frombuffer(output, dtype=np.int8)
+
+    def metropolis_sampling(self, tqdm_on):
+        metropolis_1step = np.vectorize(self.metropolis, excluded="self")
+        if self.save_magnetization:
+            def save_magn_array():
+                self.magn_array_save.append(self.s)
         else:
-            metropolis_1step = np.vectorize(self.metropolis, excluded="self")
-            if self.save_magnetization:
-                def save_magn_array():
-                    self.magn_array_save.append(self.s)
-            else:
-                def save_magn_array():
-                    pass
-            sample = list(
-                range(self.sg.N)
-            )  # rd.sample(list(self.system.H.nodes()), self.system.N)
-            iterator = (
-                tqdm(range(self.nstepsIsing))
-                if tqdm_on
-                else range(self.nstepsIsing)
-            )
-            self.ene = []
-            for _ in iterator:
-                self.magn.append(np.sum(self.s))
-                self.ene.append(self.calc_full_energy())
-                # for i in range(self.system.N):
-                #     self.metropolis(sample[i])
-                metropolis_1step(sample)
-                save_magn_array()
+            def save_magn_array():
+                pass
+
+        sample = list(range(self.sg.N))
+        iterator = tqdm(range(self.nstepsIsing)) if tqdm_on \
+            else range(self.nstepsIsing)
+        self.ene = []
+        for _ in iterator:
+            self.magn.append(np.sum(self.s))
+            self.ene.append(self.calc_full_energy())
+            metropolis_1step(sample)
+            save_magn_array()
+    @time_function_accumulate
+    def run(self, tqdm_on: bool = True, thrmSTEP: int = 2, eqSTEP: int = 10, 
+            freq: int = 10, T_ising: float = None, verbose: bool = False):
+        self.check_attribute()
+        self.initialize_run_parameters(T_ising)
+
+        if self.runlang.startswith("C"):
+            self.build_cprogram_command(thrmSTEP, eqSTEP, freq)
+            self.setup_stderr_logging()
+            self.run_cprogram(verbose)
+        else:
+            self.metropolis_sampling(tqdm_on)
 
     def find_ising_clusters(self, import_cl: bool = False):
         #can be easily reworked
