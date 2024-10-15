@@ -92,8 +92,8 @@ class SignedGraph:
         #
         pthSffx = pth_join(self.syshapePth, '')
         #
-        self.dataOut = dataOut or DIR_DAT
-        self.plotOut = plotOut or DIR_PLT
+        self.dataOut = dataOut or PATHNDATA
+        self.plotOut = plotOut or PATHNPLOT
         self.datPath = pth_join(self.dataOut, self.sgpath, '')
         self.pltPath = pth_join(self.dataOut, self.plotOut, self.sgpath, '')
         self.expOut = expOut or pth_join(self.datPath, DIR_GRAPH, pthSffx)
