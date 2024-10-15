@@ -496,11 +496,18 @@ class SignedGraph:
         spins = self.get_eigV_bin_check(which)
         edges = self.gr[SG_GRAPH_REPR].edges(data=True)
         ui, vi, w = zip(*[(u, v, data['weight']) for u, v, data in edges])
-        ui, vi = np.int(ui), np.array(vi, dtype=int)
+        ui, vi = np.array(ui, dtype=int), np.array(vi, dtype=int)
         w = np.array(w)
         if not hasattr(self, "energy_eigV_RBIM"):
             self.energy_eigV_RBIM = {}
-        self.energy_eigV_RBIM[which] -np.sum(w * spins[ui] * spins[vi])
+        self.energy_eigV_RBIM[which] = -np.sum(w * spins[ui] * spins[vi])
+    #
+    def get_rbim_energy_eigV(self, which: int = 0):
+        if not hasattr(self, "energy_eigV_RBIM"):
+            self.compute_rbim_energy_eigV(which)
+        elif which not in self.energy_eigV_RBIM.keys():
+                self.compute_rbim_energy_eigV(which)
+        return self.energy_eigV_RBIM[which]
     #
     def make_rescaled_signed_laplacian(self, MODE: str = "field"):
         if MODE == "field":
