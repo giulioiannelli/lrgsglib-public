@@ -913,3 +913,91 @@ def plot_log_distribution(data, fig_ax=None, binnum=20,
     # # Show the plot if no custom fig_ax is provided
     # if fig_ax is None:
     #     plt.show()
+def set_color_cycle(
+    arr: Sequence,
+    ax: Optional[Axes] = None,
+    my_cmap: Optional[Colormap] = None
+) -> None:
+    """
+    Sets the color cycle of the given Axes based on the provided colormap and array length.
+
+    Parameters
+    ----------
+    arr : Sequence
+        An array-like object that determines the number of distinct colors needed. The length of `arr` 
+        dictates how many colors will be generated from the colormap.
+        
+    ax : matplotlib.axes.Axes, optional
+        The Matplotlib Axes object to which the color cycle will be applied. This is where 
+        the color properties will be set, affecting subsequent plot elements added to this Axes.
+        If not provided, the current axes (`plt.gca()`) will be used.
+    
+    my_cmap : matplotlib.colors.Colormap, optional
+        A Matplotlib colormap instance used to map normalized values to colors. This colormap 
+        defines the range and variation of colors in the cycle. If not provided, defaults to 
+        the custom colormap `'restr_twilight'`.
+        
+
+    Returns
+    -------
+    None
+        This function does not return any value. It modifies the `ax` object in place by setting 
+        its color property cycle.
+
+    Raises
+    ------
+    ValueError
+        If `arr` is empty, as at least one color is required to set the color cycle.
+    LookupError
+        If the default colormap `'restr_twilight'` is not found and `my_cmap` is not provided.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> from matplotlib import cm
+    >>> # Assume 'restr_twilight' colormap is defined elsewhere
+    >>> # If not, define it here or replace with an existing colormap
+    >>> # Sample data
+    >>> arr = [1, 2, 3, 4, 5]
+    >>> x = np.linspace(0, 10, 100)
+    >>> # Create a figure and axes
+    >>> fig, ax = plt.subplots()
+    >>> # Apply the custom color cycle with default colormap
+    >>> set_color_cycle(arr, ax=ax)
+    >>> # Plot multiple lines; each line will use the next color in the cycle
+    >>> for i, val in enumerate(arr):
+    >>>     y = np.sin(x + i)
+    >>>     ax.plot(x, y, label=f'Line {i+1}')
+    >>> # Add legend and show plot
+    >>> ax.legend()
+    >>> plt.show()
+
+    Notes
+    -----
+    - Ensure that the length of `arr` corresponds to the number of distinct elements you plan to plot 
+      to avoid color repetition.
+    - The colormap (`my_cmap`) can be any Matplotlib colormap. You can create custom colormaps or use 
+      predefined ones like `'viridis'`, `'plasma'`, `'inferno'`, `'magma'`, etc.
+    - If using the default `'restr_twilight'` colormap, ensure it is registered with Matplotlib using 
+      `plt.register_cmap()` before calling this function.
+    """
+    if not arr:
+        raise ValueError("The input array 'arr' must contain at least one element to set the color cycle.")
+    # Set default axes to current axes if not provided
+    if ax is None:
+        ax = plt.gca()
+    # Set default colormap to 'restr_twilight' if not provided
+    if my_cmap is None:
+        try:
+            my_cmap = plt.get_cmap('restr_twilight')
+        except ValueError:
+            raise LookupError("The default colormap 'restr_twilight' is not found. Please provide a valid colormap.")
+    # Generate evenly spaced values between 0 and 1 based on the length of arr
+    normalized_values = np.linspace(0.0, 1.0, len(arr))
+    # Map the normalized values to colors using the provided colormap
+    colors = my_cmap(normalized_values)
+    # Create a cycler with the generated colors
+    color_cycle = cycler(color=colors)
+    # Apply the color cycle to the Axes
+    ax.set_prop_cycle(color_cycle)
