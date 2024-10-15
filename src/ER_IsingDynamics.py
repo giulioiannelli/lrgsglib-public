@@ -36,8 +36,8 @@ if not os.path.exists(pathFname):
     lenList = []
     for _ in range(navg2):
         er = ErdosRenyi(**erDictArgs)
-        # er.flip_sel_edges(er.nwDict[cell]['G'])
-        er.flip_random_fract_edges()
+        er.flip_sel_edges(er.nwDict[cell]['G'])
+        # er.flip_random_fract_edges()
         er.compute_k_eigvV(howmany=number + 1)
         er.load_eigV_on_graph(which=number, binarize=True)
         er.make_clustersYN(f'eigV{number}', +1)
@@ -50,8 +50,8 @@ for _ in range(navg):
     iter_gen = 0
     while True:
         er = ErdosRenyi(**erDictArgs)
-        # er.flip_sel_edges(er.nwDict[cell]['G'])
-        er.flip_random_fract_edges()
+        er.flip_sel_edges(er.nwDict[cell]['G'])
+        # er.flip_random_fract_edges()
         er.compute_k_eigvV(howmany=howmany)
         er.load_eigV_on_graph(which=number, binarize=True)
         er.make_clustersYN(f'eigV{number}', +1)

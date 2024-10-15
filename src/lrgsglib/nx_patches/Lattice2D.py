@@ -56,7 +56,7 @@ class Lattice2D(SignedGraph):
                 warnings.warn(L2D_WARNMSG_GEO, Lattice2DWarning)
                 self.geo = L2D_GEO
             else:
-                self.geo = L2D_SHRT_GEO_DICT[geo]
+                self.geo = L2D_SHRT_GEO_DICT[self.geo]
         if not hasattr(self, 'side2'):
             if self.geo == 'hexagonal':
                 self.side2 = self.side1
@@ -74,21 +74,24 @@ class Lattice2D(SignedGraph):
     #
     def __init_lattice__(self) -> None:
         #
-        if self.geo == L2D_SHRT_GEO_DICT['tri']:
-            nxfunc = triangular_lattice_graph_FastPatch
+        if self.geo.startswith(L2D_SHRT_GEO_DICT['tri']):
+            if self.prew == 0.:
+                nxfunc = triangular_lattice_graph_FastPatch
+            else:
+                nxfunc = compose(triangular_lattice_graph_FastPatch, 
+                                 rewire_edges_optimized, 
+                                 g_kwargs={'prew': self.prew})
             self.z = 6
             self.syshape = (self.side1, self.side2)
         elif self.geo.startswith(L2D_SHRT_GEO_DICT['sqr']):
             if self.prew == 0.:
                 nxfunc = squared_lattice_graph_FastPatch
-                self.z = 4
-                self.syshape = (self.side1, self.side2)
             else:
                 nxfunc = compose(squared_lattice_graph_FastPatch, 
                                  rewire_edges_optimized, 
                                  g_kwargs={'prew': self.prew})
-                self.z = 4
-                self.syshape = (self.side1, self.side2)
+            self.syshape = (self.side1, self.side2)
+            self.z = 4
         elif self.geo == L2D_SHRT_GEO_DICT['hex']:
             self.z = 3
             nxfunc = hexagonal_lattice_graph_FastPatch

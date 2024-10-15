@@ -49,8 +49,8 @@ class ErdosRenyi(SignedGraph):
             smallest_cycle = get_smallest_cycle_graph_node(self.rd[on_g], node)
             edges = []
             if smallest_cycle:
-                # Convert the cycle to a list of edges and add to patternList
-                edges = [(smallest_cycle[i], smallest_cycle[i + 1]) for i in range(len(smallest_cycle) - 1)]
+                edges = [(smallest_cycle[i], smallest_cycle[i + 1])
+                         for i in range(len(smallest_cycle) - 1)]
             return edges
         #
         def get_rand_pattern(self, mode: str, on_g: str = ER_ONREP):
