@@ -6,9 +6,10 @@ import matplotlib.colors as mplc
 import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 #
-from matplotlib import gridspec, rc_context
+from matplotlib import gridspec, rc_context, cycler
 from matplotlib.axes import Axes
 from matplotlib.cm import hsv, twilight, ScalarMappable
+from matplotlib.colors import LightSource
 from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
@@ -20,6 +21,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 from mpl_toolkits.mplot3d import Axes3D
+
 
 twilight_lim_low = 0.2
 twilight_lim_high = 0.8
