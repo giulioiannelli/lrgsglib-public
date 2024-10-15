@@ -265,7 +265,7 @@ def extract_value_from_filename(file_name: str, value_pattern: str) -> float:
     else:
         raise ValueError("No match found in the file name.")
 
-def extract_values_from_filenames(file_names: List[str], value_pattern: str, sort: bool = True) -> np.ndarray:
+def extract_values_from_filenames(file_names: List[str], value_pattern: str, sort: bool = True, unique: bool = False) -> np.ndarray:
     """
     Extracts numeric values from a list of file names based on a specified regular expression pattern.
     
@@ -294,16 +294,21 @@ def extract_values_from_filenames(file_names: List[str], value_pattern: str, sor
     
     This function extracts the p-values from the provided file names and returns them sorted in ascending order.
     """
-    values = []
-    for file_name in file_names:
-        match = re.search(value_pattern, file_name)
-        if match:
-            value = float(match.group(1).rstrip('.'))
-            values.append(value)
-    # Sort the values if needed
+    # values = [re.search(value_pattern, filename).group(1) 
+    #           for filename in file_names if re.search(value_pattern, filename)]
+    values = [
+        float(match.group(1).rstrip('.'))
+        for file_name in file_names
+        if (match := re.search(value_pattern, file_name))
+    ]
     if sort:
         values.sort()
+    if unique:
+        values = uniques(values)
     return np.array(values)
+
+# def extract_values_from_filenames(filenames, pattern):
+#     return [re.search(pattern, filename).group(1) for filename in filenames if re.search(pattern, filename)]
 
 def flatten(xs):
     """
@@ -1605,3 +1610,86 @@ def project_3d_to_2d(x, y, z, theta=0., phi=0.):
     x2, y2 = position_rotated[0], position_rotated[1]
 
     return x2, y2
+
+def interpolate_grid_data(
+    x: np.ndarray, 
+    y: np.ndarray, 
+    z: np.ndarray, 
+    num_points: int = 1000
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Performs interpolation of z-data over a uniformly spaced grid defined by x and y coordinates.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Meshgrid of x-coordinate values.
+    y : np.ndarray
+        Meshgrid of y-coordinate values.
+    z : np.ndarray
+        Matrix of computed z-values corresponding to each (x, y) pair.
+    num_points : int, optional
+        Number of points along each axis for the new grid. Defaults to 1000.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray]
+        grid_x : np.ndarray
+            Meshgrid of interpolated x-coordinate values.
+        grid_y : np.ndarray
+            Meshgrid of interpolated y-coordinate values.
+        z_new : np.ndarray
+            Interpolated z-values on the new grid.
+    """
+    points = np.column_stack((x.ravel(), y.ravel()))
+    grid_x, grid_y = np.meshgrid(
+        np.linspace(x.min(), x.max(), num_points),
+        np.linspace(y.min(), y.max(), num_points)
+    )
+    z_new = griddata(
+        points, z.ravel(), (grid_x, grid_y), method='cubic', fill_value=np.nan
+    )
+    return grid_x, grid_y, z_new
+from typing import List, Any
+
+def uniques(lst: List[Any]) -> List[Any]:
+    """
+    Returns a list of unique elements from the input list. This function leverages Python's 
+    built-in `set` data structure to eliminate duplicate entries efficiently. Note that the 
+    original order of elements is not preserved.
+
+    Parameters
+    ----------
+    lst : List[Any]
+        The input list from which to extract unique elements. The list can contain elements of 
+        any data type that is hashable.
+
+    Returns
+    -------
+    List[Any]
+        A new list containing only the unique elements from the input list, with duplicates removed.
+
+    Examples
+    --------
+    ```python
+    >>> uniques([1, 2, 2, 3, 4, 4, 5])
+    [1, 2, 3, 4, 5]
+
+    >>> uniques(['apple', 'banana', 'apple', 'cherry'])
+    ['apple', 'banana', 'cherry']
+    ```
+
+    Notes
+    -----
+    - **Order Preservation**: This function does **not** preserve the original order of elements. 
+      If maintaining order is essential, consider using alternative methods such as `dict.fromkeys` 
+      or `collections.OrderedDict`.
+    - **Hashable Elements**: All elements in the input list must be hashable. Unhashable elements 
+      (e.g., lists, dictionaries) will raise a `TypeError`.
+
+    See Also
+    --------
+    dict.fromkeys : Create a dictionary with keys from the input list, preserving order (Python 3.7+).
+    collections.OrderedDict : Ordered dictionary for maintaining element order (pre-Python 3.7).
+    """
+    return list(set(lst))
