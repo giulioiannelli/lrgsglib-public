@@ -569,8 +569,8 @@ def squared_lattice_graph_FastPatch(m, n, periodic=False, create_using=None, wit
         # calc position in embedded space
         ii = (i for i in rows for j in cols)
         jj = (j for i in rows for j in cols)
-        xx = ii
-        yy = jj
+        xx = (i for i in rows for j in cols)
+        yy = (j for i in rows for j in cols)
         if periodic:
             xx = (i for i in rows for j in cols)  # x position matches column index
             yy = (j for i in rows for j in cols)
