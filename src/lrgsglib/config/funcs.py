@@ -364,14 +364,14 @@ def move_to_rootf(print_tf: bool = True):
     To move to the root directory of the current working directory and print the path:
     move_to_rootf(print_tf=True)
     """
-    pcwd = getcwd()
+    pcwd = Path(getcwd())
     try:
-        while getcwd()[-len(PATH_ROOTF)+1:] != PATH_ROOTF[:-1]:
+        while Path(getcwd()).name != PATHNLLIB:
             chdir('../')
             if getcwd() == '/':
                 break
         if getcwd() == '/':
-            raise FileNotFoundError(f"Root directory '{PATH_ROOTF}' not found.")
+            raise FileNotFoundError(f"Root directory '{PATHNLLIB}' not found.")
         if print_tf:
             print("Current working directory:", getcwd())
     except FileNotFoundError as e:
