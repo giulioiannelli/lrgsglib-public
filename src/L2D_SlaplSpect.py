@@ -16,12 +16,12 @@ howmany = args.howmany
 #
 l = Lattice2D(side1=side, pflip=p, geo=geo, sgpath=args.workDir)
 workDir = l.spectpath
-fnameBase = '_'.join([f"dist{howmany}", f"{p:.3g}", eigmode])
-fname = workDir+fnameBase+f"_{navg}.pkl"
 #
 #
 match mode:
     case "eigvec_dist":
+        fnameBase = '_'.join([f"dist{howmany}", f"{p:.3g}", eigmode])
+        fname = workDir+fnameBase+f"_{navg}.pkl"
         initial_eig = np.abs(eigV_for_lattice2D_ptch(side=side, pflip=p, geo=geo, 
                                                      mode=eigmode, howmany=howmany))
         bins, bin_centers = create_symmetric_log_bins(np.min(initial_eig), 
@@ -66,6 +66,8 @@ match mode:
     case "eigval_dist":
         all_eigv = []
         fnameOld = ""
+        fnameBase = '_'.join([f"dist_eigval", f"{p:.3g}", cell])
+        fname = workDir+fnameBase+f"_{navg}.pkl"
         if not os.path.exists(fname):
             nAvgDone = 0
             fnameExists = glob.glob(f"{workDir}{fnameBase}*")
