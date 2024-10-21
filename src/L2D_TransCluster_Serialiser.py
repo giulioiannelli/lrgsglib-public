@@ -25,13 +25,11 @@ elif fullMode.endswith('ordParam'):
             if geo != 'hexagonal':
                 return np.linspace(0, 0.3, 100)
             else:
-                return np.linspace(0, 0.35, 100)
+                return np.linspace(0, 1, 100)
         return np.linspace(0, 1, 100)
-    # geometry_cell_dict = {'squared': L2D_RAND_CELL_LIST,
-    #                     'triangular': L2D_RAND_CELL_LIST,
-    #                     'hexagonal': L2D_RAND_CELL_LIST}
-    geometry_cell_dict = {'squared': ['rand'],
-                          'triangular': ['rand']}
+    geometry_cell_dict = {'hexagonal': L2D_RAND_CELL_LIST}
+    # geometry_cell_dict = {'squared': ['rand'],
+    #                       'triangular': ['rand']}
     plist = {geo: {cell: linspacepfunc(geo, cell) for cell in cells}  
             for geo,cells in geometry_cell_dict.items()}
 #
