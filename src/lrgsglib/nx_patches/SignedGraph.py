@@ -219,6 +219,14 @@ class SignedGraph:
     def get_edge_data(self, u: Any, v: Any, thedata: str = 'weight',
                       on_g: str = SG_GRAPH_REPR):
         return self.gr[on_g].get_edge_data(u, v)[thedata]
+    #
+    def get_edge_mapping_or_reverse(self, edge, target_g, on_g: str = SG_GRAPH_REPR):
+        try:
+            return self.edgeMap[target_g][on_g][edge]
+        except KeyError:
+            rev_edge = edge[::-1]
+            return self.edgeMap[target_g][on_g].get(rev_edge, None)
+    #
     def get_edge_color(self, pec: ColorType = "blue", nec: ColorType = "red",
                     thedata: str = 'weight', on_g: str = SG_GRAPH_REPR,
                     continuous: bool = False, cmap: str = 'coolwarm'):
@@ -393,12 +401,12 @@ class SignedGraph:
                 self.upd_GraphRepr(i)
                 self.upd_GraphRelabel(on_g, i)
                 self.nodes_in[i] = list(self.gr[i].nodes())
-                self.eset[i] = {self.edgeMap[i][on_g][tuple(sorted(e))] 
-                                for e in self.eset[on_g]}
-                self.fleset[i] = {self.edgeMap[i][on_g][tuple(sorted(e))] 
-                                  for e in self.fleset[on_g]}
-                self.lfeset[i] = {self.edgeMap[i][on_g][tuple(sorted(e))]
-                                  for e in self.lfeset[on_g]}
+                self.eset[i] = {x for e in self.eset[on_g] 
+                                if (x := self.get_edge_mapping_or_reverse(e, i, on_g))}
+                self.fleset[i] = {x for e in self.fleset[on_g]
+                                  if (x := self.get_edge_mapping_or_reverse(e, i, on_g))}
+                self.lfeset[i] = {x for e in self.lfeset[on_g]
+                                  if (x := self.get_edge_mapping_or_reverse(e, i, on_g))}
                 self.upd_Nen(i)
     #
     # graph operations
