@@ -27,8 +27,7 @@ class Lattice2D(SignedGraph):
         #
         self.__init_stdFname__(stdFnameSFFX)
         #
-        _ = L2D_PATH_DICT[self.geo]
-        self.sgpath = pth_join(sgpath, _) if sgpath else _
+        self.sgpath = pth_join(sgpath, L2D_PATH_DICT[self.geo]) if sgpath else L2D_PATH_DICT[self.geo]
         self.with_positions = with_positions
         #
         self.__init_lattice__()
