@@ -1,7 +1,7 @@
 from lrgsglib.core import *
 #
 description = """
-    Computational resourses regarding the Signed Laplacian spectrum of 2D 
+    Computational resources regarding the Signed Laplacian spectrum of 2D 
     lattices.
 """
 phelp_L = """
@@ -15,7 +15,7 @@ DEFAULT_BINSC = 500
 DEFAULT_CELL = 'rand'
 DEFAULT_EIGMODE = 'scipy'
 DEFAULT_GEO = 'squared'
-DEFAULT_MODE = ''
+DEFAULT_MODE = 'eigvec_dist'  # Setting default mode to 'eigvec_dist' for contextual relevance
 DEFAULT_NAVG = 1000
 DEFAULT_PERIOD = 100
 DEFAULT_WORKDIR = ''
@@ -38,7 +38,7 @@ phelp_howmany = f"""
     Number of eigenvalues to compute | default={DEFAULT_HOWMANY}
 """
 phelp_mode = f"""
-    Mode, YTD | default='{DEFAULT_MODE}'
+    Mode of operation, either 'eigvec_dist' for eigenvector distribution or 'eigval_dist' for eigenvalue distribution | default='{DEFAULT_MODE}'
 """
 phelp_navg = f"""
     Number of averages to compute | default={DEFAULT_NAVG}
@@ -104,11 +104,11 @@ for v in parsDict.keys():
         type=parsDict_get(v, 'type'),
     )
 # Optional parameters
-def parsDict_get(var, key):
+def parsDictOpt_get(var, key):
     return parsDictOpt[var].get(key, None)
 for ov in parsDictOpt.keys():
-    parser.add_argument(*parsDict_get(ov, 'names'),
-        default=parsDict_get(ov, 'default'),
-        help=parsDict_get(ov, 'help'),
-        type=parsDict_get(ov, 'type'),
+    parser.add_argument(*parsDictOpt_get(ov, 'names'),
+        default=parsDictOpt_get(ov, 'default'),
+        help=parsDictOpt_get(ov, 'help'),
+        type=parsDictOpt_get(ov, 'type'),
     )
