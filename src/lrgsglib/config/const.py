@@ -1,5 +1,5 @@
 from ..shared import *
-#
+# types
 ColorType = Union[
     Tuple[int, int, int],
     Tuple[float, float, float],
@@ -17,43 +17,61 @@ PKL = ".pkl"
 TXT = ".txt"
 # paths
 load_dotenv()
-LRGSG_ROOT = os.getenv('LRGSG_ROOT')
-LRGSG_BUILD = os.getenv('LRGSG_BUILD')
-LRGSG_DATA = os.getenv('LRGSG_DATA')
-LRGSG_IPYNB = os.getenv('LRGSG_IPYNB')
-LRGSG_SRC = os.getenv('LRGSG_SRC')
-LRGSG_LIB = os.getenv('LRGSG_LIB')
-LRGSG_LIB_CCORE = os.getenv('LRGSG_LIB_CCORE')
-LRGSG_LIB_CBIN = os.getenv('LRGSG_LIB_CBIN')
-LRGSG_LIB_CONFIG = os.getenv('LRGSG_LIB_CONFIG')
-LRGSG_LIB_GT_PATCHES = os.getenv('LRGSG_LIB_GT_PATCHES')
-LRGSG_LIB_NX_PATCHES = os.getenv('LRGSG_LIB_NX_PATCHES')
-LRGSG_LIB_STOCPROC = os.getenv('LRGSG_LIB_STOCPROC')
-LRGSG_TEST = os.getenv('LRGSG_TEST')
-LRGSG_TOOLS = os.getenv('LRGSG_TOOLS')
-LRGSG_LOG = os.getenv('LRGSG_LOG')
 #
-PATHNDATA = Path('data')
-PATHNPLOT = Path('plot')
+LRGSG_ROOT = Path(os.getenv('LRGSG_ROOT'))
+LRGSG_BUILD = Path(os.getenv('LRGSG_BUILD'))
+LRGSG_DATA = Path(os.getenv('LRGSG_DATA'))
+LRGSG_IPYNB = Path(os.getenv('LRGSG_IPYNB'))
+LRGSG_SRC = Path(os.getenv('LRGSG_SRC'))
+LRGSG_LIB = Path(os.getenv('LRGSG_LIB'))
+LRGSG_LIB_CCORE = Path(os.getenv('LRGSG_LIB_CCORE'))
+LRGSG_LIB_CBIN = Path(os.getenv('LRGSG_LIB_CBIN'))
+LRGSG_LIB_CONFIG = Path(os.getenv('LRGSG_LIB_CONFIG'))
+LRGSG_LIB_GT_PATCHES = Path(os.getenv('LRGSG_LIB_GT_PATCHES'))
+LRGSG_LIB_NX_PATCHES = Path(os.getenv('LRGSG_LIB_NX_PATCHES'))
+LRGSG_LIB_STOCPROC = Path(os.getenv('LRGSG_LIB_STOCPROC'))
+LRGSG_TEST = Path(os.getenv('LRGSG_TEST'))
+LRGSG_TOOLS = Path(os.getenv('LRGSG_TOOLS'))
+LRGSG_LOG = Path(os.getenv('LRGSG_LOG'))
 #
-PATH_ROOTF = "lrgsglib/"
+# env_vars = [
+#     'LRGSG_ROOT', 'LRGSG_BUILD', 'LRGSG_DATA', 'LRGSG_IPYNB', 'LRGSG_SRC', 'LRGSG_LIB',
+#     'LRGSG_LIB_CCORE', 'LRGSG_LIB_CBIN', 'LRGSG_LIB_CONFIG', 'LRGSG_LIB_GT_PATCHES',
+#     'LRGSG_LIB_NX_PATCHES', 'LRGSG_LIB_STOCPROC', 'LRGSG_TEST', 'LRGSG_TOOLS', 'LRGSG_LOG'
+# ]
+
+# globals().update({var: Path(os.getenv(var)) for var in env_vars})
+# #
+PATHDATA = Path(LRGSG_DATA)#
 #
-DIR_GRAPH = "graphs/"
-DIR_ISING = "ising/"
-DIR_VOTER = "voter/"
-DIR_LRGSG = "lrgsg/"
-DIR_PHTRA = "phtra/"
-DIR_SPECT = "spect/"
+PATHNLLIB = 'lrgsglib'
 #
+PATHNDATA = PATHDATA.name
+#
+PATHNCLDT = 'cluster_data'
+PATHNGRPH = 'graph'
+PATHNISNG = 'ising'
+PATHNLRGS = 'lrgsg'
+PATHNPAPR = 'paper'
+PATHNPHTR = 'phtra'
+PATHNPLOT = 'plot'
+PATHNSPEC = 'spect'
+PATHNVM = 'voter'
+#
+PATHPLOT =  PATHDATA / Path(PATHNPLOT)
+PATHPAPER = PATHPLOT / Path(PATHNPAPR)
+PATHCLDAT = Path(PATHNDATA, PATHNCLDT)
+#
+# default values
 LB_PFLIP = 0.
 UB_PFLIP = 1.
 #
 BSP_VAL = [-1, +1]
-BSP_STORE_MODE = ""
-BSP_STORE_MODES = [BSP_STORE_MODE, "persistent", "sequential"]
+BSP_STORE_MODE = ''
+BSP_STORE_MODES = [BSP_STORE_MODE, 'persistent', 'sequential']
 BSP_STORE_FREQ = 0
-BSP_RUN_MODE_C = "C"
-BSP_RUN_MODE_PYTHON = "python"
+BSP_RUN_MODE_C = 'C'
+BSP_RUN_MODE_PYTHON = 'Python'
 BSP_RUN_MODE = BSP_RUN_MODE_PYTHON
 BSP_RUN_MODES_C_LIST = [BSP_RUN_MODE_C, "c"]
 BSP_RUN_MODES_C_DICT = {bsp: BSP_RUN_MODE_C for bsp in BSP_RUN_MODES_C_LIST}
