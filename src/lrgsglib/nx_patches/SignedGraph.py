@@ -96,13 +96,13 @@ class SignedGraph:
         self.plotOut = plotOut or PATHNPLOT
         self.datPath = pth_join(self.dataOut, self.sgpath, '')
         self.pltPath = pth_join(self.dataOut, self.plotOut, self.sgpath, '')
-        self.expOut = expOut or pth_join(self.datPath, DIR_GRAPH, pthSffx)
+        self.expOut = expOut or pth_join(self.datPath, PATHNGRPH, pthSffx)
         #
-        self.isingpath = pth_join(self.datPath, DIR_ISING, pthSffx)
-        self.voterpath = pth_join(self.datPath, DIR_VOTER, pthSffx)
-        self.lrgsgpath = pth_join(self.datPath, DIR_LRGSG, pthSffx)
-        self.phtrapath = pth_join(self.datPath, DIR_PHTRA, pthSffx)
-        self.spectpath = pth_join(self.datPath, DIR_SPECT, pthSffx)
+        self.isingpath = pth_join(self.datPath, PATHNISNG, pthSffx)
+        self.voterpath = pth_join(self.datPath, PATHNVM, pthSffx)
+        self.lrgsgpath = pth_join(self.datPath, PATHNLRGS, pthSffx)
+        self.phtrapath = pth_join(self.datPath, PATHNPHTR, pthSffx)
+        self.spectpath = pth_join(self.datPath, PATHNSPEC, pthSffx)
         #
         self.dirMakeList = [self.expOut, 
                             self.isingpath, 
