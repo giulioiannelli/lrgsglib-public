@@ -1365,18 +1365,57 @@ def remove_empty_dirs(path: str):
                 print(e)
 
 
-def create_symmetric_log_bins(min_val, max_val, num_bins, incMagn=2):
-    """Creates symmetric logarithmic bins and their centers."""
-    bins_positive = np.logspace(np.log10(min_val)-incMagn, np.log10(max_val)+incMagn, num_bins//2 + 1)
-    bins_negative = -np.flip(bins_positive[:-1])
-    bins = np.concatenate((bins_negative, [0], bins_positive))
+def create_symmetric_log_bins(min_value: float, max_value: float, num_bins: int, magnitude_increment: int = 2) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Creates symmetric logarithmic bins between specified minimum and maximum values, including bin centers.
+
+    Parameters
+    ----------
+    min_value : float
+        The minimum value for the logarithmic bins.
+    max_value : float
+        The maximum value for the logarithmic bins.
+    num_bins : int
+        The total number of bins (should be even to allow symmetry).
+    magnitude_increment : int, optional
+        Increment to control the logarithmic scale extension. Default is 2.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        bins : np.ndarray
+            The edges of the bins.
+        bin_centers : np.ndarray
+            The center values of each bin.
+    """
+    positive_bins = np.logspace(np.log10(min_value) - magnitude_increment, np.log10(max_value) + magnitude_increment, num_bins // 2 + 1)
+    negative_bins = -np.flip(positive_bins[:-1])
+    bins = np.concatenate((negative_bins, [0], positive_bins))
     bin_centers = (bins[:-1] + bins[1:]) / 2
     return bins, bin_centers
-def bin_eigenvalues(eig_values, bins, bin_centers):
-    """Bins eigenvalues and counts occurrences in each bin, using bin centers as keys."""
-    indices = np.digitize(eig_values, bins, right=True) - 1
-    indices = np.clip(indices, 0, len(bin_centers) - 1)  # Ensure indices are within the valid range
-    bin_keys = [bin_centers[index] for index in indices]
+
+
+def bin_eigenvalues(eigenvalues: List[float], bins: np.ndarray, bin_centers: np.ndarray) -> Counter:
+    """
+    Bins eigenvalues into specified bins and returns the count for each bin using bin centers as keys.
+
+    Parameters
+    ----------
+    eigenvalues : List[float]
+        The eigenvalues to be binned.
+    bins : np.ndarray
+        The edges of the bins.
+    bin_centers : np.ndarray
+        The center values of each bin.
+
+    Returns
+    -------
+    Counter
+        A dictionary-like collection where keys are bin centers and values are the count of eigenvalues in each bin.
+    """
+    bin_indices = np.digitize(eigenvalues, bins, right=True) - 1
+    bin_indices = np.clip(bin_indices, 0, len(bin_centers) - 1)  # Ensure indices are within the valid range
+    bin_keys = [bin_centers[index] for index in bin_indices]
     return Counter(bin_keys)
 
 
