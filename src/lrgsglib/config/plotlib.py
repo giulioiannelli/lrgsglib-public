@@ -1064,3 +1064,67 @@ def set_color_cycle(
     color_cycle = cycler(color=colors)
     # Apply the color cycle to the Axes
     ax.set_prop_cycle(color_cycle)
+
+def plot_honeycomb_grid(data: NDArray, fig: Any, ax: Any, triangle_size: float = 1.0) -> None:
+    """
+    Plot a triangular grid representing the honeycomb structure based on the provided 2D array data.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        A 2D numpy array representing values at each point in the honeycomb structure.
+    fig : matplotlib.figure.Figure
+        A matplotlib figure object to plot on.
+    ax : matplotlib.axes._axes.Axes
+        A matplotlib axes object to plot on.
+    triangle_size : float, optional
+        The side length of the equilateral triangles in the grid. Default is 1.0.
+    
+    Returns
+    -------
+    None
+    """
+    import matplotlib.patches as patches
+    # Determine number of rows and columns from data
+    n_rows, n_cols = data.shape
+
+    # Height of an equilateral triangle
+    triangle_height = (np.sqrt(3) / 2) * triangle_size
+
+    # Loop over each row and column to create triangular patches
+    for row in range(n_rows):
+        for col in range(n_cols):
+            # Determine the x and y positions for the center of each triangle
+            x_base = col * triangle_size / 2
+            y_base = row * triangle_height
+
+            # Define the vertices of the triangles (upward and downward)
+            if (row + col) % 2 == 0:
+                # Upward-pointing triangle
+                vertices = [
+                    (x_base, y_base + (triangle_height / 2)),
+                    (x_base - (triangle_size / 2), y_base - (triangle_height / 2)),
+                    (x_base + (triangle_size / 2), y_base - (triangle_height / 2)),
+                ]
+            else:
+                # Downward-pointing triangle
+                vertices = [
+                    (x_base, y_base - (triangle_height / 2)),
+                    (x_base - (triangle_size / 2), y_base + (triangle_height / 2)),
+                    (x_base + (triangle_size / 2), y_base + (triangle_height / 2)),
+                ]
+
+            # Get color based on data
+            color = credcblu(data[row, col])
+
+            # Create and add the triangle patch to the axis
+            triangle = patches.Polygon(vertices, facecolor=color)
+            ax.add_patch(triangle)
+
+    # Set the limits and aspect ratio to ensure proper display
+    ax.set_xlim(-triangle_size / 2, (n_cols / 2 + 0.5) * triangle_size)
+    ax.set_ylim(-triangle_height / 2, (n_rows + 0.5) * triangle_height)
+    ax.set_aspect('equal')
+
+    # Hide the axes for better visualization
+    ax.axis('off')
