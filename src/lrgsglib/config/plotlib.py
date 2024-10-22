@@ -21,6 +21,69 @@ def set_new_lower_ybound(ax, new_lower_bound):
         current_ylim = ax.get_ylim()  # Get current y-axis limits
         ax.set_ylim(new_lower_bound, current_ylim[1])  # Update the lower limit
 
+def get_opposite_color(color: ColorType, output_format: str = 'hex'):
+    """
+    Calculate the opposite color for a given color in various formats.
+
+    Parameters:
+    -----------
+    color : ColorType
+        The input color which can be in any of the following formats:
+        - Hexadecimal string (e.g., '#6496c8')
+        - Named color (e.g., 'red')
+        - RGB tuple with values in the range [0, 1] (e.g., (0.1, 0.5, 0.8))
+        - RGB tuple with values in the range [0, 255] (e.g., (100, 150, 200))
+        - RGBA tuple with values in the range [0, 1] or [0, 255] (e.g., (0.1, 0.5, 0.8, 1.0) or (100, 150, 200, 255))
+    output_format : str, optional
+        The desired output format of the opposite color. Options are:
+        - 'hex': Returns the color as a hexadecimal string (default)
+        - 'rgb': Returns the color as an RGB tuple with values in the range [0, 1]
+
+    Returns:
+    --------
+    str or tuple
+        The opposite color represented in the specified format.
+
+    Example:
+    --------
+    >>> opposite_color((0.1, 0.5, 0.8))
+    '#e66a33'
+    >>> opposite_color('#6496c8', output_format='rgb')
+    (0.6078431372549019, 0.4117647058823529, 0.21568627450980393)
+    >>> opposite_color('red')
+    '#00ffff'
+    """
+    # Convert the input color to an RGB tuple (values between 0 and 1)
+    try:
+        if isinstance(color, tuple):
+            if len(color) == 3:
+                if max(color) > 1:  # Assuming the values are in [0, 255]
+                    rgb = tuple(c / 255 for c in color)
+                else:
+                    rgb = color
+            elif len(color) == 4:  # Ignore alpha channel for the opposite color
+                if max(color) > 1:  # Assuming the values are in [0, 255]
+                    rgb = tuple(c / 255 for c in color[:3])
+                else:
+                    rgb = color[:3]
+            else:
+                raise ValueError("Unsupported tuple length for color. Must be 3 (RGB) or 4 (RGBA).")
+        else:
+            rgb = mcolors.to_rgb(color)
+    except ValueError:
+        raise ValueError("Unsupported color format. Please provide a valid color.")
+
+    # Convert RGB to the opposite color
+    rgb_array = np.array(rgb)
+    opposite_rgb = 1 - rgb_array  # Find the opposite for each channel
+
+    # Return the opposite color in the desired output format
+    if output_format == 'hex':
+        return mcolors.to_hex(opposite_rgb)
+    elif output_format == 'rgb':
+        return tuple(opposite_rgb)
+    else:
+        raise ValueError("Unsupported output format. Please use 'hex' or 'rgb'.")
 
 def set_alpha_torgb(rgbacol, alpha=0.5):
     """
