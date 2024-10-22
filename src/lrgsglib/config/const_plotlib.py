@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec, rc_context, cycler
 from matplotlib.axes import Axes
 from matplotlib.cm import hsv, twilight, ScalarMappable
+import matplotlib.colors as mcolors
 from matplotlib.colors import LightSource
 from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm
 from matplotlib.colors import LinearSegmentedColormap, Normalize
