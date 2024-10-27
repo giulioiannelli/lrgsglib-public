@@ -14,6 +14,7 @@ DEFAULT_NAVG = 500
 DEFAULT_INSFFX = ''
 DEFAULT_OUTSFFX = ''
 DEFAULT_NOCLUST = 1
+DEFAULT_THRMSTEPS = 20
 #
 DEFAULT_PRINT = False
 DEFAULT_EXEC = False
@@ -22,6 +23,9 @@ DEFAULT_MMB = 2**14
 # Helpers for argparse descriptions
 phelp_print = f"""
     Option to print the output of the Serialiser. 
+"""
+phelp_thrmsteps = f"""
+    Number of thermalisation steps to compute
 """
 phelp_exc = f"""
     Option to exec the output of the Serialiser.
@@ -98,7 +102,11 @@ parDO = {
     'MMB': {'names': ['-MMB', '--slanzarv_maxMB'],
             'help': phelp_MMB,
             'type': int,
-            'default': DEFAULT_MMB}
+            'default': DEFAULT_MMB},
+    'thermsteps': {'names': ['-ts', '--thermsteps'],
+                    'help': phelp_thrmsteps,
+                    'type': int,
+                    'default': DEFAULT_THRMSTEPS}
 }
 parDA = {'exec': {'names': ['-e', '--exec'],
                         'help': phelp_exc,

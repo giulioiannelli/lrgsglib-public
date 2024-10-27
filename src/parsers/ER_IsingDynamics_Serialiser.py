@@ -26,46 +26,47 @@ DEFAULT_EXEC = False
 #
 DEFAULT_mMB = 2**10
 DEFAULT_MMB = 2**14
+DEFAULT_THRMSTEPS = 20
 #
 # Helpers for argparse descriptions
 phelp_K = f"""
-    Average degree of the Erdos-Renyi graph. | default={DEFAULT_K}
+    Average degree of the Erdos-Renyi graph.
+"""
+phelp_thrmsteps = f"""
+    Number of thermalisation steps to compute
 """
 phelp_print = f"""
-    Option to print the output of the Serialiser. | default={DEFAULT_PRINT}
+    Option to print the output of the Serialiser.
 """
 phelp_exc = f"""
-    Option to exec the output of the Serialiser. | default={DEFAULT_EXEC}
+    Option to exec the output of the Serialiser.
 """
 phelp_mMB = f"""
-    Minimum MB quantity to be allocated for the single process | 
-    default={DEFAULT_mMB}
+    Minimum MB quantity to be allocated for the single process
 """
 phelp_MMB = f"""
-    Maximum MB quantity to be allocated for the single process | 
-    default={DEFAULT_MMB}
+    Maximum MB quantity to be allocated for the single process
 """
 phelp_cell = f"""
-    Topological defect class: 'rand', 'randXERR', 'randZERR'. | 
-    default='{DEFAULT_CELL}'
+    Topological defect class: 'rand', 'randXERR', 'randZERR'.
 """
 phelp_navg = f"""
-    Number of averages to compute | default={DEFAULT_NAVG}
+    Number of averages to compute
 """
 phelp_initCond = f"""
-    Initial condition for the Ising model | default='{DEFAULT_INIT_COND}'
+    Initial condition for the Ising model
 """
 phelp_runlang = f"""
-    Language for running the Ising model | default='{DEFAULT_RUNLANG}'
+    Language for running the Ising model
 """
 phelp_inSuffix = f"""
-    Suffix for the input files | default='{DEFAULT_INSFFX}'
+    Suffix for the input files
 """
 phelp_outSuffix = f"""
-    Suffix for the output files | default='{DEFAULT_OUTSFFX}'
+    Suffix for the output files
 """
 phelp_NoClust = f"""
-    Number of clusters to compute | default={DEFAULT_NOCLUST} 
+    Number of clusters to compute
 """
 #
 parDO = {
@@ -108,7 +109,11 @@ parDO = {
     'MMB': {'names': ['-MMB', '--slanzarv_maxMB'],
             'help': phelp_MMB,
             'type': int,
-            'default': DEFAULT_MMB}
+            'default': DEFAULT_MMB},
+    'thermsteps': {'names': ['-ts', '--thermsteps'],
+                    'help': phelp_thrmsteps,
+                    'type': int,
+                    'default': DEFAULT_THRMSTEPS}
 }
 parDA = {'exec': {'names': ['-e', '--exec'],
                         'help': phelp_exc,

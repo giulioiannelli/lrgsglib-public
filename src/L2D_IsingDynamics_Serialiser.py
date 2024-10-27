@@ -11,6 +11,7 @@ out_suffix = args.out_suffix
 in_suffix = args.in_suffix
 NoClust = args.NoClust
 runlang = args.runlang
+thrmsteps = args.thermsteps
 if ic.startswith('ground_state'):
     parts = ic.split('_')
     number = int(parts[-1])
@@ -23,10 +24,10 @@ progNameShrt = L2D_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-List = [16, 32, 64, 96]
-plist = np.linspace(0.09, 0.4, num=10)
-Tlist = np.concatenate([np.linspace(0.1, 1.4, 14),
-    np.linspace(1.4, 2.5, 11),
+List = [32, 96]
+plist = np.linspace(0.01, 0.5, num=15)
+Tlist = np.concatenate([np.linspace(0.1, 1.4, 20),
+    np.linspace(1.4, 2.5, 10),
     np.linspace(2.5, 5, 3)])
 
 if args.slanzarv_minMB == args.slanzarv_maxMB:
@@ -44,8 +45,8 @@ else:
 def slanzarv_str(mode, L, p, geo, c, T):
     slanzarvopt = "--nomail --jobname "
     slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
-    argstr = '_'.join(progNameShrt, mode, f"{L}", f"{p:.3g}", f"{T:.3g}", 
-                      geo[:3], c[3:])
+    argstr = '_'.join([progNameShrt, mode, f"{L}", f"{p:.3g}", f"{T:.3g}", 
+                        geo[:3], c[3:]])
     return slanzarvstr + argstr
 #
 if execBool or printBool:
@@ -71,8 +72,9 @@ if execBool or printBool:
         outstr = f"-os {out_suffix} " if out_suffix else " "
         argstr = (f"{L} {p:.3g} {T:.3g} -g {geo} -c {cell} -n {navg} -ic {ic} "
                   f"-rl {runlang} -is {in_suffix} "
-                  f"{outstr}"
-                  f"-nc {NoClust}")
+                  f"{outstr} "
+                  f"-nc {NoClust} "
+                  f"-ts {thrmsteps}")
         return f"{slanzarv_str(runlang, L, p, geo, cell, T)} {lnchStr} {argstr}"
 
 else:
