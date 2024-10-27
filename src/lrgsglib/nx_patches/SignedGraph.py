@@ -84,7 +84,7 @@ class SignedGraph:
         return self.sDeg
     @property
     def gcl(self):
-        return self.gclUtil
+        return self.gclutil
     #
     def __init_paths__(
         self, dataOut: str = "", plotOut: str = "", expOut: str = ""
@@ -115,7 +115,7 @@ class SignedGraph:
         for _ in self.dirMakeList: os.makedirs(_, exist_ok=exist_ok)
     #
     def __make_graphCl_util__(self):
-        self.gclUtil = NestedDict()
+        self.gclutil = NestedDict()
     #
     def __init_graph_fromfile__(self, import_mode: str = SG_MPRT_MODE):
         match import_mode:
@@ -277,7 +277,7 @@ class SignedGraph:
     #
     def get_eigV_binarized(self, which: int = 0):
         eigV = self.eigV[which].squeeze()
-        return flip_to_positive_majority(regbin_ndarr(eigV)).squeeze()
+        return flip_to_positive_majority(bin_sign(eigV)).squeeze()
     #
     def get_eigV_bin_check(self, which: int = 0):
         if not hasattr(self, f"eigV") or which >= len(self.eigV):
@@ -286,16 +286,19 @@ class SignedGraph:
     #
     def get_bineigV_all(self):
         try:
-            eigVbin = regbin_ndarr(self.eigV)
+            eigVbin = bin_sign(self.eigV)
         except (AttributeError, IndexError):
             self.compute_k_eigvV()
-            eigVbin = regbin_ndarr(self.eigV)
+            eigVbin = bin_sign(self.eigV)
         for i in range(len(eigVbin)):
             eigVbin[i] = flip_to_positive_majority(eigVbin[i])
         return eigVbin
     #
     def get_signed_laplacian_embedding(self, k: int = 2):
         return self.eigV[:k]
+    #
+    def get_subgraph_from_nodes(self, list_of_nodes, on_g: str = SG_GRAPH_REPR):
+        return self.gr[on_g].subgraph(list_of_nodes)
     #
     def get_nodes_subgraph_by_kv(self, k, val, on_g: str = SG_GRAPH_REPR):
         G = self.gr[on_g]
@@ -309,21 +312,22 @@ class SignedGraph:
     #
     def get_bineigV_cluster_sizes(self, which: int = 0, 
                       binarize: bool = True, on_g: str = SG_GRAPH_REPR):
-        self.load_eigV_on_graph(which, on_g, binarize)
-        if not hasattr(self, "clusters"):
+        if not all(f"eigV{which}" in self.gr[on_g].nodes[node] 
+                   for node in self.gr[on_g].nodes):
+            self.load_eigV_on_graph(which, on_g, binarize)
+        if not hasattr(self, "clustersY"):
             self.make_clustersYN(f"eigV{which}", +1, on_g)
-        clusterLen = sorted(list(map(lambda x: len(x), self.clustersY)), 
-                            reverse=True)
-        return clusterLen
+        cl_len = sorted(map(len, self.clustersY), reverse=True)
+        return cl_len
     #
     def get_cluster_distribution(self, which: int = 0, 
                                   on_g: str = SG_GRAPH_REPR,
                                   binarize: bool = True):
-        clusterLen = self.get_bineigV_cluster_sizes(which, on_g, binarize)
-        distNeg = {
-            size: clusterLen.count(size) for size in set(clusterLen)
+        cl_len = self.get_bineigV_cluster_sizes(which, on_g, binarize)
+        dictdist_cluster_sizes = {
+            size: cl_len.count(size) for size in set(cl_len)
         }
-        return distNeg
+        return dictdist_cluster_sizes
     #
     def get_ferroAntiferro_regions(self, attr_str: str = 's', 
                                         on_g: str = SG_GRAPH_REPR):
@@ -473,8 +477,9 @@ class SignedGraph:
             except (IndexError, AttributeError):
                 self.compute_k_eigvV(howmany=which + 1)
                 eigV = self.eigV[which]
-        eigVNodeAttr = {nd: v for v, nd in zip(eigV, self.gr[on_g].nodes)}
-        nx.set_node_attributes(self.gr[on_g], eigVNodeAttr, f"eigV{which}")
+        # print(eigV, self.gr[on_g].nodes)
+        eigV_val_nd = {nd: v for v, nd in zip(eigV, self.gr[on_g].nodes)}
+        nx.set_node_attributes(self.gr[on_g], eigV_val_nd, f"eigV{which}")
     #
     # computations
     #
@@ -492,13 +497,14 @@ class SignedGraph:
             self.eigV = self.eigV.T
     #
     def compute_pinf(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
-        cd = self.get_bineigV_cluster_sizes(which, on_g)
-        size = cd[0]
-        self.Pinf = size / self.N
+        clustd = np.array(self.get_bineigV_cluster_sizes(which, on_g))
+        mclust = clustd[0]
+        self.Pinf = mclust / self.N
+        self.Pinf_var = np.sum(clustd@clustd-mclust**2)/(np.sum(clustd)-mclust)
         if hasattr(self, "Pinf_dict"):
-            self.Pinf_dict[which] = self.Pinf
+            self.Pinf_dict[which] = (self.Pinf, self.Pinf_var)
         else:
-            self.Pinf_dict = {which: self.Pinf}
+            self.Pinf_dict = {which: (self.Pinf, self.Pinf_var)}
     #
     def compute_rbim_energy_eigV(self, which: int = 0):
         spins = self.get_eigV_bin_check(which)
@@ -530,14 +536,14 @@ class SignedGraph:
             self.resLp = self.resLp - new_eigv0 * np.identity(self.N)
     #
     def make_graphYN(self, k, val, on_g: str = SG_GRAPH_REPR):
-        self.gclUtil[k][val][on_g] = self.get_nodes_subgraph_by_kv(k, val, on_g)
+        self.gclutil[k][val][on_g] = self.get_nodes_subgraph_by_kv(k, val, on_g)
     #
     def make_clustersYN(self, k, val, on_g: str = SG_GRAPH_REPR):
         try:
-            graphY, graphN = self.gclUtil[k][val][on_g]
+            graphY, graphN = self.gclutil[k][val][on_g]
         except:
             self.make_graphYN(k, val, on_g)
-            graphY, graphN = self.gclUtil[k][val][on_g]
+            graphY, graphN = self.gclutil[k][val][on_g]
         #
         self.clustersY = list(nx.connected_components(graphY))
         self.clustersN = list(nx.connected_components(graphN))

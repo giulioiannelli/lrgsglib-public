@@ -1,5 +1,4 @@
 from lrgsglib.core import *
-from fractions import Fraction
 #
 def parse_fraction(value):
     try:
