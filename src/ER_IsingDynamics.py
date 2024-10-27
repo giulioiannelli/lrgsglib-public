@@ -55,7 +55,7 @@ for _ in range(navg):
         er.compute_k_eigvV(howmany=howmany)
         er.load_eigV_on_graph(which=number, binarize=True)
         er.make_clustersYN(f'eigV{number}', +1)
-        if  abs(len(er.gc)/er.N - meanN) < stdN/2:
+        if  abs(len(er.gc)/er.N - meanN) < stdN:
             break
         elif iter_gen > DEFAULT_MAX_ITER_ER_GC:
             raise ValueError(f"Exceeded maximum number of iterations\
