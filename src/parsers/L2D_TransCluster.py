@@ -12,6 +12,7 @@ DEFAULT_GEO = "squared"
 DEFAULT_CELL = "rand"
 DEFAULT_FLOAT_TYPE = "float64"
 DEFAULT_PREW = 0.
+DEFAULT_OUTDIR = ''
 # Helpers for argparse descriptions
 HELP_L = """
     Size of the square lattice.
@@ -45,6 +46,9 @@ HELP_svfreq = f"""
     Saving frequency for the data. By default 1/20 of the number of averages 
     | default='{DEFAULT_NUMBER_AVERAGES // 20}'
 """
+HELP_outd = f"""
+    Output directory | default='{DEFAULT_OUTDIR}'
+"""
 # Setup the argument parser
 parser = argparse.ArgumentParser(description=description.strip())
 # Required parameters
@@ -59,6 +63,12 @@ parser.add_argument(
     type=float,
 )
 # Optional parameters
+parser.add_argument(
+    "--outdir",
+    default=DEFAULT_OUTDIR,
+    help=HELP_outd,
+    type=str,
+)
 parser.add_argument(
     "--mode",
     default=DEFAULT_MODE,
