@@ -1562,46 +1562,34 @@ def compose(f: callable, g: callable, g_args: tuple = (), g_kwargs: dict = None)
         return g(f_result, *g_args, **g_kwargs)  # Pass the result of f to g, with any additional args/kwargs
 
     return composed_function
-def regbin_ndarr(eigV: NDArray) -> NDArray:
+def bin_sign(arr: Iterable) -> NDArray:
     """
-    Regularizes and binarizes a NumPy array by setting all zero elements to +1 and taking the sign of each element.
-
-    For each element in the input array `eigV`:
-    - If the element is zero, it is replaced with +1.
-    - Otherwise, the sign of the element is taken (resulting in -1 for negative values and +1 for positive values).
-
+    Regularizes and binarizes an array by setting all zeros to +1 and taking the sign of each element.
+    
     Parameters
     ----------
-    eigV : NDArray
-        A NumPy array of numerical values to be regularized and binarized.
+    arr : Iterable
+        Input iterable.
 
     Returns
     -------
     NDArray
-        A NumPy array of the same shape as `eigV`, where:
-        - All zero elements are set to +1.
-        - All positive elements are set to +1.
-        - All negative elements are set to -1.
+        Binarized array with -1, +1 values.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
-    >>> eigV = np.array([-2.5, 0.0, 3.1, -0.7, 0.0])
-    >>> regbin_ndarr(eigV)
-    array([-1.,  1.,  1., -1.,  1.])
+    >>> arr = [-3, 0, 2, -1, 0]
+    >>> bin_sign(arr)
+    array([-1,  1,  1, -1,  1])
 
     Notes
     -----
-    - This function is useful for converting continuous data into binary form, especially in contexts where the presence or absence (or positive/negative sign) of a feature is significant.
-    - The function handles multi-dimensional arrays as well.
-
-    See Also
-    --------
-    numpy.sign : Returns an element-wise indication of the sign of a number.
-    numpy.where : Return elements chosen from `eigV` or +1 depending on the condition.
-
+    - This function replaces zero elements with +1 and converts all non-zero elements to their respective signs.
+    - It can be used to transform continuous data into a binary representation.
     """
-    return np.sign(np.where(eigV == 0, +1, eigV))
+    arr = np.asarray(arr)
+    return np.sign(np.where(arr == 0, 1, arr))
 
 def project_3d_to_2d(x, y, z, theta=0., phi=0.):
     """
