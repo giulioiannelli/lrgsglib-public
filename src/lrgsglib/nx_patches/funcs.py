@@ -143,7 +143,7 @@ def get_sparse_slaplacian_from_G(
         G, nodelist=nodelist, weight=weight, format="csr"
     )
     deg = csr_array(
-        scsp.spdiags(np.abs(adj).sum(axis=1), 0, *adj.shape, format="csr")
+        spdiags(np.abs(adj).sum(axis=1), 0, *adj.shape, format="csr")
     )
     return deg - adj
 #
@@ -257,14 +257,14 @@ def _sparse_spectral_signed(A, dim=2):
 
     # form Laplacian matrix
     # TODO: Rm csr_array wrapper in favor of spdiags array constructor when available
-    D = csr_array(scsp.spdiags(np.abs(A).sum(axis=1), 0, nnodes, nnodes))
+    D = csr_array(spdiags(np.abs(A).sum(axis=1), 0, nnodes, nnodes))
     L = D - A
 
     k = dim + 1
     # number of Lanczos vectors for ARPACK solver.What is the right scaling?
     ncv = max(2 * k + 1, int(np.sqrt(nnodes)))
     # return smallest k eigenvalues and eigenvectors
-    eigenvalues, eigenvectors = scsp.linalg.eigsh(L, k, which="SM", ncv=ncv)
+    eigenvalues, eigenvectors = scsp_eigsh(L, k, which="SM", ncv=ncv)
     index = np.argsort(eigenvalues)[1:k]  # 0 index is zero eigenvalue
     return np.real(eigenvectors[:, index])
 
@@ -499,7 +499,6 @@ def hexagonal_lattice_graph_FastPatch(n: int, m: int, periodic: bool = False, wi
         
     # Optionally assign positions for visualization
     if with_positions:
-
         # calc position in embedded space
         ii = (i for i in cols for j in rows)
         jj = (j for i in cols for j in rows)
