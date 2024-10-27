@@ -10,6 +10,7 @@ outSuffix = args.out_suffix
 inSuffix = args.in_suffix
 NoClust = args.NoClust
 runlang = args.runlang
+thrmsteps = args.thermsteps
 if ic.startswith('ground_state'):
     parts = ic.split('_')
     number = int(parts[-1])
@@ -22,10 +23,10 @@ progNameShrt = ER_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-N_list = [256, 512, 1024, 2048]
-pflip_list = np.linspace(0.05, 0.7, num=15)
+N_list = [1024, 4096]
+pflip_list = np.linspace(0.01, 0.8, num=25)
 Tlist = np.concatenate([
-    np.linspace(0.4, 10, 50),
+    np.linspace(0.4, 10, 40),
 ])
 
 if args.slanzarv_minMB == args.slanzarv_maxMB:
@@ -73,7 +74,8 @@ if execBool or printBool:
             f"-c {cell} -n {navg} -ic {ic}",
             f"-rl {runlang} -is {inSuffix}",
             f"-os {out_suffix}" if out_suffix else "",
-            f"-nc {NoClust}"
+            f"-nc {NoClust}",
+            f"-ts {thrmsteps}"
         ])).strip()
         # (f"{L} {p:.3g} {pflip:.3g} {T:.3g} -c {cell} -n {navg} -ic {ic} "
         #           f"-rl {runlang} -is {inSuffix} "
