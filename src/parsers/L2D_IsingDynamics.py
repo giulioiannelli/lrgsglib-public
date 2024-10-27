@@ -24,37 +24,41 @@ DEFAULT_OUTSFFX = ''
 DEFAULT_NOCLUST = 1
 DEFAULT_REMOVE_FILES = True
 DEFAULT_WORKDIR = ''
+DEFAULT_THRMSTEPS = 20
 #
 phelp_remove_files = """
     Remove the input files after the computation.
 """
 phelp_cell = f"""
     Topological defect class: 'rand', 'randXERR', 
-    'randZERR', 'ball_<R>' with type(<R>)=int. | default='{DEFAULT_CELL}'
+    'randZERR', 'ball_<R>' with type(<R>)=int.
+"""
+phelp_thrmsteps = f"""
+    Number of thermalization steps
 """
 phelp_geo = f"""
-    Geometry of the lattice. | default='{DEFAULT_GEO}'
+    Geometry of the lattice.
 """
 phelp_navg = f"""
-    Number of averages to compute | default={DEFAULT_NAVG}
+    Number of averages to compute
 """
 phelp_initCond = f"""
-    Initial condition for the Ising model | default='{DEFAULT_INIT_COND}'
+    Initial condition for the Ising model
 """
 phelp_runlang = f"""
-    Language for running the Ising model | default='{DEFAULT_RUNLANG}'
+    Language for running the Ising model
 """
 phelp_inSuffix = f"""
-    Suffix for the input files | default='{DEFAULT_INSFFX}'
+    Suffix for the input files
 """
 phelp_outSuffix = f"""
-    Suffix for the output files | default='{DEFAULT_OUTSFFX}'
+    Suffix for the output files
 """
 phelp_NoClust = f"""
-    Number of clusters to compute | default={DEFAULT_NOCLUST}
+    Number of clusters to compute
 """
 phelp_workdir = f"""
-    Working directory | default='{DEFAULT_WORKDIR}'
+    Working directory
 """
 #
 parsDict = {
@@ -99,7 +103,11 @@ parsDictOpt = {
     'workdir': {'names': ['-wd', '--workdir'],
                 'help': phelp_workdir,
                 'type': str,
-                'default': DEFAULT_WORKDIR}
+                'default': DEFAULT_WORKDIR},
+    'thrmsteps': {'names': ['-ts', '--thrmsteps'],
+                    'help': phelp_thrmsteps,
+                    'type': int,
+                    'default': DEFAULT_THRMSTEPS}
 }
 #
 parDA = {'remove_files': {'names': ['-rf', '--remove_files'],

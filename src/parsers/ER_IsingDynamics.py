@@ -38,7 +38,11 @@ DEFAULT_REMOVE_FILES = True
 DEFAULT_WORKDIR = ''
 DEFAULT_MAX_ITER_ER_GC = 20
 DEFAULT_PRINT_CHRONO = False
+DEFAULT_THRMSTEPS = 20
 #
+phelp_thrmsteps = """
+    Number of thermalization steps.
+"""
 phelp_remove_files = """
     Remove the input files after the computation.
 """
@@ -116,7 +120,11 @@ parsDictOpt = {
     'navg2': {'names': ['-n2', '--number_of_averages2'],
                 'help': phelp_navg2,
                 'type': int,
-                'default': DEFAULT_NAVG2}
+                'default': DEFAULT_NAVG2},
+    'thrmsteps': {'names': ['-ts', '--thrmsteps'],
+                'help': phelp_thrmsteps,
+                'type': int,
+                'default': DEFAULT_THRMSTEPS}
 }
 #
 parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
