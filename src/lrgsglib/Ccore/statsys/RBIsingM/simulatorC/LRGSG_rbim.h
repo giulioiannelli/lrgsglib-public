@@ -16,7 +16,7 @@
 #define SOUT_FNAME ISNG_DIR "sout_p=%.3g_T=%.3g_%s" BINX
 #define MAGN_FNAME ISNG_DIR "m_p=%.3g_T=%.3g_%s" BINX
 
-#define GRPH_DIR "%sgraphs/%s/"
+#define GRPH_DIR "%sgraph/%s/"
 #define EDGL_FNAME GRPH_DIR "edgelist_p=%.3g%s" BINX
 
 extern sfmt_t sfmt;
