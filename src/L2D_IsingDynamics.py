@@ -5,6 +5,7 @@ args = parser.parse_args()
 side = args.L
 pflip = args.p
 T = args.T
+steps = args.thrmsteps
 geo = args.geometry
 cell = args.cell_type
 ic = args.init_cond
@@ -58,7 +59,7 @@ for _ in range(navg):
     isdy.init_ising_dynamics()
     l.export_edgel_bin(exName=isdy.id_string_isingdyn)
     isdy.export_ising_clust()
-    isdy.run(verbose=False)
+    isdy.run(verbose=False, thrmSTEP=steps)
     if remove_files:
         isdy.remove_run_c_files(remove_stderr=True)
         l.remove_edgl_file()

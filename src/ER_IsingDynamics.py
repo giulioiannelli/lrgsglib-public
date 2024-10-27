@@ -7,6 +7,7 @@ p = args.p
 pflip = args.pflip
 T = args.T
 # geo = args.geometry
+thrmsteps = args.thrmsteps
 cell = args.cell_type
 ic = args.init_cond
 navg = args.number_of_averages
@@ -65,7 +66,7 @@ for _ in range(navg):
     isdy.init_ising_dynamics()
     er.export_edgel_bin(exName=isdy.id_string_isingdyn)
     isdy.export_ising_clust()
-    isdy.run(verbose=False)
+    isdy.run(verbose=False, thrmSTEP=thrmsteps)
     if remove_files:
         isdy.remove_run_c_files(remove_stderr=True)
         er.remove_edgl_file()
