@@ -29,38 +29,38 @@ else:
 erDictArgs = dict(n=N, p=p, sgpath=workdir, pflip=pflip)
 isingDictArgs = dict(T=T, ic=ic, runlang=runlang, NoClust=NoClust, rndStr=True, 
                      out_suffix=out_suffix, id_string=in_suffix)
-er = ErdosRenyi(**erDictArgs)
-Fname = f'GC_meanVar_p={pflip:.3g}_{cell}_{in_suffix}.txt'
-pathFname = os.path.join(er.expOut, Fname)
-if not os.path.exists(pathFname):
-    lenList = []
-    for _ in range(navg2):
-        er = ErdosRenyi(**erDictArgs)
-        er.flip_sel_edges(er.nwDict[cell]['G'])
-        # er.flip_random_fract_edges()
-        er.compute_k_eigvV(howmany=number + 1)
-        er.load_eigV_on_graph(which=number, binarize=True)
-        er.make_clustersYN(f'eigV{number}', +1)
-        lenList.append(len(er.gc))
-    meanN, stdN = np.mean(lenList)/er.N, np.std(lenList)
-    np.savetxt(pathFname, np.atleast_2d([meanN, stdN]), fmt='%.3g')
-else:
-    meanN, stdN = np.loadtxt(pathFname)
+# er = ErdosRenyi(**erDictArgs)
+# Fname = f'GC_meanVar_p={pflip:.3g}_{cell}_{in_suffix}.txt'
+# pathFname = os.path.join(er.expOut, Fname)
+# if not os.path.exists(pathFname):
+#     lenList = []
+#     for _ in range(navg2):
+#         er = ErdosRenyi(**erDictArgs)
+#         er.flip_sel_edges(er.nwDict[cell]['G'])
+#         # er.flip_random_fract_edges()
+#         er.compute_k_eigvV(howmany=number + 1)
+#         er.load_eigV_on_graph(which=number, binarize=True)
+#         er.make_clustersYN(f'eigV{number}', +1)
+#         lenList.append(len(er.gc))
+#     meanN, stdN = np.mean(lenList)/er.N, np.std(lenList)
+#     np.savetxt(pathFname, np.atleast_2d([meanN, stdN]), fmt='%.3g')
+# else:
+#     meanN, stdN = np.loadtxt(pathFname)
 for _ in range(navg):
-    iter_gen = 0
-    while True:
-        er = ErdosRenyi(**erDictArgs)
-        er.flip_sel_edges(er.nwDict[cell]['G'])
-        # er.flip_random_fract_edges()
-        er.compute_k_eigvV(howmany=howmany)
-        er.load_eigV_on_graph(which=number, binarize=True)
-        er.make_clustersYN(f'eigV{number}', +1)
-        if  abs(len(er.gc)/er.N - meanN) < stdN:
-            break
-        elif iter_gen > DEFAULT_MAX_ITER_ER_GC:
-            raise ValueError(f"Exceeded maximum number of iterations\
-                              {DEFAULT_MAX_ITER_ER_GC}")
-        iter_gen += 1
+    # iter_gen = 0
+    # while True:
+    er = ErdosRenyi(**erDictArgs)
+    er.flip_sel_edges(er.nwDict[cell]['G'])
+    # er.flip_random_fract_edges()
+    er.compute_k_eigvV(howmany=howmany)
+    er.load_eigV_on_graph(which=number, binarize=True)
+    er.make_clustersYN(f'eigV{number}', +1)
+        # if  abs(len(er.gc)/er.N - meanN) < stdN:
+        #     break
+        # elif iter_gen > DEFAULT_MAX_ITER_ER_GC:
+        #     raise ValueError(f"Exceeded maximum number of iterations\
+        #                       {DEFAULT_MAX_ITER_ER_GC}")
+        # iter_gen += 1
     isdy = IsingDynamics(er, **isingDictArgs)
     isdy.init_ising_dynamics()
     er.export_edgel_bin(exName=isdy.id_string_isingdyn)
