@@ -29,7 +29,7 @@ else:
 #
 erDictArgs = dict(n=N, p=p, sgpath=workdir, pflip=pflip)
 isingDictArgs = dict(T=T, ic=ic, runlang=runlang, NoClust=NoClust, rndStr=True, 
-                     out_suffix=out_suffix, id_string=in_suffix)
+                     out_suffix=out_suffix, id_string=in_suffix, init_nw_dict=True)
 # er = ErdosRenyi(**erDictArgs)
 # Fname = f'GC_meanVar_p={pflip:.3g}_{cell}_{in_suffix}.txt'
 # pathFname = os.path.join(er.expOut, Fname)
