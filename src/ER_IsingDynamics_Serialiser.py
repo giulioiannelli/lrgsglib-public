@@ -23,7 +23,7 @@ progNameShrt = ER_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-N_list = [1024]
+N_list = [1024, 4096]
 pflip_list = np.linspace(0.01, 0.8, num=25)
 Tlist = np.concatenate([
     np.linspace(0.4, 10, 40),
@@ -45,7 +45,7 @@ def slanzarv_str(mode, L, p, pflip, T, c):
     slanzarvopt = "--nomail --jobname "
     slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
     argstr = '_'.join([progNameShrt, mode, f"{L}", f"{p:.3g}", f"{pflip:.3g}", 
-                       f"{T:.3g}", c[3:]])
+                       f"{T:.3g}", c, str(number)])
     return slanzarvstr + argstr
 #
 if execBool or printBool:
