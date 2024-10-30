@@ -53,7 +53,7 @@ for _ in range(navg):
     er = ErdosRenyi(**erDictArgs)
     er.flip_sel_edges(er.nwDict[cell]['G'])
     # er.flip_random_fract_edges()
-    er.compute_k_eigvV(howmany=howmany)
+    er.compute_k_eigvV(k=howmany)
     er.load_eigV_on_graph(which=number, binarize=True)
     er.make_clustersYN(f'eigV{number}', +1)
         # if  abs(len(er.gc)/er.N - meanN) < stdN:
