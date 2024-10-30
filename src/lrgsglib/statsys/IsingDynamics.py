@@ -175,7 +175,7 @@ class IsingDynamics:
             print("Ising Clusters already computed.")
             return
         #
-        self.sg.compute_k_eigvV(howmany=self.NoClust)
+        self.sg.compute_k_eigvV(k=self.NoClust)
         eigVbin = self.sg.get_bineigV_all()
         #
         self.Ising_clusters = []
