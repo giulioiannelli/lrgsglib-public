@@ -60,7 +60,7 @@ class SignedLaplacianAnalysis:
             self.__initSpectrum__()
     #
     def __initSpectrum__(self):
-        self.sg.compute_k_eigvV(MODE_dynspec="numpy")
+        self.sg.compute_k_eigvV(with_routine="numpy")
     #
     def computeS(self) -> None:
         w =  self.sg.eigv
@@ -117,7 +117,7 @@ class SignedLaplacianAnalysis:
             self.sg.compute_k_eigvV()
         if self.initCond.startswith("ground_state"):
             self.eigenModeInit = int(self.initCond.split("_")[-1])
-            self.sg.compute_k_eigvV(howmany=self.eigenModeInit + 1)
+            self.sg.compute_k_eigvV(k=self.eigenModeInit + 1)
             self.field =  self.sg.eigV.T[self.eigenModeInit]
         elif self.initCond == "uniform_1":
             self.field = np.random.uniform(-1, 1, N)
@@ -181,7 +181,7 @@ class SignedLaplacianAnalysis:
                     initStatus[sqIdx] = np.random.normal(-1, 1, len(sqIdx))
                 elif self.initCond.startswith("window_ground_state"):
                     self.eigenModeInit = int(self.initCond.split("_")[-1])
-                    self.sg.compute_k_eigvV(howmany=self.eigenModeInit + 1)
+                    self.sg.compute_k_eigvV(k=self.eigenModeInit + 1)
                     initStatus = self.eigV.T[self.eigenModeInit]
                     outIdx = np.setxor1d(np.arange(N), sqIdx)
                     initStatus[outIdx] = np.random.uniform(
@@ -318,7 +318,7 @@ def lsp_read_values(folder_path, fpattern="Sm1_avg_p", sort=True):
 def eigV_for_lattice2D(side, mode='scipy', **kwargs):
     l = Lattice2D(side, **kwargs)
     l.flip_random_fract_edges()
-    l.compute_k_eigvV(MODE_dynspec=mode)
+    l.compute_k_eigvV(with_routine=mode)
     return flip_to_positive_majority(l.eigV[0])
 
 
@@ -809,7 +809,7 @@ def flip_random_fract_edges(G: Graph, p: float):
 def eigV_for_lattice2D(side, mode='scipy', howmany=1, **kwargs) -> NDArray:
     l = Lattice2D(side, **kwargs)
     l.flip_random_fract_edges()
-    l.compute_k_eigvV(MODE_dynspec=mode, howmany=howmany)
+    l.compute_k_eigvV(with_routine=mode, k=howmany)
     return l.eigV
 
 def adjust_eigV_for_lattice2D(leigV: NDArray) -> NDArray:
