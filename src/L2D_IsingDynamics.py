@@ -50,7 +50,7 @@ for _ in range(navg):
     # while True:
     l = Lattice2D(**l2dDictArgs)
     l.flip_sel_edges(l.nwDict[cell]['G'])
-    l.compute_k_eigvV(howmany=howmany)
+    l.compute_k_eigvV(k=howmany)
     l.load_eigV_on_graph(which=number, binarize=True)
     l.make_clustersYN(f'eigV{number}', +1)
         # if abs(len(l.gc)/l.N - meanN) < stdN:
