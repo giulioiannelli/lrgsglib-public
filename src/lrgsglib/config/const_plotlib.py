@@ -10,13 +10,14 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec, rc_context, cycler
 from matplotlib.axes import Axes
 from matplotlib.cm import hsv, twilight, ScalarMappable
-from matplotlib.colors import LightSource
-from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm
-from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.colorbar import ColorbarBase
+from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm, \
+    LightSource, LinearSegmentedColormap, Normalize
 from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
 from matplotlib.path import Path
 from matplotlib.text import Text
-from matplotlib.ticker import ScalarFormatter, MultipleLocator
+from matplotlib.ticker import ScalarFormatter, MultipleLocator, \
+    SymmetricalLogLocator
 #
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
