@@ -281,7 +281,7 @@ class SignedGraph:
     #
     def get_eigV_bin_check(self, which: int = 0):
         if not hasattr(self, f"eigV") or which >= len(self.eigV):
-            self.compute_k_eigvV(howmany=which+1)
+            self.compute_k_eigvV(k=which+1)
         return self.get_eigV_binarized(which)
     #
     def get_bineigV_all(self):
@@ -475,7 +475,7 @@ class SignedGraph:
             try:
                 eigV = self.eigV[which]
             except (IndexError, AttributeError):
-                self.compute_k_eigvV(howmany=which + 1)
+                self.compute_k_eigvV(k=which + 1)
                 eigV = self.eigV[which]
         # print(eigV, self.gr[on_g].nodes)
         eigV_val_nd = {nd: v for v, nd in zip(eigV, self.gr[on_g].nodes)}
@@ -483,18 +483,21 @@ class SignedGraph:
     #
     # computations
     #
-    def compute_k_eigvV(self, howmany: int = 1, MODE_dynspec: str = "scipy",
+    def compute_full_laplacian_spectrum(self, typf: type = np.float64):
+        self.eigv, self.eigV = np.linalg.eigh(self.sLp.astype(typf).todense())
+        self.make_eigV_transposed()
+    #
+    def compute_k_eigvV(self, k: int = 1, with_routine: str = "scipy",
         which: str = "SM", typf: type = np.float64):
-        if MODE_dynspec == "numpy" or howmany > self.N//2:
-            self.eigv, self.eigV = np.linalg.eigh(
-                self.sLp.astype(typf).todense()
-            )
-            self.eigV = self.eigV.T
-        elif MODE_dynspec.startswith("scipy"):
+        if with_routine == "numpy" or k > self.N//2:
+            self.compute_full_laplacian_spectrum(typf)
+        elif with_routine.startswith("scipy"):
+            mode = with_routine.split("_")
+            mode = mode[-1] if len(mode) > 1 else "caley"
             self.eigv, self.eigV = scsp_eigsh(
-                self.sLp.astype(typf), k=howmany, which=which, mode="caley"
+                self.sLp.astype(typf), k=k, which=which, mode=mode
             )
-            self.eigV = self.eigV.T
+            self.make_eigV_transposed()
     #
     def compute_pinf(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
         clustd = np.array(self.get_bineigV_cluster_sizes(which, on_g))
@@ -522,6 +525,11 @@ class SignedGraph:
         elif which not in self.energy_eigV_RBIM.keys():
                 self.compute_rbim_energy_eigV(which)
         return self.energy_eigV_RBIM[which]
+    #
+    # make methods
+    #
+    def make_eigV_transposed(self):
+        self.eigV = self.eigV.T
     #
     def make_rescaled_signed_laplacian(self, MODE: str = "field"):
         if MODE == "field":
