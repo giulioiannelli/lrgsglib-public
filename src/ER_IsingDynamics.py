@@ -20,7 +20,7 @@ workdir = args.workdir
 print_chrono = args.print_chrono
 ic_gs = ic.startswith('ground_state')
 number = int(ic.split('_')[-1]) if ic_gs else 0
-out_suffix = args.out_suffix or "gs"+str(number) if ic_gs else ic
+out_suffix = args.out_suffix or "gs"+str(number)+cell if ic_gs else ic
 
 #
 erDictArgs = dict(n=N, p=p, sgpath=workdir, pflip=pflip, init_nw_dict=True)
