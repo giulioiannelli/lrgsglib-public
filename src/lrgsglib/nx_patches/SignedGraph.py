@@ -1,9 +1,9 @@
 from .common import *
 class SignedGraph:
-    sgpath = "custom_graph"
+    sgpathn = "signed_graph"
     syshapePth = ""
     stdFname = ""
-
+    #
     def __init__(self,
         G: Graph, 
         pflip: float = SG_PFLIP,
@@ -87,15 +87,33 @@ class SignedGraph:
         return self.gclutil
     #
     def __init_paths__(
-        self, dataOut: str = "", plotOut: str = "", expOut: str = ""
+        self, path_data: Path = None, path_plot: Path = None, path_export: Path = None,
+        dataOut: str = "", plotOut: str = "", expOut: str = ""
     ):
         #
-        pthSffx = pth_join(self.syshapePth, '')
+        self.path_data = path_data or PATHDATA
+        self.path_plot = path_plot or PATHPLOT
+        self.path_sgdata = self.path_data / Path(self.sgpathn)
         #
+        self.path_export = self.path_sgdata / Path(PATHNGRPH, self.syshapePth)
+        self.path_ising = self.path_sgdata / Path(PATHNISNG, self.syshapePth)
+        self.path_voter = self.path_sgdata / Path(PATHNVM, self.syshapePth)
+        self.path_lrgsg = self.path_sgdata / Path(PATHNLRGS, self.syshapePth)
+        self.path_phtra = self.path_sgdata / Path(PATHNPHTR, self.syshapePth)
+        self.path_spect = self.path_sgdata / Path(PATHNSPEC, self.syshapePth)
+        #
+        self.dirMakeList = [self.path_export,
+            self.path_ising,
+            self.path_voter,
+            self.path_lrgsg,
+            self.path_phtra,
+            self.path_spect]
+        #
+        pthSffx = pth_join(self.syshapePth, '')
         self.dataOut = dataOut or PATHNDATA
         self.plotOut = plotOut or PATHNPLOT
-        self.datPath = pth_join(self.dataOut, self.sgpath, '')
-        self.pltPath = pth_join(self.dataOut, self.plotOut, self.sgpath, '')
+        self.datPath = pth_join(self.dataOut, self.sgpathn, '')
+        self.pltPath = pth_join(self.dataOut, self.plotOut, self.sgpathn, '')
         self.expOut = expOut or pth_join(self.datPath, PATHNGRPH, pthSffx)
         #
         self.isingpath = pth_join(self.datPath, PATHNISNG, pthSffx)
@@ -103,13 +121,6 @@ class SignedGraph:
         self.lrgsgpath = pth_join(self.datPath, PATHNLRGS, pthSffx)
         self.phtrapath = pth_join(self.datPath, PATHNPHTR, pthSffx)
         self.spectpath = pth_join(self.datPath, PATHNSPEC, pthSffx)
-        #
-        self.dirMakeList = [self.expOut, 
-                            self.isingpath, 
-                            self.voterpath,
-                            self.phtrapath, 
-                            self.lrgsgpath, 
-                            self.spectpath]
     #
     def __make_dirs__(self, exist_ok: bool = True):
         for _ in self.dirMakeList: os.makedirs(_, exist_ok=exist_ok)

@@ -20,6 +20,7 @@ DEFAULT_NAVG = 1000
 DEFAULT_PERIOD = 100
 DEFAULT_WORKDIR = ''
 DEFAULT_HOWMANY = 1
+DEFAULT_VERBOSE = False
 #
 phelp_binsc = f"""
     Number of bins for the distribution sampling | default={DEFAULT_BINSC}
@@ -48,6 +49,9 @@ phelp_period = f"""
 """
 phelp_workDir = f"""
     Working directory | default='{DEFAULT_WORKDIR}'
+"""
+phelp_verbose = f"""
+    Increase output verbosity
 """
 #
 parsDict = {'L': {'help': phelp_L, 'type': int},
@@ -92,7 +96,11 @@ parsDictOpt = {'mode': {'names': ['-m', '--mode'],
                         'default': DEFAULT_WORKDIR}
             }
 #
-
+parDA = {'verbose': {'names': ['-v', '--verbose'],
+                    'help': phelp_verbose,
+                    'action': argparse.BooleanOptionalAction,
+                    'default': DEFAULT_VERBOSE}
+        }
 #
 parser = argparse.ArgumentParser(description=description.strip())
 # Mandatory arguments
@@ -111,4 +119,13 @@ for ov in parsDictOpt.keys():
         default=parsDictOpt_get(ov, 'default'),
         help=parsDictOpt_get(ov, 'help'),
         type=parsDictOpt_get(ov, 'type'),
+    )
+# Optional parameters
+def parsDict_get(var, key):
+    return parDA[var].get(key, None)
+for ov in parDA.keys():
+    parser.add_argument(*parsDict_get(ov, 'names'),
+        default=parsDict_get(ov, 'default'),
+        help=parsDict_get(ov, 'help'),
+        action=parsDict_get(ov, 'action')
     )
