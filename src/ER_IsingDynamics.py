@@ -21,11 +21,11 @@ print_chrono = args.print_chrono
 ic_gs = ic.startswith('ground_state')
 number = int(ic.split('_')[-1]) if ic_gs else 0
 out_suffix = args.out_suffix or "gs"+str(number)+cell if ic_gs else ic
-
 #
 erDictArgs = dict(n=N, p=p, sgpath=workdir, pflip=pflip, init_nw_dict=True)
 isingDictArgs = dict(T=T, ic=ic, runlang=runlang, NoClust=NoClust, rndStr=True, 
                      out_suffix=out_suffix, id_string=in_suffix)
+# pay attentions maybe when talking with ising problems if graph is not connected...
 for _ in range(navg):
     er = ErdosRenyi(**erDictArgs)
     er.flip_sel_edges(er.nwDict[cell]['G'])

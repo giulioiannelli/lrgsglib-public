@@ -23,7 +23,7 @@ progNameShrt = ER_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-N_list = [1024, 4096]
+N_list = [512, 1024]
 pflip_list = np.linspace(0.01, 0.8, num=25)
 Tlist = np.concatenate([
     np.linspace(0.4, 10, 40),
