@@ -11,7 +11,7 @@ class ErdosRenyi(SignedGraph):
             stdFnameSFFX: str = ER_STDFN,
             **kwargs):
         
-        self.sgpath = ER_PHTABB if not sgpath else sgpath
+        self.sgpathn = ER_PHTABB if not sgpath else sgpath
         self.__init_stdFname__(stdFnameSFFX)
         self.__init_network__(n, p)
         super(ErdosRenyi, self).__init__(self.G, **kwargs)

@@ -13,7 +13,7 @@ class Lattice2D(SignedGraph):
         pbc: bool = L2D_PBC,
         fbc_val: float = L2D_FBCV,
         stdFnameSFFX: str = L2D_STDFN,
-        sgpath: str = L2D_SGPATH,
+        sgpathn: str = L2D_SGPATH,
         with_positions: bool = L2D_WITH_POS,
         prew: float = L2D_PREW,
         **kwargs,
@@ -27,7 +27,7 @@ class Lattice2D(SignedGraph):
         #
         self.__init_stdFname__(stdFnameSFFX)
         #
-        self.sgpath = pth_join(sgpath, L2D_PATH_DICT[self.geo]) if sgpath else L2D_PATH_DICT[self.geo]
+        self.sgpathn = pth_join(sgpathn, L2D_PATH_DICT[self.geo]) if sgpathn else L2D_PATH_DICT[self.geo]
         self.with_positions = with_positions
         #
         self.__init_lattice__()
