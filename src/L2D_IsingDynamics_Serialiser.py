@@ -15,16 +15,14 @@ thrmsteps = args.thermsteps
 if ic.startswith('ground_state'):
     parts = ic.split('_')
     number = int(parts[-1])
-    howmany = number+1
-else:
-    howmany = 1
+
 #
 progName = L2D_IsingDynamics_progName
 progNameShrt = L2D_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-List = [32, 96]
+List = [32, 64]
 plist = np.linspace(0.01, 0.5, num=15)
 Tlist = np.concatenate([np.linspace(0.1, 1.4, 20),
     np.linspace(1.4, 2.5, 10),
@@ -45,7 +43,7 @@ else:
 def slanzarv_str(mode, L, p, geo, c, T):
     slanzarvopt = "--nomail --jobname "
     slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
-    argstr = '_'.join([progNameShrt, mode, f"{L}", f"{p:.3g}", f"{T:.3g}", 
+    argstr = '_'.join([progNameShrt, mode[:3], f"{L}", f"{p:.3g}", f"{T:.3g}", 
                         geo[:3], c[3:]])
     return slanzarvstr + argstr
 #
