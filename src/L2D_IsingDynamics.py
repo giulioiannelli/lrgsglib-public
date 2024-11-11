@@ -1,66 +1,19 @@
-from parsers.L2D_IsingDynamics import *
-#
-args = parser.parse_args()
-#
-side = args.L
-pflip = args.p
-T = args.T
-steps = args.thrmsteps
-geo = args.geometry
-cell = args.cell_type
-ic = args.init_cond
-navg = args.number_of_averages
-navg2 = 500
-in_suffix = args.in_suffix
-out_suffix = args.out_suffix
-NoClust = args.NoClust
-runlang = args.runlang
-remove_files = args.remove_files
-workdir = args.workdir
-if ic.startswith('ground_state'):
-    parts = ic.split('_')
-    number = int(parts[-1])
-    howmany = number+1
-else:
-    number  = 0
-    howmany = 1
-#
-l2dDictArgs = dict(side1=side, geo=geo, sgpath=workdir, pflip=pflip, 
-                   init_nw_dict=True)
-isingDictArgs = dict(T=T, ic=ic, runlang=runlang, NoClust=NoClust, rndStr=True, 
-                     out_suffix=out_suffix, id_string=in_suffix)
-# l = Lattice2D(**l2dDictArgs)
-# Fname = f'GC_meanVar_p={pflip:.3g}_{cell}_{in_suffix}.txt'
-# pathFname = os.path.join(l.expOut, Fname)
-# if not os.path.exists(pathFname):
-#     lenList = []
-#     for _ in range(navg2):
-#         l = Lattice2D(**l2dDictArgs)
-#         l.flip_sel_edges(l.nwDict[cell]['G'])
-#         l.compute_k_eigvV(howmany=number + 1)
-#         l.load_eigV_on_graph(which=number, binarize=True)
-#         l.make_clustersYN(f'eigV{number}', +1)
-#         lenList.append(len(l.gc))
-#     meanN, stdN = np.mean(lenList)/l.N, np.std(lenList)
-#     np.savetxt(pathFname, np.atleast_2d([meanN, stdN]), fmt='%.3g')
-# else:
-#     meanN, stdN = np.loadtxt(pathFname)
-#
-for _ in range(navg):
-    # while True:
-    l = Lattice2D(**l2dDictArgs)
-    l.flip_sel_edges(l.nwDict[cell]['G'])
-    l.compute_k_eigvV(k=howmany)
-    l.load_eigV_on_graph(which=number, binarize=True)
-    l.make_clustersYN(f'eigV{number}', +1)
-        # if abs(len(l.gc)/l.N - meanN) < stdN:
-        #     break
-    isdy = IsingDynamics(l, **isingDictArgs)
-    isdy.init_ising_dynamics()
-    l.export_edgel_bin(exName=isdy.id_string_isingdyn)
-    isdy.export_ising_clust()
-    isdy.run(verbose=False, thrmSTEP=steps)
-    if remove_files:
-        isdy.remove_run_c_files(remove_stderr=True)
-        l.remove_edgl_file()
-print("Done!")
+from parsers.L2D_IsingDynamics import parse_arguments, parser
+from kernels.L2D_IsingDynamics import *
+
+def main():
+    args = parse_arguments(parser)
+    ic_gs = args.init_cond.startswith('ground_state')
+    number = int(args.init_cond.split('_')[-1]) if ic_gs else 0
+    out_suffix = get_out_suffix(args, ic_gs, number)
+    l2dDictArgs = initialize_l2d_dict_args(args)
+    isingDictArgs = initialize_ising_dict_args(args, out_suffix)
+    run_simulation(args, l2dDictArgs, isingDictArgs, number, args.remove_files)
+    #
+    if args.print_chrono:
+        Chronometer.print_all_chronometers()
+    if args.verbose:
+        print("Done!")
+
+if __name__ == "__main__":
+    main()
