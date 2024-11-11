@@ -11,7 +11,7 @@ class Lattice3D(SignedGraph):
         pbc: bool = L3D_PBC,
         fbc_val: float = L3D_FBCV,
         stdFnameSFFX: str = L3D_STDFN,
-        sgpath: str = L3D_SGPATH,
+        sgpathn: str = L3D_SGPATH,
         with_positions: bool = L3D_WITH_POS,
         theta: float = L3D_THETA,
         phi: float = L3D_PHI,
@@ -33,7 +33,7 @@ class Lattice3D(SignedGraph):
         self.phi = phi
         self.__init_stdFname__(stdFnameSFFX)
         _ = L3D_PATH_DICT[self.geo]
-        self.sgpath = sgpath + _ if sgpath else _
+        self.sgpathn = sgpathn + _ if sgpathn else _
         self.with_positions = with_positions
         self.__init_lattice__()
         super(Lattice3D, self).__init__(self.G, **kwargs)

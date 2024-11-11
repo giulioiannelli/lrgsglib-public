@@ -18,9 +18,9 @@ class FullyConnected(SignedGraph):
         self.upd_graph_matrices()
 
     def init_paths(self):
-        self.sgpath = f"fc/"
-        self.pltPath = f"data/plot/{self.sgpath}"
-        self.datPath = f"data/{self.sgpath}"
+        self.sgpathn = f"fc/"
+        self.pltPath = f"data/plot/{self.sgpathn}"
+        self.datPath = f"data/{self.sgpathn}"
 
     #
     def make_animation(

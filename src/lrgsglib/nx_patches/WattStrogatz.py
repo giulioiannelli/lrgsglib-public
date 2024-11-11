@@ -7,11 +7,11 @@ class WattStrogatz(SignedGraph):
             n: int,
             k: int, 
             p: float, 
-            sgpath: str = WS_SGPATH, 
+            sgpathn: str = WS_SGPATH, 
             stdFnameSFFX: str = WS_STDFN,
             **kwargs):
         
-        self.sgpath = WS_PHTABB if not sgpath else sgpath
+        self.sgpathn = WS_PHTABB if not sgpathn else sgpathn
         self.__init_stdFname__(stdFnameSFFX)
         self.__init_network__(n, k, p)
         super(WattStrogatz, self).__init__(self.G, **kwargs)

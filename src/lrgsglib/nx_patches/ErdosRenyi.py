@@ -7,11 +7,11 @@ class ErdosRenyi(SignedGraph):
             self, 
             n: int, 
             p: float, 
-            sgpath: str = ER_SGPATH, 
+            sgpathn: str = ER_SGPATH, 
             stdFnameSFFX: str = ER_STDFN,
             **kwargs):
         
-        self.sgpathn = ER_PHTABB if not sgpath else sgpath
+        self.sgpathn = ER_PHTABB if not sgpathn else sgpathn
         self.__init_stdFname__(stdFnameSFFX)
         self.__init_network__(n, p)
         super(ErdosRenyi, self).__init__(self.G, **kwargs)
