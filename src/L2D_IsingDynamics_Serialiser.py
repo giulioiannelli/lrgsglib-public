@@ -22,11 +22,12 @@ progNameShrt = L2D_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-List = [32, 64]
-plist = np.linspace(0.01, 0.5, num=15)
-Tlist = np.concatenate([np.linspace(0.1, 1.4, 20),
-    np.linspace(1.4, 2.5, 10),
-    np.linspace(2.5, 5, 3)])
+List = [32, 64, 96]
+navglist = [navg//(2**i) for i in range(len(List))]
+plist = np.linspace(0.01, 0.5, num=20)
+Tlist = np.concatenate([np.linspace(0.1, 1.4, 15),
+    np.linspace(1.4, 2.5, 15),
+    np.linspace(2.5, 5, 4)])
 
 if args.slanzarv_minMB == args.slanzarv_maxMB:
     def memoryfunc(*_):
@@ -78,10 +79,10 @@ if execBool or printBool:
 else:
     exit(0)
 
-for L in List:
+for L,navv in zip(List, navglist):
     for p in plist:
             for T in Tlist:
-                estring = exec_str(L, p, geo, cell, navg, T, 
+                estring = exec_str(L, p, geo, cell, navv, T, 
                                    runlang, in_suffix, out_suffix, NoClust)
                 operate(estring)
 print(f"Total number of jobs executed: {count_exe}")
