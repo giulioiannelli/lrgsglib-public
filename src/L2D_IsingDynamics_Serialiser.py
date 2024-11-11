@@ -45,7 +45,7 @@ def slanzarv_str(mode, L, p, geo, c, T):
     slanzarvopt = "--nomail --jobname "
     slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
     argstr = '_'.join([progNameShrt, mode[:3], f"{L}", f"{p:.3g}", f"{T:.3g}", 
-                        geo[:3], c[3:]])
+                        geo[:3], out_suffix])
     return slanzarvstr + argstr
 #
 if execBool or printBool:
