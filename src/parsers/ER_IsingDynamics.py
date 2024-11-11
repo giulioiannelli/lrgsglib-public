@@ -1,4 +1,5 @@
 from lrgsglib.core import *
+from parsers.shared import *
 #
 def parse_fraction(value):
     try:
@@ -39,6 +40,7 @@ DEFAULT_WORKDIR = ''
 DEFAULT_MAX_ITER_ER_GC = 20
 DEFAULT_PRINT_CHRONO = False
 DEFAULT_THRMSTEPS = 20
+DEFAULT_VERBOSE = False
 #
 phelp_thrmsteps = """
     Number of thermalization steps.
@@ -75,6 +77,9 @@ phelp_workdir = f"""
 """
 phelp_navg2 = f"""
     Number of averages for the cluster statistic
+"""
+phelp_verbose = f"""
+    Verbose mode
 """
 #
 parsDict = {
@@ -134,7 +139,11 @@ parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
         'print_chrono': {'names': ['-pc', '--print_chrono'],
                         'help': phelp_print_chrono,
                         'action': argparse.BooleanOptionalAction,
-                        'default': DEFAULT_PRINT_CHRONO}
+                        'default': DEFAULT_PRINT_CHRONO},
+        'verbose': {'names': ['-v', '--verbose'],
+                    'help': phelp_verbose,
+                    'action': argparse.BooleanOptionalAction,
+                    'default': DEFAULT_VERBOSE}
 }
 parser = argparse.ArgumentParser(description=description.strip())
 # Mandatory arguments
