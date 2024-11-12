@@ -13,6 +13,7 @@ class SignedGraph:
         xprt_modeL: str = SG_XPRT_MODE,
         mprt_modeL: str = SG_MPRT_MODE,
         make_dir_tree: bool = True,
+        path_data: Path = None,
         on_g: str = "",
         expOut: str = "",
         dataOut: str = "",
@@ -32,6 +33,7 @@ class SignedGraph:
         np.random.seed(seed)
         #
         self.__init_paths__(
+            path_data=path_data,
             dataOut=dataOut, 
             plotOut=plotOut, 
             expOut=expOut
@@ -493,6 +495,10 @@ class SignedGraph:
         nx.set_node_attributes(self.gr[on_g], eigV_val_nd, f"eigV{which}")
     #
     # computations
+    #
+    def compute_laplacian_spectrum(self, typf: type = np.float64):
+        # NOT WORKING, NEEDS FIX
+        self.eigv = np.linalg.eigvalsh(self.Lap.astype(typf).todense())
     #
     def compute_full_laplacian_spectrum(self, typf: type = np.float64):
         self.eigv, self.eigV = np.linalg.eigh(self.sLp.astype(typf).todense())
