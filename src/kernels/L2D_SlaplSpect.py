@@ -30,17 +30,19 @@ def process_eigen_distribution(
     else:
         fname = f"{args.workDir}{fname_base}_{navg_done}.pkl"
         initial_data = initial_data_fn(args)
-        if not initial_data:
+        if initial_data is None:
             raise ValueError("Initial data is empty. Please check the input parameters or data generation.")
         if args.mode == "eigvec_dist":
             bin_counter = [Counter() for _ in range(args.howmany)]
         else:
             bin_counter = Counter()
 
-    # Create symmetric logarithmic bins
-    bins, bin_centers = create_symmetric_log_bins(
-        np.min(initial_data), np.max(initial_data), args.bins_count)
-    nAvgNeed = args.navg - navg_done
+    # Create bins based on mode
+    if args.mode == "eigvec_dist":
+        bins, bin_centers = create_symmetric_log_bins(initial_data, args.bins_count)
+    else:
+        bins, bin_centers = create_linear_bins(initial_data, args.bins_count)
+    nAvgNeed = args.number_of_averages - navg_done
     total_periods = (nAvgNeed // args.period) + bool(nAvgNeed % args.period)
 
     # Process each period until reaching the required number of averages
@@ -67,7 +69,7 @@ def eigvec_initial_data(args):
     if args.verbose:
         print("Computing initial eigenvector data...")
     result = np.abs(eigV_for_lattice2D_ptch(
-        side=args.side, pflip=args.p, geo=args.geo, mode=args.eigen_mode,
+        side=args.L, pflip=args.p, geo=args.geo, mode=args.eigen_mode,
         howmany=args.howmany))
     if args.verbose:
         print(f"Computed initial eigenvector data of size {result.shape}")
@@ -78,7 +80,7 @@ def eigval_initial_data(args):
     if args.verbose:
         print("Computing initial eigenvalue data...")
     result = eigv_for_lattice2D(
-        side=args.side, pflip=args.p, geo=args.geo)
+        side=args.L, pflip=args.p, geo=args.geo)
     if args.verbose:
         print(f"Computed initial eigenvalue data of size {result.shape}")
     return result
@@ -90,17 +92,16 @@ def eigvec_update_data(batch_size, bins, bin_centers, bin_counter, args):
     eig_values = [[] for _ in range(args.howmany)]
     for _ in range(batch_size):
         eigV = eigV_for_lattice2D_ptch(
-            side=args.side, pflip=args.p, geo=args.geo, mode=args.eigen_mode,
+            side=args.L, pflip=args.p, geo=args.geo, mode=args.eigen_mode,
             howmany=args.howmany)
         for i in range(args.howmany):
             eig_values[i].append(eigV[i])
     eig_values = [np.concatenate(i) for i in eig_values]
 
-    min_val = min(np.min(eig) for eig in eig_values)
-    max_val = max(np.max(eig) for eig in eig_values)
+    min_val = np.min(eig_values)
+    max_val = np.max(eig_values)
     if min_val < bins[0] or max_val > bins[-1]:
-        bins, bin_centers = create_symmetric_log_bins(
-            min(min_val, bins[0]), max(max_val, bins[-1]), args.bins_count)
+        bins, bin_centers = create_symmetric_log_bins(eig_values, args.bins_count)
 
     for i in range(args.howmany):
         bin_counter[i].update(bin_eigenvalues(eig_values[i], bins, bin_centers))
@@ -113,14 +114,13 @@ def eigval_update_data(batch_size, bins, bin_centers, bin_counter, args):
     if args.verbose:
         print(f"Updating eigenvalue data for batch size {batch_size}...")
     eig_values = [eigv_for_lattice2D(
-        side=args.side, pflip=args.p, geo=args.geo) for _ in range(batch_size)]
+        side=args.L, pflip=args.p, geo=args.geo) for _ in range(batch_size)]
     eig_values = np.concatenate(eig_values)
 
     min_val = np.min(eig_values)
     max_val = np.max(eig_values)
     if min_val < bins[0] or max_val > bins[-1]:
-        bins, bin_centers = create_symmetric_log_bins(
-            min(min_val, bins[0]), max(max_val, bins[-1]), args.bins_count)
+        bins, bin_centers = create_linear_bins(eig_values, args.bins_count)
 
     bin_counter.update(bin_eigenvalues(eig_values, bins, bin_centers))
     if args.verbose:
