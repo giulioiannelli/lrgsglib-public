@@ -14,7 +14,7 @@ DEFAULT_WORKDIR = ''
 DEFAULT_HOWMANY = 1
 DEFAULT_GEO = 'squared'
 DEFAULT_CELL = 'rand'
-DEFAULT_MODE = 'slanzarv_eigDistr'
+DEFAULT_MODE = 'slanzarv_eigvec_dist'
 #
 DEFAULT_PRINT = False
 DEFAULT_EXEC = False

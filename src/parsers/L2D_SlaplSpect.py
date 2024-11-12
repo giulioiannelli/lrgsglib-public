@@ -1,4 +1,5 @@
 from lrgsglib.core import *
+from parsers.shared import *
 #
 description = """
     Computational resources regarding the Signed Laplacian spectrum of 2D 
@@ -66,7 +67,7 @@ parsDictOpt = {'mode': {'names': ['-m', '--mode'],
                         'help': phelp_eigMode, 
                         'type': str, 
                         'default': DEFAULT_EIGMODE},
-                'geo': {'names': ['-g', '--geometry'],
+                'geo': {'names': ['-g', '--geo'],
                         'help': phelp_geo,
                         'type': str,
                         'default': DEFAULT_GEO} ,

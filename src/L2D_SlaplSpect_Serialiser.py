@@ -13,13 +13,16 @@ howmany = args.howmany
 #
 progName = L2D_SlaplSpect_progName
 progNameShrt = L2D_SlaplSpect_progNameShrt
-progMode = args.mode.split("_")[-1]
+progMode = '_'.join(args.mode.split('_')[1:])
 execBool = args.exec
 printBool = args.print
 #
-if mode.endswith("eigDistr"):
+if mode.endswith("eigvec_dist"):
     List = 2 ** np.arange(4, 10)
     plist = np.linspace(0.06, 0.115, num=10)
+if mode.endswith("eigval_dist"):
+    List = [16, 32, 64, 96]
+    plist = [0.01, 0.05, 0.08, 0.1, 0.15, 0.25, 0.5]
 if mode.startswith("slanzarv"):
     if args.slanzarv_minMB == args.slanzarv_maxMB:
 
@@ -78,9 +81,8 @@ else:
     exit(0)
 
 count = 0
-if mode.endswith("eigDistr"):
-    for L in List:
-        for p in plist:
-            estring = exec_str(L, p, geo, cell, navg, progMode, eigmode, T, 
-                               bins_count, howmany)
-            operate(estring, count)
+for L in List:
+    for p in plist:
+        estring = exec_str(L, p, geo, cell, navg, progMode, eigmode, T, 
+                            bins_count, howmany)
+        operate(estring, count)
