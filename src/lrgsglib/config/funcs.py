@@ -1365,16 +1365,37 @@ def remove_empty_dirs(path: str):
                 print(e)
 
 
-def create_symmetric_log_bins(min_value: float, max_value: float, num_bins: int, magnitude_increment: int = 2) -> Tuple[np.ndarray, np.ndarray]:
+def create_linear_bins(data: np.ndarray, bins_count: int) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Creates symmetric logarithmic bins between specified minimum and maximum values, including bin centers.
+    Creates linearly spaced bins and calculates their centers based on the provided data.
 
     Parameters
     ----------
-    min_value : float
-        The minimum value for the logarithmic bins.
-    max_value : float
-        The maximum value for the logarithmic bins.
+    data : np.ndarray
+        The input data array for which linear bins are created.
+    bins_count : int
+        The number of bins to create.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        bins : np.ndarray
+            The edges of the bins.
+        bin_centers : np.ndarray
+            The center values of each bin.
+    """
+    bins = np.linspace(np.min(data), np.max(data), bins_count)
+    bin_centers = (bins[:-1] + bins[1:]) / 2
+    return bins, bin_centers
+
+def create_symmetric_log_bins(data: np.ndarray, num_bins: int, magnitude_increment: int = 2) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Creates symmetric logarithmic bins based on the specified data, including bin centers.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The input data array for which symmetric logarithmic bins are created.
     num_bins : int
         The total number of bins (should be even to allow symmetry).
     magnitude_increment : int, optional
@@ -1388,10 +1409,16 @@ def create_symmetric_log_bins(min_value: float, max_value: float, num_bins: int,
         bin_centers : np.ndarray
             The center values of each bin.
     """
+    min_value = np.min(np.abs(data[data != 0]))
+    max_value = np.max(np.abs(data))
+
+    # Creating positive and negative symmetric logarithmic bins
     positive_bins = np.logspace(np.log10(min_value) - magnitude_increment, np.log10(max_value) + magnitude_increment, num_bins // 2 + 1)
     negative_bins = -np.flip(positive_bins[:-1])
+    
     bins = np.concatenate((negative_bins, [0], positive_bins))
     bin_centers = (bins[:-1] + bins[1:]) / 2
+
     return bins, bin_centers
 
 
