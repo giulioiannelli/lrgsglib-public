@@ -11,19 +11,15 @@ inSuffix = args.in_suffix
 NoClust = args.NoClust
 runlang = args.runlang
 thrmsteps = args.thermsteps
-if ic.startswith('ground_state'):
-    parts = ic.split('_')
-    number = int(parts[-1])
-    howmany = number+1
-else:
-    howmany = 1
+ic_gs = args.init_cond.startswith('ground_state')
+number = int(args.init_cond.split('_')[-1]) if ic_gs else 0
 #
 progName = ER_IsingDynamics_progName
 progNameShrt = ER_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-N_list = [512, 1024]
+N_list = [1024, 4096]
 pflip_list = np.linspace(0.01, 0.8, num=25)
 Tlist = np.concatenate([
     np.linspace(0.4, 10, 40),
