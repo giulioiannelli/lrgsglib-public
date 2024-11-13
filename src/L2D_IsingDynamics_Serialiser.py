@@ -12,9 +12,8 @@ in_suffix = args.in_suffix
 NoClust = args.NoClust
 runlang = args.runlang
 thrmsteps = args.thermsteps
-if ic.startswith('ground_state'):
-    parts = ic.split('_')
-    number = int(parts[-1])
+ic_gs = args.init_cond.startswith('ground_state')
+number = int(args.init_cond.split('_')[-1]) if ic_gs else 0
 
 #
 progName = L2D_IsingDynamics_progName
@@ -22,12 +21,12 @@ progNameShrt = L2D_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-List = [32, 64, 96]
+List = [32, 48, 64]
 navglist = [navg//(2**i) for i in range(len(List))]
-plist = np.linspace(0.01, 0.5, num=20)
-Tlist = np.concatenate([np.linspace(0.1, 1.4, 15),
-    np.linspace(1.4, 2.5, 15),
-    np.linspace(2.5, 5, 4)])
+plist = np.linspace(0.01, 0.5, num=25)
+Tlist = np.concatenate([np.linspace(0.1, 1.4, 16),
+    np.linspace(1.4, 2.5, 16),
+    np.linspace(2.5, 5, 3)])
 
 if args.slanzarv_minMB == args.slanzarv_maxMB:
     def memoryfunc(*_):
