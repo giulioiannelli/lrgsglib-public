@@ -7,7 +7,7 @@ def initialize_l2d_dict_args(args):
 def initialize_ising_dict_args(args, out_suffix):
     return dict(T=args.T, ic=args.init_cond, runlang=args.runlang, 
                 NoClust=args.NoClust, rndStr=True,
-                out_suffix=out_suffix, id_string=args.in_suffix)
+                out_suffix=out_suffix)
 
 def get_out_suffix(args, ic_gs, number):
     return args.out_suffix or "gs"+str(number)+args.cell_type if ic_gs else args.init_cond
@@ -19,7 +19,7 @@ def run_simulation(args, l2dDictArgs, isingDictArgs, number, remove_files):
         lattice.compute_k_eigvV(k=number+1)
         lattice.load_eigV_on_graph(which=number, binarize=True)
         lattice.make_clustersYN(f'eigV{number}', +1)
-
+        #
         isdy = IsingDynamics(lattice, **isingDictArgs)
         isdy.init_ising_dynamics()
         lattice.export_edgel_bin(exName=isdy.id_string_isingdyn)
