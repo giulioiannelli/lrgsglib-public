@@ -1669,7 +1669,9 @@ def interpolate_grid_data(
     x: np.ndarray, 
     y: np.ndarray, 
     z: np.ndarray, 
-    num_points: int = 1000
+    num_points: int = 1000,
+    method: str = 'cubic',
+    fill_value: float = np.nan
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Performs interpolation of z-data over a uniformly spaced grid defined by x and y coordinates.
@@ -1684,6 +1686,10 @@ def interpolate_grid_data(
         Matrix of computed z-values corresponding to each (x, y) pair.
     num_points : int, optional
         Number of points along each axis for the new grid. Defaults to 1000.
+    method : str, optional
+        Interpolation method to be used. Options are 'linear', 'nearest', and 'cubic'. Defaults to 'cubic'.
+    fill_value : float, optional
+        Value used to fill in for requested points outside of the convex hull of the input points. Defaults to np.nan.
 
     Returns
     -------
@@ -1701,10 +1707,9 @@ def interpolate_grid_data(
         np.linspace(y.min(), y.max(), num_points)
     )
     z_new = griddata(
-        points, z.ravel(), (grid_x, grid_y), method='cubic', fill_value=np.nan
+        points, z.ravel(), (grid_x, grid_y), method=method, fill_value=fill_value
     )
     return grid_x, grid_y, z_new
-from typing import List, Any
 
 def uniques(lst: List[Any]) -> List[Any]:
     """
