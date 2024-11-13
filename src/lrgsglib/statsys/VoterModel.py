@@ -43,7 +43,7 @@ class VoterModel(BinDynSys):
             f"{self.sg.N}",
             f"{self.sg.pflip}",
             f"{self.eqSTEP_def}",
-            self.sg.datPath,
+            self.sg.dataOut,
             adjfname,
             out_suffix
         ]
