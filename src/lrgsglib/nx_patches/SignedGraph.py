@@ -111,18 +111,16 @@ class SignedGraph:
             self.path_phtra,
             self.path_spect]
         #
-        pthSffx = pth_join(self.syshapePth, '')
-        self.dataOut = dataOut or PATHNDATA
-        self.plotOut = plotOut or PATHNPLOT
-        self.datPath = pth_join(self.dataOut, self.sgpathn, '')
-        self.pltPath = pth_join(self.dataOut, self.plotOut, self.sgpathn, '')
-        self.expOut = expOut or pth_join(self.datPath, PATHNGRPH, pthSffx)
+        self.dataOut = dataOut or str(self.path_data)
+        self.plotOut = plotOut or str(self.path_plot)
+        self.expOut = expOut or str(self.path_export)
         #
-        self.isingpath = pth_join(self.datPath, PATHNISNG, pthSffx)
-        self.voterpath = pth_join(self.datPath, PATHNVM, pthSffx)
-        self.lrgsgpath = pth_join(self.datPath, PATHNLRGS, pthSffx)
-        self.phtrapath = pth_join(self.datPath, PATHNPHTR, pthSffx)
-        self.spectpath = pth_join(self.datPath, PATHNSPEC, pthSffx)
+        self.sgdatpath = str(self.path_sgdata)
+        self.isingpath = str(self.path_ising)
+        self.voterpath = str(self.path_voter)
+        self.lrgsgpath = str(self.path_lrgsg)
+        self.phtrapath = str(self.path_phtra)
+        self.spectpath = str(self.path_spect)
     #
     def __make_dirs__(self, exist_ok: bool = True):
         for _ in self.dirMakeList: os.makedirs(_, exist_ok=exist_ok)
