@@ -105,7 +105,7 @@ class IsingDynamics:
             f"{self.NoClust}",
             f"{thrmSTEP:.3g}",
             f"{eqSTEP}",
-            self.sg.datPath,
+            self.sg.sgdatpath,
             self.sg.syshapePth,
             self.run_id,
             self.out_suffix,
