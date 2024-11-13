@@ -113,14 +113,14 @@ class IsingDynamics:
             f"{freq}"
         ]
         self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
-
+    #
     def setup_stderr_logging(self):
         stderrFname = join_non_empty('_', f"err{self.CbaseName}", f"{self.N}",
                                     f"{self.id_string_isingdyn}",
                                     f"{self.out_suffix}") + LOG
         stderrFname = os.path.join(LRGSG_LOG, stderrFname)
         self.stderr = open(stderrFname, 'w')
-
+    #
     def run_cprogram(self, verbose):
         if verbose:
             print('\rExecuting: ', ' '.join(self.cprogram), end='', flush=True)
@@ -128,7 +128,7 @@ class IsingDynamics:
                                 stdout=subprocess.PIPE)
         output = result.stdout
         self.s = np.frombuffer(output, dtype=np.int8)
-
+    #
     def metropolis_sampling(self, tqdm_on):
         metropolis_1step = np.vectorize(self.metropolis, excluded="self")
         if self.save_magnetization:
@@ -147,6 +147,7 @@ class IsingDynamics:
             self.ene.append(self.calc_full_energy())
             metropolis_1step(sample)
             save_magn_array()
+    #
     @time_function_accumulate
     def run(self, tqdm_on: bool = True, thrmSTEP: int = 2, eqSTEP: int = 10, 
             freq: int = 10, T_ising: float = None, verbose: bool = False):
@@ -159,7 +160,7 @@ class IsingDynamics:
             self.run_cprogram(verbose)
         else:
             self.metropolis_sampling(tqdm_on)
-
+    #
     def find_ising_clusters(self, import_cl: bool = False):
         #can be easily reworked
         if import_cl:
