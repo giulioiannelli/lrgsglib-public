@@ -8,7 +8,7 @@
 
 #define BOLTZMANN_FACTOR(DE, T) exp(-DE / T)
 
-#define ISNG_DIR "%sising/%s/"
+#define ISNG_DIR "%s/ising/%s/"
 #define SINI_FNAME ISNG_DIR "s_p=%.3g%s" BINX
 #define CLID_FNAME ISNG_DIR "cl%zu_p=%.3g%s" BINX
 #define CLOUT_FNAME ISNG_DIR "outcl%zu_p=%.3g_T=%.3g%s%s"
@@ -16,7 +16,7 @@
 #define SOUT_FNAME ISNG_DIR "sout_p=%.3g_T=%.3g_%s" BINX
 #define MAGN_FNAME ISNG_DIR "m_p=%.3g_T=%.3g_%s" BINX
 
-#define GRPH_DIR "%sgraph/%s/"
+#define GRPH_DIR "%s/graph/%s/"
 #define EDGL_FNAME GRPH_DIR "edgelist_p=%.3g%s" BINX
 
 extern sfmt_t sfmt;
