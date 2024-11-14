@@ -574,11 +574,7 @@ class SignedGraph:
         self.numClustersY = len(self.clustersY)
         self.numClustersN = len(self.clustersN)
         #
-        lgcY = max(self.clustersY, key=len) if self.clustersY else []
-        lgcN = max(self.clustersN, key=len) if self.clustersN else []
-        self.biggestClSet = self.clustersY if len(lgcY) >= len(lgcN) \
-            else self.clustersN
-        self.biggestClSet.sort(key=len, reverse=True)
+        self.biggestClSet = sorted(self.clustersY, key=len, reverse=True)
         self.numClustersBig = len(self.biggestClSet)
         self.gc = max(self.biggestClSet, key=len)
     #
