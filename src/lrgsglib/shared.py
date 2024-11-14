@@ -28,6 +28,7 @@ from networkx.classes.graph import Graph
 from numpy.typing import NDArray
 from networkx.drawing.layout import rescale_layout
 from pathlib import Path
+from operator import itemgetter
 from os import chdir, getcwd
 from os.path import join as pth_join
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
