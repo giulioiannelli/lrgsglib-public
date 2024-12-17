@@ -11,12 +11,16 @@ def get_out_suffix(args, ic_gs, number):
     return args.out_suffix or "gs"+str(number)+args.cell_type if ic_gs else args.init_cond
 
 def run_simulation(args, erDictArgs, isingDictArgs, number, remove_files):
-    for _ in range(args.number_of_averages):
+    count = 0
+    while count < args.number_of_averages:
         er = ErdosRenyi(**erDictArgs)
         er.flip_sel_edges(er.nwDict[args.cell_type]['G'])
         er.compute_k_eigvV(k=number+1)
         er.load_eigV_on_graph(which=number, binarize=True)
-        er.make_clustersYN(f'eigV{number}', -1)
+        try:
+            er.make_clustersYN(f'eigV{number}', -1)
+        except:
+            continue
         isdy = IsingDynamics(er, **isingDictArgs)
         isdy.init_ising_dynamics()
         er.export_edgel_bin(exName=isdy.id_string_isingdyn)
@@ -25,3 +29,4 @@ def run_simulation(args, erDictArgs, isingDictArgs, number, remove_files):
         if remove_files:
             isdy.remove_run_c_files(remove_stderr=True)
             er.remove_edgl_file()
+        count += 1
