@@ -415,7 +415,6 @@ class SignedGraph:
         ngraph_to = lambda x: dict(zip(graph, self.gr[x]))
         self.nodeMap[on_g] = {x: {v: k for k, v in ngraph_to(x).items()} 
                                    for x in self.GraphReprs if x != on_g}
-        print(self.gr)
         egraph_to =  lambda x: dict(zip(graph.edges(), self.gr[x].edges()))
         self.edgeMap[on_g] = {x: {v: k for k, v in egraph_to(x).items()} 
                                    for x in self.GraphReprs if x != on_g}
