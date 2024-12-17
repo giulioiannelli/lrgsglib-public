@@ -50,7 +50,7 @@ HELP_outd = f"""
     Output directory | default='{DEFAULT_OUTDIR}'
 """
 # Setup the argument parser
-parser = argparse.ArgumentParser(description=description.strip())
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 # Required parameters
 parser.add_argument(
     "L",

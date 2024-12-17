@@ -51,7 +51,7 @@ HELP_t = f"""
 Lattice2D_TransCluster_progName = "L2D_TransCluster"
 Lattice2D_TransCluster_progNameShrt = "L2D"
 # Setup the argument parser
-parser = argparse.ArgumentParser(description=description)
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 # Required parameters
 parser.add_argument(
     "--print",

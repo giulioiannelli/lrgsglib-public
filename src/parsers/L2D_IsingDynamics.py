@@ -133,7 +133,7 @@ parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
                         'default': DEFAULT_PRINT_CHRONO}
 }
 #
-parser = argparse.ArgumentParser(description=description.strip())
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 # Mandatory arguments
 def parsDict_get(var, key):
     return parsDict[var].get(key, None)
