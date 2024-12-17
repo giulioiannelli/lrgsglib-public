@@ -86,7 +86,7 @@ SG_INIT_NW_DICT = False
 SG_INIT_WVAL = 1.0
 SG_XPRT_MODE = 'pk'
 SG_MPRT_MODE = 'pk'
-SG_LIST_REPR = ['H', 'I', 'J', 'K', 'L', 'M', 'N']
+SG_LIST_REPR = ['H']
 SG_GRAPH_REPR = 'G'
 SG_GRAPHINT_REPR = SG_GRAPH_REPR
 SG_GRAPHGEO_REPR = 'H'
@@ -100,6 +100,8 @@ WS_PHTABB = "ws"
 WS_ONREP = 'G'
 WS_STDFN = ""
 WS_SGPATH = ""
+#
+FC_N = 100
 # erdos renyi default values
 ER_PHTABB = "er"
 ER_ONREP = 'G'
