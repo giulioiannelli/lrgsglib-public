@@ -42,7 +42,7 @@ class SignedRW(BinDynSys):
             f"{self.sg.N}",
             f"{self.sg.pflip}",
             f"{self.eqSTEP_def}",
-            self.sg.dataOut,
+            str(self.sg.path_data),
             adjfname,
             out_suffix
         ]
