@@ -41,7 +41,7 @@ HELP_o = f"""
     (str) suffix to be given to the output {DEFAULT_o:->10}
 """
 #
-parser = argparse.ArgumentParser(description=description)
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
     "L",
     help=HELP_L,

@@ -30,7 +30,7 @@ default_t2 = "| default=5"
 hPars_t2 = f"""
     (float) lower exponent of the time scale: {default_t2:->10}
 """
-parser = argparse.ArgumentParser(description=description)
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('L',
                     help=hPars_L,
                     type=int)
