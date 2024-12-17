@@ -59,7 +59,7 @@ HELP_t = f"""
 L3D_TransCluster_progName = "L3D_TransCluster"
 L3D_TransCluster_progNameShrt = "L3D"
 # Setup the argument parser
-parser = argparse.ArgumentParser(description=description)
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 # Required parameters
 parser.add_argument(
     "--print",
