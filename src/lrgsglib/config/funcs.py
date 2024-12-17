@@ -1752,3 +1752,29 @@ def uniques(lst: List[Any]) -> List[Any]:
     collections.OrderedDict : Ordered dictionary for maintaining element order (pre-Python 3.7).
     """
     return list(set(lst))
+def correlated_binary_sequence_vectorized(length: int, T: float, J: float = 1.) -> np.ndarray:
+    """
+    Generate a random binary sequence with a given flipping probability based on interaction JI and temperature T,
+    using a vectorized approach.
+
+    Parameters
+    ----------
+    length : int
+        Length of the sequence.
+    J : float
+        Interaction strength (coupling constant).
+    T : float
+        Temperature controlling randomness.
+
+    Returns
+    -------
+    np.ndarray
+        A binary sequence with flipping probabilities defined by tanh(JI / T).
+    """
+    P_flip = 1-0.5 * (np.tanh(J / T) + 1)  # Calculate flipping probability
+    flips = np.random.random(size=length) < P_flip
+    sequence = np.ones(length, dtype=int)
+    sequence[0] = np.random.choice([-1, 1])
+    flips_cumsum = np.cumsum(flips)
+    sequence = sequence[0] * (-1) ** flips_cumsum
+    return sequence
