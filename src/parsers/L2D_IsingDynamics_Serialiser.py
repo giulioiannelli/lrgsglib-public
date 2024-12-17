@@ -120,7 +120,7 @@ parDA = {'exec': {'names': ['-e', '--exec'],
                         }
 
 # Setup the argument parser
-parser = argparse.ArgumentParser(description=description)
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 # Optional parameters
 def parsDict_get(var, key):
     return parDO[var].get(key, None)
