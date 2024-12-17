@@ -1,5 +1,7 @@
 from lrgsglib.core import *
 
+MAX_ITER =1e5
+
 def initialize_er_dict_args(args):
     return dict(n=args.N, p=args.p, sgpathn=args.workdir, pflip=args.pflip, init_nw_dict=True)
 
@@ -12,7 +14,7 @@ def get_out_suffix(args, ic_gs, number):
 
 def run_simulation(args, erDictArgs, isingDictArgs, number, remove_files):
     count = 0
-    while count < args.number_of_averages:
+    while count < args.number_of_averages and count < MAX_ITER:
         er = ErdosRenyi(**erDictArgs)
         er.flip_sel_edges(er.nwDict[args.cell_type]['G'])
         er.compute_k_eigvV(k=number+1)
