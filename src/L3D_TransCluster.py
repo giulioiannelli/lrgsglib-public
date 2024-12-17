@@ -63,7 +63,7 @@ def process_ordParam(lattice, geometry_func, navg, sfreq, mpath, mode):
         if edge_weight == 'flip':
             l.flip_sel_edges(geometry_func(l))
         else:
-            l.make_edges_random_normal(mu, sigma)
+            l.set_edges_random_normal(mu, sigma)
         neglinks += l.Ne_n
         l.compute_k_eigvV(typf=typf)
         try:
