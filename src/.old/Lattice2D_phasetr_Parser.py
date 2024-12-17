@@ -36,7 +36,7 @@ HELP_o = f"""
 """
 
 # Setup the argument parser
-parser = argparse.ArgumentParser(description=description)
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # Required parameters
 parser.add_argument(

@@ -37,7 +37,7 @@ HELP_o = f"""
     (str) file name of the graph container {DEFAULT_o:->10}
 """
 #
-parser = argparse.ArgumentParser(description=description)
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
     "L",
     help=HELP_L,
