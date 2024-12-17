@@ -16,7 +16,7 @@ def run_simulation(args, erDictArgs, isingDictArgs, number, remove_files):
         er.flip_sel_edges(er.nwDict[args.cell_type]['G'])
         er.compute_k_eigvV(k=number+1)
         er.load_eigV_on_graph(which=number, binarize=True)
-        er.make_clustersYN(f'eigV{number}', +1)
+        er.make_clustersYN(f'eigV{number}', -1)
         isdy = IsingDynamics(er, **isingDictArgs)
         isdy.init_ising_dynamics()
         er.export_edgel_bin(exName=isdy.id_string_isingdyn)
