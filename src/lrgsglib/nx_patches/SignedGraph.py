@@ -89,8 +89,12 @@ class SignedGraph:
         return self.gclutil
     #
     def __init_paths__(
-        self, path_data: Path = None, path_plot: Path = None, path_export: Path = None,
-        dataOut: str = "", plotOut: str = "", expOut: str = ""
+        self,
+        path_data: Path = None,
+        path_plot: Path = None,
+        dataOut: str = "",
+        plotOut: str = "",
+        expOut: str = ""
     ):
         #
         self.path_data = path_data or PATHDATA
@@ -111,8 +115,6 @@ class SignedGraph:
             self.path_phtra,
             self.path_spect]
         #
-        self.dataOut = dataOut or str(self.path_data)
-        self.plotOut = plotOut or str(self.path_plot)
         self.expOut = expOut or str(self.path_export)
         #
         self.sgdatpath = str(self.path_sgdata)
@@ -136,13 +138,13 @@ class SignedGraph:
                 return nx.read_gml(self.graphPath+GML)
     #
     def __init_reprdict__(self):
-        self.GraphReprDict[self.onGraph] = self.G
+        self.gr[self.onGraph] = self.G
         for grd in SG_LIST_REPR:
             try:
-                self.GraphReprDict[grd] = getattr(self, grd)
+                self.gr[grd] = getattr(self, grd)
             except AttributeError:
                 pass
-        self.GraphReprs = list(self.GraphReprDict.keys())
+        self.GraphReprs = list(self.gr.keys())
     #
     def __init_weights__(self, values: Union[float, List] = 1) -> None:
         nx.set_edge_attributes(self.gr[self.onGraph], values, 'weight')
@@ -180,7 +182,7 @@ class SignedGraph:
     #
     def export_adj_bin(self, print_msg: bool = False) -> None:
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
-        exname = f"{self.expOut}adj_{self.stdFname}.bin"
+        exname = self.path_export / f"adj_{self.stdFname}.bin"
         if print_msg:
             print(f"exporting {exname}\n")
         with open(exname, "wb") as f:
@@ -189,10 +191,10 @@ class SignedGraph:
     #
     def export_edgel_bin(self, on_g: str = SG_GRAPH_REPR, exName: str = "",
                          print_msg: bool = False, mode: str = 'numpy') -> None:
-        edges = self.GraphReprDict[on_g].edges(data='weight')
+        edges = self.gr[on_g].edges(data='weight')
         exname = '_'.join([self.pEqStr, exName]) if exName else self.pEqStr
         fname = '_'.join(["edgelist", exname])+BIN
-        edglFname = os.path.join(self.expOut, fname)
+        edglFname = self.path_export / fname
         match mode:
             case 'numpy':
                 edge_array = np.array(list(edges), 
@@ -231,7 +233,7 @@ class SignedGraph:
                       on_g: str = SG_GRAPH_REPR):
         return self.gr[on_g].get_edge_data(u, v)[thedata]
     #
-    def get_edge_mapping_or_reverse(self, edge, target_g, on_g: str = SG_GRAPH_REPR):
+    def get_edge_mapping(self, edge, target_g, on_g: str = SG_GRAPH_REPR):
         try:
             return self.edgeMap[target_g][on_g][edge]
         except KeyError:
@@ -353,6 +355,11 @@ class SignedGraph:
                 ferroGroup.append(node)
         return ferroGroup, antiGroup
     #
+    # set graph properties
+    #
+    def set_node_attributes(self, values: Any, attribute_name: Any, on_g: str = SG_GRAPH_REPR):
+        nx.set_node_attributes(self.gr[on_g], values, attribute_name)
+    #
     # update graph methods
     #
     def upd_graph_matrices(self, format: str = 'csr', 
@@ -364,6 +371,15 @@ class SignedGraph:
         self.sLp = self.get_signed_laplacian()
         self.upd_Nen(on_g)
         self.upd_Degree(on_g)
+    #
+    def upd_edge_sets(self, on_g: str = SG_GRAPH_REPR):
+        self.eset[on_g] = set(self.gr[on_g].edges())
+        self.fleset[on_g] = set([
+            (u, v) 
+            for u, v, data in self.gr[on_g].edges(data=True)
+            if data.get("weight", 1) < 0
+        ])
+        self.lfeset[on_g] = self.eset[on_g].difference(self.fleset[on_g])
     #
     def upd_Degree(self, on_g: str = SG_GRAPH_REPR):
         self.degrees = list(dict(self.gr[on_g].degree).values())
@@ -399,6 +415,7 @@ class SignedGraph:
         ngraph_to = lambda x: dict(zip(graph, self.gr[x]))
         self.nodeMap[on_g] = {x: {v: k for k, v in ngraph_to(x).items()} 
                                    for x in self.GraphReprs if x != on_g}
+        print(self.gr)
         egraph_to =  lambda x: dict(zip(graph.edges(), self.gr[x].edges()))
         self.edgeMap[on_g] = {x: {v: k for k, v in egraph_to(x).items()} 
                                    for x in self.GraphReprs if x != on_g}
@@ -417,11 +434,11 @@ class SignedGraph:
                 self.upd_GraphRelabel(on_g, i)
                 self.nodes_in[i] = list(self.gr[i].nodes())
                 self.eset[i] = {x for e in self.eset[on_g] 
-                                if (x := self.get_edge_mapping_or_reverse(e, i, on_g))}
+                                if (x := self.get_edge_mapping(e, i, on_g))}
                 self.fleset[i] = {x for e in self.fleset[on_g]
-                                  if (x := self.get_edge_mapping_or_reverse(e, i, on_g))}
+                                  if (x := self.get_edge_mapping(e, i, on_g))}
                 self.lfeset[i] = {x for e in self.lfeset[on_g]
-                                  if (x := self.get_edge_mapping_or_reverse(e, i, on_g))}
+                                  if (x := self.get_edge_mapping(e, i, on_g))}
                 self.upd_Nen(i)
     #
     # graph operations
@@ -459,19 +476,27 @@ class SignedGraph:
     def unflip_all(self, on_g: str = SG_GRAPH_REPR):
         self.flip_sel_edges(1, on_g)
     #
-    def make_edges_random_normal(self, mu: float = 1.0, sigma: float = 1.0, 
+    def set_edge_weights_wij(self, wij: NDArray, on_g: str = SG_GRAPH_REPR):
+        weights = {
+            (u, v): wij[u, v] for u, v in self.gr[on_g].edges()
+        }
+        nx.set_edge_attributes(self.gr[on_g], values=weights, name="weight")
+        #
+        self.upd_edge_sets(on_g)
+        self.upd_GraphRepr_All(on_g)
+        self.upd_graph_matrices(on_g)
+    #
+    def set_edges_random_normal(self, mu: float = 1.0, sigma: float = 1.0, 
                                  on_g: str = SG_GRAPH_REPR):
         weights = {
             edge: random.normalvariate(mu, sigma) 
             for edge in self.gr[on_g].edges()
         }
         nx.set_edge_attributes(self.gr[on_g], values=weights, name='weight')
-        self.fleset[on_g] = set([(u, v) 
-                                 for u, v, _ in self.gr[on_g].edges(data=True)
-                                 if _.get('weight', 1) < 0])
-        self.lfeset[on_g] = self.eset[on_g].difference(self.fleset[on_g])
+        self.upd_edge_sets(on_g)
         self.upd_GraphRepr_All(on_g)
         self.upd_graph_matrices(on_g)
+    
     #
     def load_vec_on_nodes(self, vec: NDArray, attr: str,
                           on_g: str = SG_GRAPH_REPR):
