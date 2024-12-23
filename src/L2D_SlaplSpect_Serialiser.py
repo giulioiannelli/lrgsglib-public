@@ -21,8 +21,8 @@ if mode.endswith("eigvec_dist"):
     List = 2 ** np.arange(4, 10)
     plist = np.linspace(0.06, 0.115, num=10)
 if mode.endswith("eigval_dist"):
-    List = [16, 32, 64, 96]
-    plist = [0.01, 0.05, 0.08, 0.1, 0.15, 0.25, 0.5]
+    List = [16, 32, 48, 64, 96, 128]
+    plist = [0.01, 0.025, 0.05, 0.075, 0.08, 0.09, 0.1, 0.11, 0.125, 0.15, 0.25, 0.5, 0.75]
 if mode.startswith("slanzarv"):
     if args.slanzarv_minMB == args.slanzarv_maxMB:
 
