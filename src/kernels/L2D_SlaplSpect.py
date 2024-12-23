@@ -11,24 +11,27 @@ def process_eigen_distribution(
 
     # Check for existing files and determine the number of averages already done
     navg_done = 0
-    existing_files = sorted(glob.glob(f"{args.workDir}{fname_base}_*.pkl"))
+    working_path = args.workDir
+    search_str = f"{fname_base}_*.pkl"
+    existing_files = sorted(glob.glob(str(working_path / Path(search_str))))
+    #
     if existing_files:
         navg_done = max(int(os.path.splitext(f.split('_')[-1])[0])
                         for f in existing_files)
 
     # Load existing data or compute initial data if no files exist
     if navg_done > 0:
-        fname = f"{args.workDir}{fname_base}_{navg_done}.pkl"
-        with open(fname, "rb") as f:
+        path_fname = working_path / Path(f"{fname_base}_{navg_done}.pkl")
+        with open(path_fname, "rb") as f:
             bin_counter = pk.load(f)
         if args.mode == "eigvec_dist":
             initial_data = [val for counter in bin_counter for val in counter.elements()]
         else:
             initial_data = list(bin_counter.elements())
         if args.verbose:
-            print(f"Loaded existing data from {fname}")
+            print(f"Loaded existing data from {path_fname}")
     else:
-        fname = f"{args.workDir}{fname_base}_{navg_done}.pkl"
+        path_fname = working_path / Path(f"{fname_base}_{navg_done}.pkl")
         initial_data = initial_data_fn(args)
         if initial_data is None:
             raise ValueError("Initial data is empty. Please check the input parameters or data generation.")
@@ -52,15 +55,14 @@ def process_eigen_distribution(
         batch_size = min(nAvgNeed - current_period * args.period, args.period)
         bin_counter = update_data_fn(batch_size, bins, bin_centers,
                                      bin_counter, args)
-        save_data_fn(args, bin_counter, fname)
+        save_data_fn(args, bin_counter, path_fname)
         navg_done += batch_size
-        new_fname = f"{args.workDir}{fname_base}_{navg_done}.pkl"
-        os.rename(fname, new_fname)
-        fname = new_fname
-
+        new_fname = working_path /  Path(f"{fname_base}_{navg_done}.pkl")
+        os.rename(path_fname, new_fname)
+        path_fname = new_fname
     # Rename the final file
-    fname_final = f"{args.workDir}{fname_base}_{navg_done}.pkl"
-    os.rename(fname, fname_final)
+    fname_final = working_path /  Path(f"{fname_base}_{navg_done}.pkl")
+    os.rename(path_fname, fname_final)
     if args.verbose:
         print(f"Renamed final file to {fname_final}")
 

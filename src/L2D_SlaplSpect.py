@@ -6,7 +6,7 @@ def main():
     args = parse_arguments(parser)
     args.workDir = Lattice2D(
         side1=args.L, pflip=args.p, geo=args.geo, sgpathn=args.workDir
-    ).spectpath
+    ).path_spect
     # Determine the filename base based on the mode
     if args.mode == "eigvec_dist":
         fname_base = f"dist{args.howmany}_{args.p:.3g}_{args.eigen_mode}"
