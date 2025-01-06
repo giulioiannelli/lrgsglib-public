@@ -1778,3 +1778,27 @@ def correlated_binary_sequence_vectorized(length: int, T: float, J: float = 1.) 
     flips_cumsum = np.cumsum(flips)
     sequence = sequence[0] * (-1) ** flips_cumsum
     return sequence
+
+
+
+def compute_energy_sum(spins, edges):
+    """
+    Computes the negative weighted sum of energy for the given spins and edges.
+
+    Parameters:
+        spins (np.ndarray): Array of spins, where each spin is +1 or -1.
+        edges (list of tuples): List of edges with weights. Each edge is represented as
+                                (node1, node2, weight).
+
+    Returns:
+        float: The negative weighted sum of energy.
+    """
+    # Extract the edges and weights
+    ui, vi, w = zip(*edges)
+    
+    # Convert to numpy arrays for efficient computation
+    ui = np.array(ui, dtype=int)
+    vi = np.array(vi, dtype=int)
+    w = np.array(w)
+    energy_sum = -np.sum(w * spins[ui] * spins[vi])
+    return energy_sum
