@@ -12,12 +12,12 @@ from matplotlib.axes import Axes
 from matplotlib.cm import hsv, twilight, ScalarMappable
 from matplotlib.colorbar import ColorbarBase
 from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm, \
-    LightSource, LinearSegmentedColormap, Normalize
+    LightSource, LinearSegmentedColormap, Normalize, SymLogNorm, to_rgb
 from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
 from matplotlib.path import Path
 from matplotlib.text import Text
 from matplotlib.ticker import ScalarFormatter, MultipleLocator, \
-    SymmetricalLogLocator
+    SymmetricalLogLocator, LogLocator
 #
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
