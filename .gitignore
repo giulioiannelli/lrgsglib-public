@@ -24,3 +24,5 @@ data/plot/*/
 *.cpython-39.pyc
 *.pickle
 .DS_Store
+
+.codegpt
