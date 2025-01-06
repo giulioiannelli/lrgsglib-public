@@ -550,13 +550,10 @@ class SignedGraph:
     #
     def compute_rbim_energy_eigV(self, which: int = 0):
         spins = self.get_eigV_bin_check(which)
-        edges = self.gr[SG_GRAPH_REPR].edges(data=True)
-        ui, vi, w = zip(*[(u, v, data['weight']) for u, v, data in edges])
-        ui, vi = np.array(ui, dtype=int), np.array(vi, dtype=int)
-        w = np.array(w)
+        edges = self.gr[SG_GRAPH_REPR].edges(data='weight')
         if not hasattr(self, "energy_eigV_RBIM"):
             self.energy_eigV_RBIM = {}
-        self.energy_eigV_RBIM[which] = -np.sum(w * spins[ui] * spins[vi])
+        self.energy_eigV_RBIM[which] = compute_energy_sum(spins, edges)
     #
     def get_rbim_energy_eigV(self, which: int = 0):
         if not hasattr(self, "energy_eigV_RBIM"):
