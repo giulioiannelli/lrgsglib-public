@@ -21,7 +21,7 @@ def run_simulation(args, l2dDictArgs, isingDictArgs, number, remove_files):
         isdy = IsingDynamics(lattice, **isingDictArgs)
         isdy.init_ising_dynamics()
         lattice.export_edgel_bin(exName=isdy.id_string_isingdyn)
-        isdy.export_ising_clust(which=number, val=-1)
+        isdy.export_ising_clust(which=number, val=+1)
         isdy.run(verbose=False, thrmSTEP=args.thrmsteps)
         if remove_files:
             isdy.remove_run_c_files(remove_stderr=True)
