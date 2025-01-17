@@ -36,7 +36,7 @@ from scipy.interpolate import griddata, pchip
 from scipy.linalg import expm, fractional_matrix_power
 from scipy.linalg import eigvalsh as seigvalsh
 from scipy.ndimage import gaussian_filter1d, gaussian_filter
-from scipy.signal import argrelextrema, medfilt
+from scipy.signal import argrelextrema, medfilt, find_peaks
 from scipy.sparse import csr_array, spdiags, coo_matrix
 from scipy.sparse import identity as scsp_identity
 from scipy.sparse.linalg import eigsh as scsp_eigsh
