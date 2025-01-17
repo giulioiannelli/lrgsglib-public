@@ -21,7 +21,7 @@ progNameShrt = L2D_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-List = [16, 32, 48, 64, 96, 128]
+List = [16, 32, 64, 96, 128]
 navglist = [navg for i in range(len(List))]#[navg//(2**i) for i in range(len(List))]
 plist = np.linspace(0.01, 0.5, num=25)
 Tlist = np.concatenate([np.linspace(0.1, 1.6, 15),
