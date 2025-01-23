@@ -35,7 +35,7 @@ from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.interpolate import griddata, pchip
 from scipy.linalg import expm, fractional_matrix_power
 from scipy.linalg import eigvalsh as seigvalsh
-from scipy.ndimage import gaussian_filter1d, gaussian_filter
+from scipy.ndimage import gaussian_filter1d, gaussian_filter, zoom
 from scipy.signal import argrelextrema, medfilt, find_peaks
 from scipy.sparse import csr_array, spdiags, coo_matrix
 from scipy.sparse import identity as scsp_identity
