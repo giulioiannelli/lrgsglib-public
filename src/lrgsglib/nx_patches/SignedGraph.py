@@ -189,6 +189,18 @@ class SignedGraph:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)
     #
+    def export_eigV(self, which: int = 0,  exName: str = "", print_msg: bool = False, binarize: bool = True) -> None:
+        exname = '_'.join([self.pEqStr, exName]) if exName else self.pEqStr
+        fname = '_'.join([f"eigV{which}", exname])+BIN
+        self.exported_eigV = self.path_export / fname
+        if print_msg:
+            print(f"exporting {exname}\n")
+        with open(self.exported_eigV, "wb") as f:
+            if binarize:
+                self.get_eigV_bin_check(which).astype("int8").tofile(f)
+            else:
+                self.eigV[which].astype("float64").tofile(f)
+    #
     def export_edgel_bin(self, on_g: str = SG_GRAPH_REPR, exName: str = "",
                          print_msg: bool = False, mode: str = 'numpy') -> None:
         edges = self.gr[on_g].edges(data='weight')
@@ -210,6 +222,8 @@ class SignedGraph:
     #
     def remove_edgl_file(self):
         os.remove(self.edglFile.name)
+    def remove_eigV_file(self):
+        os.remove(self.exported_eigV)
     
     def export_graphPKL(self):
         pk.dump(self.G, open(self.graphPath+PKL, "wb"), pk.HIGHEST_PROTOCOL)

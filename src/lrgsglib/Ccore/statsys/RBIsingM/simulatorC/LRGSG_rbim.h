@@ -18,6 +18,7 @@
 
 #define GRPH_DIR "%s/graph/%s/"
 #define EDGL_FNAME GRPH_DIR "edgelist_p=%.3g%s" BINX
+#define EIGV_FNAME GRPH_DIR "eigV%d_p=%.3g%s" BINX
 
 extern sfmt_t sfmt;
 extern uint32_t *seed_rand;
