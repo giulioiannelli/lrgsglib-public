@@ -51,6 +51,8 @@ extern Edges __read_bin_EdgeList__(const char *filename, size_t *edge_count);
 extern void process_edges(const char *filename, size_t N, Edges *edges,
     NodesEdges *node_edges, size_tp *neigh_len);
 
+extern float calculateFractionEqual(int8_t *array1, int8_t *array2, size_t size);
+
 extern void __make_adj_from_tmp(size_t i, size_t j, double tmp, double_p **adj);
 extern void __fill_adj__(FILE **f, size_t N, double_p **adj);
 extern void __fill_edgl_read__(FILE **f, size_t N, double_p **edgl, 

@@ -30,6 +30,7 @@ class IsingDynamics:
         self.nstepsIsing = nstepsIsing
         self.save_magnetization = save_magnetization
         self.NoClust = NoClust
+        self.NeigV = -1
         self.upd_mode = upd_mode
         self.randstring_OPT = rndStr
         randstr_tmp = randstring() if rndStr else ""
@@ -71,8 +72,8 @@ class IsingDynamics:
             case "uniform":
                 self.s = np.random.choice([-1, 1], size=self.sg.N)
             case _ if self.ic.startswith("ground_state"):
-                number = int(self.ic.split("_")[-1])
-                bineigv = self.sg.get_eigV_bin_check(which=number)
+                self.NeigV = int(self.ic.split("_")[-1])
+                bineigv = self.sg.get_eigV_bin_check(which=self.NeigV)
                 self.s = bineigv
             case "custom":
                 self.s = custom
@@ -110,7 +111,8 @@ class IsingDynamics:
             self.run_id,
             self.out_suffix,
             self.upd_mode,
-            f"{freq}"
+            f"{freq}",
+            f"{self.NeigV}"
         ]
         self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
     #
@@ -149,7 +151,7 @@ class IsingDynamics:
             save_magn_array()
     #
     @time_function_accumulate
-    def run(self, tqdm_on: bool = True, thrmSTEP: int = 2, eqSTEP: int = 10, 
+    def run(self, tqdm_on: bool = True, thrmSTEP: int = 2, eqSTEP: int = 20, 
             freq: int = 10, T_ising: float = None, verbose: bool = False):
         self.check_attribute()
         self.initialize_run_parameters(T_ising)

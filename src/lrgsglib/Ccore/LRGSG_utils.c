@@ -158,6 +158,30 @@ extern uint32_t softplus_u32(int32_t x)
     }
     return 0;
 }
+/**
+ * @brief Calculates the fraction of equal entries in two int8_t arrays.
+ * 
+ * The arrays are assumed to contain only +1 and -1 values. The function
+ * counts the number of positions where the entries are equal and returns
+ * the fraction of such positions with respect to the total size.
+ * 
+ * @param array1 Pointer to the first int8_t array.
+ * @param array2 Pointer to the second int8_t array.
+ * @param size The size of the arrays (number of elements in each array).
+ * @return float The fraction of equal entries (value between 0 and 1).
+ */
+extern float calculateFractionEqual(int8_t *array1, int8_t *array2, size_t size) {
+    if (size == 0) {
+        return 0.0f; // Avoid division by zero
+    }
+    
+    size_t equalCount = 0;
+    for (size_t i = 0; i < size; i++) {
+        equalCount += (array1[i] * array2[i]) == 1; // Increment if product is 1
+    }
+    
+    return (float)equalCount / size;
+}
 
 /* STRING RELATED FUNCTIONS ************************************************* */
 //
