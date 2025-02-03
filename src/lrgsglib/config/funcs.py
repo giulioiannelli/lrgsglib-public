@@ -1802,3 +1802,31 @@ def compute_energy_sum(spins, edges):
     w = np.array(w)
     energy_sum = -np.sum(w * spins[ui] * spins[vi])
     return energy_sum
+
+def compute_delta_energies(spins, edges):
+    """
+    Computes the change in energy (ΔE) for each node when flipping its spin.
+
+    Parameters:
+        spins (np.ndarray): Array of spins, where each spin is +1 or -1.
+        edges (list of tuples): List of edges with weights. Each edge is represented as
+                                (node1, node2, weight).
+
+    Returns:
+        np.ndarray: Array of ΔE values for each spin flip.
+    """
+    # Extract the edges and weights
+    ui, vi, w = zip(*edges)
+
+    # Convert to numpy arrays for efficient computation
+    ui = np.array(ui, dtype=int)
+    vi = np.array(vi, dtype=int)
+    w = np.array(w)
+
+    # Compute ΔE for each node flip
+    delta_E = np.zeros_like(spins, dtype=float)
+    for i in range(len(spins)):
+        mask = (ui == i) | (vi == i)  # Select edges connected to node i
+        delta_E[i] = -2 * np.sum(w[mask] * spins[ui[mask]] * spins[vi[mask]])
+
+    return delta_E
