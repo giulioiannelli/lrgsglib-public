@@ -1,6 +1,8 @@
-from parsers.L2D_IsingDynamics_Serialiser import *
+from parsers.L2D_IsingDynamics_Serialiser import parse_arguments, parser
+from lrgsglib.config.progargs import *
+from lrgsglib.shared import *
 #
-args = parser.parse_args()
+args = parse_arguments(parser)
 #
 geo = args.geometry
 cell = args.cell_type
@@ -14,36 +16,31 @@ runlang = args.runlang
 thrmsteps = args.thermsteps
 ic_gs = args.init_cond.startswith('ground_state')
 number = int(args.init_cond.split('_')[-1]) if ic_gs else 0
-
+workdir = args.workdir
 #
 progName = L2D_IsingDynamics_progName
 progNameShrt = L2D_IsingDynamics_progNameShrt
 execBool = args.exec
 printBool = args.print
 #
-List = [64, 96, 128]
-navglist = [navg for i in range(len(List))]#[navg//(2**i) for i in range(len(List))]
-plist = [0.15, 0.25, 0.35]
-Tlist = np.concatenate([np.linspace(0.0, 1, 80),
-    np.linspace(1, 2.5, 20),
-    np.linspace(2.5, 5, 3)])
+List = args.side1_list
+navglist = [navg for _ in range(len(List))]
+plist = args.pflip_linsp
+Tlist = args.Temp_linsp
 
 if args.slanzarv_minMB == args.slanzarv_maxMB:
     def memoryfunc(*_):
         return args.slanzarv_minMB
 else:
     def memoryfunc(x):
-        return int(
-            np.interp(
-                x,
-                [min(List), max(List)],
-                [args.slanzarv_minMB, args.slanzarv_maxMB],
-            )
-        )
-def slanzarv_str(mode, L, p, geo, c, T, moretime=False):
+        return np.interp(x, [min(List), max(List)],
+                [args.slanzarv_minMB, args.slanzarv_maxMB]).astype(int)
+def slanzarv_str(mode, L, p, geo, c, T, moretime=False, short=True):
     slanzarvopt = "--nomail --jobname "
     if moretime:
-        slanzarvopt += "--time " + moretime
+        slanzarvopt += " --time " + moretime
+    if short:
+        slanzarvopt += " --short "
     slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
     argstr = '_'.join([progNameShrt, mode[:3], f"{L}", f"{p:.3g}", f"{T:.3g}", 
                         geo[:3], out_suffix])
@@ -66,7 +63,7 @@ if execBool or printBool:
             print(s)
             count += 1
     def exec_str(L, p, geo, cell, navg, T, runlang, in_suffix, out_suffix, 
-                 NoClust):
+                 NoClust, workdir=workdir):
         lnchStr = f"python src/{progName}.py"
         in_suffix = in_suffix or f"p={p:.3g}"
         outstr = f"-os {out_suffix} " if out_suffix else " "
@@ -74,7 +71,8 @@ if execBool or printBool:
                   f"-rl {runlang} -is {in_suffix} "
                   f"{outstr} "
                   f"-nc {NoClust} "
-                  f"-ts {thrmsteps}")
+                  f"-ts {thrmsteps} "
+                  f"-wd {workdir} " if workdir else "")
         return f"{slanzarv_str(runlang, L, p, geo, cell, T)} {lnchStr} {argstr}"
 
 else:
