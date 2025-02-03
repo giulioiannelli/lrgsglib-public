@@ -96,7 +96,10 @@
         "locale": "c",
         "sfmtrng.h": "c",
         "stdlib.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "__functional_base": "c",
+        "__node_handle": "c",
+        "__memory": "c"
     },
     "python.formatting.provider": "black",
     "python.formatting.blackArgs": [
