@@ -35,16 +35,18 @@ else:
     def memoryfunc(x):
         return np.interp(x, [min(List), max(List)],
                 [args.slanzarv_minMB, args.slanzarv_maxMB]).astype(int)
-def slanzarv_str(mode, L, p, geo, c, T, moretime=False, short=True):
-    slanzarvopt = "--nomail --jobname "
-    if moretime:
-        slanzarvopt += " --time " + moretime
-    if short:
-        slanzarvopt += " --short "
-    slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
-    argstr = '_'.join([progNameShrt, mode[:3], f"{L}", f"{p:.3g}", f"{T:.3g}", 
+def slanzarv_str(mode, L, p, geo, c, T, nomail=True, moretime=False, short=True):
+    jobname = '_'.join([progNameShrt, mode[:3], f"{L}", f"{p:.3g}", f"{T:.3g}", 
                         geo[:3], out_suffix])
-    return slanzarvstr + argstr
+    slanzarvopt = f"--jobname {jobname} "
+    if nomail:
+        slanzarvopt += "--nomail "
+    if moretime:
+        slanzarvopt += " --time " + moretime + ""
+    if short:
+        slanzarvopt += "--short"
+    slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
+    return slanzarvstr
 #
 if execBool or printBool:
     count = 0
