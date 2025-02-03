@@ -1,7 +1,21 @@
 from lrgsglib.core import *
 from lrgsglib.config.progargs import *
+from parsers.shared import *
 #
-parDO = {
+parserDict_Opt = {
+    'side1_list': {'names': ['-s1', '--side1_list'],
+                   'help': phelp_side1_list,
+                   'type': int,
+                   'nargs': '+',
+                   'default': DEFAULT_SIDE1_LIST},
+    'pflip_linsp': {'names': ['-pFT', '--pflip_linsp'],
+                   'help': phelp_pflip_linsp,
+                   'type': parse_multiple_linspace,
+                   'default': DEFAULT_PFLIP_LINSP},
+    'Temp_linsp': {'names': ['-TT', '--Temp_linsp'],
+                    'help': phelp_Temp_linsp,
+                    'type': parse_multiple_linspace,
+                    'default': DEFAULT_TEMP_LINSP},
     'geo': {'names': ['-g', '--geometry'],
             'help': phelp_geo,
             'type': str,
@@ -60,18 +74,19 @@ parDA = {'exec': {'names': ['-e', '--exec'],
                         'action': argparse.BooleanOptionalAction,
                         'default': DEFAULT_PRINT}
                         }
-
 # Setup the argument parser
 parser = argparse.ArgumentParser(description=L2D_IsingDynamicsSerializer_description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+# required arguments
+
+
 # Optional parameters
-def parsDict_get(var, key):
-    return parDO[var].get(key, None)
-for ov in parDO.keys():
-    parser.add_argument(*parsDict_get(ov, 'names'),
-        default=parsDict_get(ov, 'default'),
-        help=parsDict_get(ov, 'help')+\
-            f"(default: {parsDict_get(ov, 'default')})",
-        type=parsDict_get(ov, 'type'),
+for ov in parserDict_Opt.keys():
+    parser.add_argument(*parsDict_get(parserDict_Opt, ov, 'names'),
+        default=parsDict_get(parserDict_Opt, ov, 'default'),
+        help=parsDict_get(parserDict_Opt, ov, 'help')+\
+            f"(default: {parsDict_get(parserDict_Opt, ov, 'default')})",
+        type=parsDict_get(parserDict_Opt, ov, 'type'),
+        nargs=parsDict_get(parserDict_Opt, ov, 'nargs')
     )
 # Optional parameters
 def parsDict_get(var, key):

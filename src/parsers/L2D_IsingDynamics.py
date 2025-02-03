@@ -80,8 +80,8 @@ parser = argparse.ArgumentParser(description=L2D_IsingDynamics_description,
 # Mandatory arguments
 for v in parsDict.keys():
     parser.add_argument(v,
-        help=parsDict_get(v, 'help'),
-        type=parsDict_get(v, 'type'),
+        help=parsDict_get(parsDict, v, 'help'),
+        type=parsDict_get(parsDict, v, 'type'),
     )
 # Optional parameters
 for ov in parsDictOpt.keys():
