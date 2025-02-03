@@ -99,21 +99,37 @@ class IsingDynamics:
     def build_cprogram_command(self, thrmSTEP, eqSTEP, freq):
         run_id = self.id_string_isingdyn
         self.run_id = f"_{run_id}" if run_id else ''
-        arglist = [
-            f"{self.N}",
-            f"{self.T:.3g}",
-            f"{self.sg.pflip:.3g}",
-            f"{self.NoClust}",
-            f"{thrmSTEP:.3g}",
-            f"{eqSTEP}",
-            self.sg.sgdatpath,
-            self.sg.syshapePth,
-            self.run_id,
-            self.out_suffix,
-            self.upd_mode,
-            f"{freq}",
-            f"{self.NeigV}"
-        ]
+        match self.runlang:
+            case "C5":
+                arglist = [
+                    f"{self.N}",
+                    f"{self.T:.3g}",
+                    f"{self.sg.pflip:.3g}",
+                    f"{thrmSTEP:.3g}",
+                    f"{eqSTEP}",
+                    self.sg.sgdatpath,
+                    self.sg.syshapePth,
+                    self.run_id,
+                    self.out_suffix,
+                    self.upd_mode,
+                    f"{freq}",
+                ]
+            case _:
+                arglist = [
+                    f"{self.N}",
+                    f"{self.T:.3g}",
+                    f"{self.sg.pflip:.3g}",
+                    f"{self.NoClust}",
+                    f"{thrmSTEP:.3g}",
+                    f"{eqSTEP}",
+                    self.sg.sgdatpath,
+                    self.sg.syshapePth,
+                    self.run_id,
+                    self.out_suffix,
+                    self.upd_mode,
+                    f"{freq}",
+                    f"{self.NeigV}"
+                ]
         self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
     #
     def setup_stderr_logging(self):
