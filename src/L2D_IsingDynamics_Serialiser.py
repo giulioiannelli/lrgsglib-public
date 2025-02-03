@@ -40,8 +40,10 @@ else:
                 [args.slanzarv_minMB, args.slanzarv_maxMB],
             )
         )
-def slanzarv_str(mode, L, p, geo, c, T):
+def slanzarv_str(mode, L, p, geo, c, T, moretime=False):
     slanzarvopt = "--nomail --jobname "
+    if moretime:
+        slanzarvopt += "--time " + moretime
     slanzarvstr = f"slanzarv -m {memoryfunc(L)} {slanzarvopt}"
     argstr = '_'.join([progNameShrt, mode[:3], f"{L}", f"{p:.3g}", f"{T:.3g}", 
                         geo[:3], out_suffix])
