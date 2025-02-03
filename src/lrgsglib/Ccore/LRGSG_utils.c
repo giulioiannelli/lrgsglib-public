@@ -1,27 +1,73 @@
 #include "LRGSG_utils.h"
 //
-
-extern void print_stdout_cwd(void)
-{
+/**
+ * @brief Prints the current working directory to the specified output stream.
+ * 
+ * @param output_stream (FILE*) The output stream to print to (e.g., stdout, stderr).
+ */
+void print_cwd(FILE *output_stream) {
+    if (output_stream == NULL) {
+        fprintf(stderr, "Invalid output stream.\n");
+        return;
+    }
     char cwd[1024];
-    if (getcwd(cwd, sizeof(cwd)) == NULL)
-        perror("getcwd() error");
-    else
-        printf("Current working directory: %s\n", cwd);
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        fprintf(stderr, "Error getting current working directory: %s\n", strerror(errno));
+    } else {
+        fprintf(output_stream, "Current working directory: %s\n", cwd);
+    }
+}
+/**
+ * @brief Fills a section of an array with a specified value.
+ * 
+ * @param arr   (double*) Pointer to the array to be filled.
+ * @param start (size_t) Starting index of the section to fill (inclusive).
+ * @param end   (size_t) Ending index of the section to fill (exclusive).
+ * @param value (double) The value to set in the specified range.
+ * 
+ * @note The function does not perform bounds checking. Ensure `start < end` 
+ *       and `end` is within the bounds of the array to avoid undefined behavior.
+ */
+void fill_array_with_value(double *arr, size_t start, size_t end, double value) {
+    for (size_t i = start; i < end; i++)
+        arr[i] = value;
 }
 
+/**
+ * @brief Flips the spin at the given index in the spin array.
+ * 
+ * @param nd  (size_t) Index of the spin to flip.
+ * @param s   (spin_tp) Array of spins.
+ */
 void flip_spin(size_t nd, spin_tp s) {
     *(s + nd) = -*(s + nd);
 }
+/**
+ * @brief Calculates the total magnetization of the spin system.
+ * 
+ * @param N   (size_t) Number of spins in the system.
+ * @param s   (spin_tp) Pointer to the array of spins.
+ * 
+ * @return    (double) The total magnetization of the system.
+ */
 double calc_ext_magn(size_t N, spin_tp s) {
-    double m = 0.;
+    double M = 0.;
     for (size_t i = 0; i < N; i++)
-        m += *(s + i);
-    return m;
+        M += *(s + i);
+    return M;
 }
+/**
+ * @brief Calculates the average magnetization of the spin system.
+ * 
+ * @param N   (size_t) Number of spins in the system.
+ * @param s   (spin_tp) Pointer to the array of spins.
+ * 
+ * @return    (double) The average magnetization of the system.
+ */
 double calc_magn(size_t N, spin_tp s) {
-    return (calc_ext_magn(N, s) / N);
+    return calc_ext_magn(N, s) / N;
 }
+
 double calc_ext_magn2(size_t N, spin_tp s) {
     double m2 = 0.;
     for (size_t i = 0; i < N; i++)
@@ -64,6 +110,26 @@ double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
     }
     return -sum / N;
 }
+/**
+ * @brief Checks if flipping any spin in the system would increase the energy (stability at T = 0).
+ * 
+ * @param N      (size_t) Number of spins in the system.
+ * @param s      (spin_tp) Array of spins representing the system.
+ * @param nlen   (size_t*) Array containing the number of neighbors for each spin.
+ * @param ne     (NodesEdges) Array of neighbor data structures.
+ * 
+ * @return       (bool) True if the system is stable, false otherwise.
+ */
+bool glauber_isStableAtZeroTemp(size_t N, spin_tp s, size_tp nlen, NodesEdges ne) {
+    for (size_t i = 0; i < N; i++) {
+        double DE = 2 * (*(s + i)) * neighWeight_magn(ne[i], s, nlen[i]);
+        if (DE < 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 /**
  * @brief Generate a logarithmically-spaced vector
  *
