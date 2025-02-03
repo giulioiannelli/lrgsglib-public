@@ -1,67 +1,5 @@
 from lrgsglib.core import *
-#
-description = """
-    Serialiser for Lattice2D_IsingDynamics.py
-"""
-L2D_IsingDynamics_progName = "L2D_IsingDynamics"
-L2D_IsingDynamics_progNameShrt = "L2DID"
-# Default values for the optional parameters
-DEFAULT_GEO = 'squared'
-DEFAULT_CELL = 'rand'
-DEFAULT_INIT_COND = 'ground_state_0'
-DEFAULT_RUNLANG = 'C1'
-DEFAULT_NAVG = 500
-DEFAULT_INSFFX = ''
-DEFAULT_OUTSFFX = ''
-DEFAULT_NOCLUST = 1
-DEFAULT_THRMSTEPS = 20
-#
-DEFAULT_PRINT = False
-DEFAULT_EXEC = False
-DEFAULT_mMB = 2**10
-DEFAULT_MMB = 2**14
-# Helpers for argparse descriptions
-phelp_print = f"""
-    Option to print the output of the Serialiser. 
-"""
-
-phelp_thrmsteps = f"""
-    Number of thermalisation steps to compute
-"""
-phelp_exc = f"""
-    Option to exec the output of the Serialiser.
-"""
-phelp_mMB = f"""
-    Minimum MB quantity to be allocated for the single process 
-"""
-phelp_MMB = f"""
-    Maximum MB quantity to be allocated for the single process 
-"""
-phelp_cell = f"""
-    Topological defect class: 'rand', 'randXERR', 'randZERR', 'ball_<R>' 
-    with type(<R>)=int. 
-"""
-phelp_geo = f"""
-    Geometry of the lattice. 
-"""
-phelp_navg = f"""
-    Number of averages to compute 
-"""
-phelp_initCond = f"""
-    Initial condition for the Ising model
-"""
-phelp_runlang = f"""
-    Language for running the Ising model
-"""
-phelp_inSuffix = f"""
-    Suffix for the input files
-"""
-phelp_outSuffix = f"""
-    Suffix for the output files
-"""
-phelp_NoClust = f"""
-    Number of clusters to compute
-"""
+from lrgsglib.config.progargs import *
 #
 parDO = {
     'geo': {'names': ['-g', '--geometry'],
@@ -77,7 +15,7 @@ parDO = {
             'type': int,
             'default': DEFAULT_NAVG},
     'init_cond': {'names': ['-ic', '--init_cond'],
-                    'help': phelp_initCond,
+                    'help': phelp_ic,
                     'type': str,
                     'default': DEFAULT_INIT_COND},
     'runlang': {'names': ['-rl', '--runlang'],
@@ -85,11 +23,11 @@ parDO = {
                 'type': str,
                 'default': DEFAULT_RUNLANG},
     'in_suffix': {'names': ['-is', '--in_suffix'],
-                    'help': phelp_inSuffix,
+                    'help': phelp_insuffix,
                     'type': str,
                     'default': DEFAULT_INSFFX},
     'out_suffix': {'names': ['-os', '--out_suffix'],
-                    'help': phelp_outSuffix,
+                    'help': phelp_outsuffix,
                     'type': str,
                     'default': DEFAULT_OUTSFFX},
     'NoClust': {'names': ['-nc', '--NoClust'],
@@ -107,7 +45,11 @@ parDO = {
     'thermsteps': {'names': ['-ts', '--thermsteps'],
                     'help': phelp_thrmsteps,
                     'type': int,
-                    'default': DEFAULT_THRMSTEPS}
+                    'default': DEFAULT_THRMSTEPS},
+    'workdir': {'names': ['-wd', '--workdir'],
+                'help': phelp_workdir,
+                'type': str,
+                'default': DEFAULT_WORKDIR}
 }
 parDA = {'exec': {'names': ['-e', '--exec'],
                         'help': phelp_exc,
@@ -120,7 +62,7 @@ parDA = {'exec': {'names': ['-e', '--exec'],
                         }
 
 # Setup the argument parser
-parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(description=L2D_IsingDynamicsSerializer_description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 # Optional parameters
 def parsDict_get(var, key):
     return parDO[var].get(key, None)
