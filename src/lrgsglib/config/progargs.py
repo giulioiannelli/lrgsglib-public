@@ -1,3 +1,4 @@
+import numpy as np
 # General program arguments
 ## program helpers
 phelp_exc = "Option to exec the output of the Serialiser"
@@ -28,14 +29,20 @@ DEFAULT_WORKDIR = ''
 phelp_cell = "Topological defect class: 'rand', 'randXERR', 'randZERR', \
     'ball_<R>' with type(<R>)=int"
 phelp_NoClust = "Number of clusters to compute"
+phelp_pflip_linsp = "Tuple for linspace (e.g., '(0.15, 0.35, 3)')"
+phelp_Temp_linsp = "Tuple for linspace (e.g., '(0.1, 1, 10);(1, 2.5, 20);(2.5, 5, 3)')"
 ## default values
 DEFAULT_CELL = 'rand'
 DEFAULT_NOCLUST = 1
+DEFAULT_PFLIP_LINSP = np.linspace(0.01, 0.5, 10)
+DEFAULT_TEMP_LINSP = np.linspace(0.1, 2.2, 10)
 # Lattices program arguments
 ## program helpers
 phelp_geo = "Geometry of the lattice"
+phelp_side1_list = "List of side1 values for L2D Serializers"
 ## default values
 DEFAULT_GEO = 'squared'
+DEFAULT_SIDE1_LIST = [16, 32, 64]
 # IsingDynamics program arguments
 ## program helpers
 phelp_ic = "Initial condition for the Ising model"
@@ -55,3 +62,5 @@ L2D_IsingDynamics_description = f"""
 L2D_IsingDynamicsSerializer_description = f"""
     Serialiser for {L2D_IsingDynamics_progName}.py
 """
+
+
