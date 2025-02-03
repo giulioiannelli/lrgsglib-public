@@ -293,11 +293,10 @@ class IsingDynamics:
             os.remove(self.sfout.name)
         except FileNotFoundError:
             pass
-        if self.runlang == "C1":
-            try:
-                os.remove(self.clfout.name)
-            except FileNotFoundError:
-                pass
+        try:
+            os.remove(self.clfout.name)
+        except FileNotFoundError:
+            pass
         if remove_stderr:
             try:
                 os.remove(self.stderr.name)
