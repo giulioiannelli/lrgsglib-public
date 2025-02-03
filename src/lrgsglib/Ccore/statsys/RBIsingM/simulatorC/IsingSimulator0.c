@@ -13,11 +13,6 @@
 #define ADJ_FNAME GRPH_DIR "N=%zu/adj_%s" BINX
 #define EDGL_FNAME GRPH_DIR "N=%zu/edgel_%s" TXTX
 
-#define T_THERM_STEP (thrmSTEP * N)
-#define T_EQ_STEP (eqSTEP * N)
-
-sfmt_t sfmt;
-uint32_t *seed_rand;
 
 int main(int argc, char *argv[])
 {

@@ -6,13 +6,6 @@
 #define EXPECTED_ARGC 13
 #define MOD_SAVE 1
 //
-#define T_THERM_STEP  (size_t)(thrmSTEP * N)
-#define T_EQ_STEP (size_t)(eqSTEP * N)
-#define T_STEPS (T_THERM_STEP + T_EQ_STEP)
-//
-sfmt_t sfmt;
-uint32_t *seed_rand;
-//
 int main(int argc, char *argv[])
 {
     /* check argc */
@@ -60,6 +53,8 @@ int main(int argc, char *argv[])
     nSampleLog = atoi(argv[12]);
     NeigV = atoi(argv[13]);
     side = (size_t)sqrt(N);
+    /* init metropolis algorithm */
+    initialize_glauberMetropolis(T);
     /* open out files */
     switch (MOD_SAVE)
     {

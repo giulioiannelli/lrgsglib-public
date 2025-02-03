@@ -5,13 +5,6 @@
 //
 #define EXPECTED_ARGC 13
 //
-#define T_THERM_STEP (thrmSTEP * N)
-#define T_EQ_STEP (eqSTEP * N)
-#define T_STEPS (T_THERM_STEP + T_EQ_STEP)
-//
-sfmt_t sfmt;
-uint32_t *seed_rand;
-//
 int main(int argc, char *argv[])
 {
     /* check argc */
@@ -57,6 +50,8 @@ int main(int argc, char *argv[])
     side = (size_t)sqrt(N);
     freq = (size_t) (T_STEPS / nSampleLog);
     logspc = logspace_int(log10(T_STEPS), &nSampleLog);
+    /* init metropolis algorithm */
+    initialize_glauberMetropolis(T);
     //
     s = __chMalloc(N * sizeof(*s));
     ene = __chMalloc(sizeof(*ene) * T_STEPS);
