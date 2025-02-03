@@ -75,31 +75,24 @@ parDA = {'remove_files': {'names': ['-rf', '--remove_files'],
                         'default': DEFAULT_PRINT_CHRONO}
 }
 #
-parser = argparse.ArgumentParser(description=L2D_IsingDynamics_description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(description=L2D_IsingDynamics_description, 
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 # Mandatory arguments
-def parsDict_get(var, key):
-    return parsDict[var].get(key, None)
 for v in parsDict.keys():
     parser.add_argument(v,
         help=parsDict_get(v, 'help'),
         type=parsDict_get(v, 'type'),
     )
 # Optional parameters
-def parsDict_get(var, key):
-    return parsDictOpt[var].get(key, None)
 for ov in parsDictOpt.keys():
-    parser.add_argument(*parsDict_get(ov, 'names'),
-        default=parsDict_get(ov, 'default'),
-        help=parsDict_get(ov, 'help'),
-        type=parsDict_get(ov, 'type'),
+    parser.add_argument(*parsDict_get(parsDictOpt, ov, 'names'),
+        default=parsDict_get(parsDictOpt, ov, 'default'),
+        help=parsDict_get(parsDictOpt, ov, 'help'),
+        type=parsDict_get(parsDictOpt, ov, 'type'),
     )
-
-# Optional parameters
-def parsDict_get(var, key):
-    return parDA[var].get(key, None)
 for ov in parDA.keys():
-    parser.add_argument(*parsDict_get(ov, 'names'),
-        default=parsDict_get(ov, 'default'),
-        help=parsDict_get(ov, 'help'),
-        action=parsDict_get(ov, 'action')
+    parser.add_argument(*parsDict_get(parDA, ov, 'names'),
+        default=parsDict_get(parDA, ov, 'default'),
+        help=parsDict_get(parDA, ov, 'help'),
+        action=parsDict_get(parDA, ov, 'action')
     )
