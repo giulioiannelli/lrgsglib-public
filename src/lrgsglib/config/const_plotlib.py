@@ -12,7 +12,8 @@ from matplotlib.axes import Axes
 from matplotlib.cm import hsv, twilight, ScalarMappable
 from matplotlib.colorbar import ColorbarBase
 from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm, \
-    LightSource, LinearSegmentedColormap, Normalize, SymLogNorm, to_rgb
+    LightSource, LinearSegmentedColormap, Normalize, SymLogNorm, to_rgb,\
+    rgb2hex
 from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
 from matplotlib.path import Path
 from matplotlib.text import Text

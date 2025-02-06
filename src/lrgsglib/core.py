@@ -626,6 +626,8 @@ def get_graph_lspectrum_rw(G, is_signed=False):
     return L, w
 
 
+
+
 def entropy(G, steps=600, is_signed=False, wTresh=1e-15, t1=-2, t2=5):
     N = G.number_of_nodes()
 
