@@ -85,6 +85,7 @@ class IsingDynamics:
         if self.runlang.startswith("C") and not self.sg.import_on:
             self.export_s_init()
             self.CbaseName = f"IsingSimulator{self.runlang[-1]}"
+        self.sini = self.s.copy()
     #
     def check_attribute(self):
         try:
