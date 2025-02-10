@@ -1830,3 +1830,163 @@ def compute_delta_energies(spins, edges):
         delta_E[i] = -2 * np.sum(w[mask] * spins[ui[mask]] * spins[vi[mask]])
 
     return delta_E
+
+
+def coarsen_bins_with_padding(x: np.ndarray, y: np.ndarray, factor: int) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Coarsen binned data by a given factor with padding.
+
+    This function groups consecutive bins by the specified factor. The new bin centers are the
+    mean of each group, and the new bin values are the sum of each group. If the length of the input
+    arrays is not divisible by the factor, they are padded accordingly.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        1D array of bin centers.
+    y : np.ndarray
+        1D array of bin values.
+    factor : int
+        Factor by which to reduce the number of bins.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        Tuple containing:
+        - new_x: 1D array of coarsened bin centers.
+        - new_y: 1D array of coarsened bin values.
+
+    Notes
+    -----
+    If len(x) is not a multiple of factor, x is padded using its edge value and y is padded with zeros.
+    """
+    remainder = len(x) % factor
+    if remainder != 0:
+        pad_width = factor - remainder
+        x = np.pad(x, (0, pad_width), mode='edge')
+        y = np.pad(y, (0, pad_width), mode='constant', constant_values=0)
+    
+    new_x = x.reshape(-1, factor).mean(axis=1)
+    new_y = y.reshape(-1, factor).sum(axis=1)
+    return new_x, new_y
+
+
+def spin_overlap(S1: np.ndarray, S2: np.ndarray) -> float:
+    """
+    Compute the maximum overlap between two spin configurations.
+
+    This function calculates the overlap between two spin matrices by computing
+    both the direct overlap and the flipped overlap (accounting for spin inversion).
+    The overlap is defined as the average of the product of corresponding spins.
+
+    Parameters
+    ----------
+    S1 : np.ndarray
+        A 2D numpy array representing the first spin configuration.
+    S2 : np.ndarray
+        A 2D numpy array representing the second spin configuration.
+
+    Returns
+    -------
+    float
+        The maximum overlap value between the two spin configurations.
+
+    Raises
+    ------
+    AssertionError
+        If S1 and S2 do not have the same shape.
+
+    Notes
+    -----
+    The function assumes that the spin values are numerical (e.g., +1 and -1).
+    """
+    assert S1.shape == S2.shape, "Matrices must have the same shape!"
+
+    direct_overlap = np.sum(S1 * S2) / S1.size
+    flipped_overlap = np.sum(S1 * (-S2)) / S1.size
+
+    return max(direct_overlap, flipped_overlap)
+
+
+def matrix_projection(M: np.ndarray, basis: List[np.ndarray]) -> List[float]:
+    """
+    Compute the projection of a matrix onto a set of basis matrices.
+
+    This function computes the projection of matrix M onto each matrix in the provided
+    basis. The projection onto a basis matrix is defined as the normalized inner product,
+    where the normalization is performed using the Frobenius norm of the basis matrix.
+
+    Parameters
+    ----------
+    M : np.ndarray
+        2D array representing the matrix to be projected.
+    basis : List[np.ndarray]
+        List of 2D arrays representing the basis matrices.
+
+    Returns
+    -------
+    List[float]
+        A list of projection values, one for each basis matrix in the input list.
+
+    Notes
+    -----
+    The projection for each basis matrix B_i is computed as:
+        projection_i = (sum(M * B_i)) / ||B_i||_F,
+    where ||B_i||_F denotes the Frobenius norm of B_i.
+    """
+    projections = []
+    for B_i in basis:
+        inner_product = np.sum(M * B_i)
+        norm_Bi = np.linalg.norm(B_i)
+        projection_i = inner_product / norm_Bi
+        projections.append(projection_i)
+    return projections
+
+def reconstruct_from_projections(projections: List[float], basis: List[np.ndarray]) -> np.ndarray:
+    """
+    Reconstruct a matrix from its projections onto a basis.
+
+    This function reconstructs a matrix by summing the product of each projection
+    coefficient with its corresponding basis matrix.
+
+    Parameters
+    ----------
+    projections : List[float]
+        List of projection coefficients for each basis matrix.
+    basis : List[np.ndarray]
+        List of basis matrices. All basis matrices must have the same shape.
+
+    Returns
+    -------
+    np.ndarray
+        The reconstructed matrix obtained by summing the scaled basis matrices.
+    """
+    reconstructed_matrix = np.zeros_like(basis[0])
+    for i, B_i in enumerate(basis):
+        reconstructed_matrix += projections[i] * B_i
+    return reconstructed_matrix
+
+import numpy as np
+from typing import Union, Sequence
+
+def elements_within_eta_numpy(array: Union[np.ndarray, Sequence[float]], eta: float) -> np.ndarray:
+    """
+    Return elements that are within a threshold eta from the minimum value in the array.
+
+    Parameters
+    ----------
+    array : array-like
+        Input array of numerical values. It will be converted to a NumPy array.
+    eta : float
+        Threshold value. Elements whose difference from the minimum value is less than or equal to eta are returned.
+
+    Returns
+    -------
+    np.ndarray
+        Array of elements that are within eta of the minimum value.
+    """
+    array = np.array(array)
+    min_val = np.min(array)
+    mask = (array - min_val) <= eta
+    filtered_elements = array[mask]
+    return filtered_elements
