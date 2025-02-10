@@ -296,7 +296,7 @@ class IsingDynamics:
             pass
         try:
             os.remove(self.clfout.name)
-        except FileNotFoundError:
+        except:
             pass
         if remove_stderr:
             try:
