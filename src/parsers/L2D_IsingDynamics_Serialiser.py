@@ -83,8 +83,7 @@ parser = argparse.ArgumentParser(description=L2D_IsingDynamicsSerializer_descrip
 for ov in parserDict_Opt.keys():
     parser.add_argument(*parsDict_get(parserDict_Opt, ov, 'names'),
         default=parsDict_get(parserDict_Opt, ov, 'default'),
-        help=parsDict_get(parserDict_Opt, ov, 'help')+\
-            f"(default: {parsDict_get(parserDict_Opt, ov, 'default')})",
+        help=parsDict_get(parserDict_Opt, ov, 'help'),
         type=parsDict_get(parserDict_Opt, ov, 'type'),
         nargs=parsDict_get(parserDict_Opt, ov, 'nargs')
     )
