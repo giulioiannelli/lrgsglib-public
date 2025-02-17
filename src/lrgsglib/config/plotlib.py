@@ -69,7 +69,7 @@ def get_opposite_color(color: ColorType, output_format: str = 'hex'):
             else:
                 raise ValueError("Unsupported tuple length for color. Must be 3 (RGB) or 4 (RGBA).")
         else:
-            rgb = mcolors.to_rgb(color)
+            rgb = to_rgb(color)
     except ValueError:
         raise ValueError("Unsupported color format. Please provide a valid color.")
 
@@ -79,7 +79,7 @@ def get_opposite_color(color: ColorType, output_format: str = 'hex'):
 
     # Return the opposite color in the desired output format
     if output_format == 'hex':
-        return mcolors.to_hex(opposite_rgb)
+        return to_hex(opposite_rgb)
     elif output_format == 'rgb':
         return tuple(opposite_rgb)
     else:
