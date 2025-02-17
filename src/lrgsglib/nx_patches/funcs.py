@@ -784,3 +784,62 @@ def remove_edges(G: nx.Graph, pdil: float) -> nx.Graph:
         return G
 
     return G
+
+
+
+def fast_set_weights_from_matrix(G: nx.Graph, weight_matrix: np.ndarray) -> None:
+    """
+    Update the edge weights of an existing fully-connected NetworkX graph using a weighted adjacency matrix.
+
+    This function efficiently updates the 'weight' attribute for each edge in the graph `G`
+    by mapping values from the provided `weight_matrix` using NetworkX's bulk attribute update.
+    It assumes that `G` is undirected and fully connected, and that `weight_matrix` is a square
+    NumPy array of shape (N, N), where N is the number of nodes in `G`. Diagonal entries (self-loops)
+    are ignored.
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        A fully-connected NetworkX graph whose edge weights will be updated.
+    weight_matrix : np.ndarray
+        A 2D NumPy array of shape (N, N) representing the weighted adjacency matrix. The element
+        at index (i, j) specifies the weight for the edge between nodes i and j.
+
+    Returns
+    -------
+    None
+        The function modifies the graph `G` in-place and does not return any value.
+
+    Raises
+    ------
+    ValueError
+        If the dimensions of `weight_matrix` do not match the number of nodes in `G`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import networkx as nx
+    >>> G = nx.complete_graph(4)
+    >>> weight_matrix = np.array([
+    ...     [ 0,  2, -3,  1],
+    ...     [ 2,  0,  4, -1],
+    ...     [-3,  4,  0,  5],
+    ...     [ 1, -1,  5,  0]
+    ... ])
+    >>> fast_set_weights_from_matrix(G, weight_matrix)
+    >>> G[0][1]['weight']
+    2
+    """
+    num_nodes = G.number_of_nodes()
+    if weight_matrix.shape != (num_nodes, num_nodes):
+        raise ValueError("The dimensions of weight_matrix must match the number of nodes in G.")
+
+    # Construct a dictionary for edge weights from the upper triangular portion of the matrix
+    edge_weights = {
+        (i, j): weight_matrix[i, j]
+        for i in range(num_nodes)
+        for j in range(i + 1, num_nodes)
+    }
+
+    # Update the graph's edge attributes in one efficient call
+    nx.set_edge_attributes(G, edge_weights, "weight")
