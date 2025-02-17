@@ -37,7 +37,8 @@ def run_simulation(args, l2dDictArgs, isingDictArgs, number, remove_files, min_g
         #
         isdy = IsingDynamics(lattice, **isingDictArgs)
         isdy.init_ising_dynamics()
-        lattice.export_eigV(number, exName=isdy.id_string_isingdyn)
+        if args.runlang == 'C4':
+            lattice.export_eigV(number, exName=isdy.id_string_isingdyn)
         lattice.export_edgel_bin(exName=isdy.id_string_isingdyn)
         isdy.export_ising_clust(which=number, val=val)
         isdy.run(verbose=False, thrmSTEP=args.thrmsteps)
