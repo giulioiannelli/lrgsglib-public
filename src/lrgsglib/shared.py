@@ -1,6 +1,7 @@
 #
 import argparse
 import glob
+import itertools
 import lmfit
 import os
 import powerlaw
