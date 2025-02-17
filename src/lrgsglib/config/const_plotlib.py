@@ -1,24 +1,23 @@
 from ..shared import *
 #
 import matplotlib.animation as animation
-import matplotlib.cm as cm
-import matplotlib.colors as mcolors
-import matplotlib.colors as mplc
 import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 #
 from matplotlib import gridspec, rc_context, cycler
 from matplotlib.axes import Axes
-from matplotlib.cm import hsv, twilight, ScalarMappable
+from matplotlib.cm import hsv, twilight, ScalarMappable, register_cmap
 from matplotlib.colorbar import ColorbarBase
 from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm, \
     LightSource, LinearSegmentedColormap, Normalize, SymLogNorm, to_rgb,\
-    rgb2hex
-from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch
+    rgb2hex, to_hex
+from matplotlib.lines import Line2D
+from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch, ConnectionPatch
 from matplotlib.path import Path
 from matplotlib.text import Text
 from matplotlib.ticker import ScalarFormatter, MultipleLocator, \
     SymmetricalLogLocator, LogLocator
+from matplotlib.transforms import blended_transform_factory
 #
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.axes_divider import AxesDivider
@@ -37,12 +36,12 @@ restr_twilight = LinearSegmentedColormap.from_list(
     "restr_twilight", restr_twilight_vals
 )
 credcblu = ListedColormap([cred, cblu])
-cm.register_cmap(name="restr_twilight", cmap=restr_twilight)
-cm.register_cmap(name='restr_twilight_r', cmap=restr_twilight.reversed())
+register_cmap(name="restr_twilight", cmap=restr_twilight)
+register_cmap(name='restr_twilight_r', cmap=restr_twilight.reversed())
 
 red_blue = LinearSegmentedColormap.from_list("red_blue", ["red", "blue"])
-cm.register_cmap(name="red_blue", cmap=red_blue)
-cm.register_cmap(name="red_blue_r", cmap=red_blue.reversed())
+register_cmap(name="red_blue", cmap=red_blue)
+register_cmap(name="red_blue_r", cmap=red_blue.reversed())
 
 PLT_SL2DSQ_SIDE1 = 7
 PLT_SL2DSQ_SIDE2 = 7
