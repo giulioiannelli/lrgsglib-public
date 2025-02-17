@@ -39,9 +39,8 @@ else:
         return np.interp(x, hl_side, hl_memy).astype(int)
 def slanzarv_str(mode, L, p, geo, c, T, 
                  nomail=True, moretime=False, short=False):
-    jobname = join_non_empty('_', progn_shrt, mode[:3],
-                            f"{L}", f"{p:.3g}", f"{T:.3g}", geo[:3], c, 
-                            out_suffix)
+    jobname = join_non_empty('_', progn_shrt, out_suffix,
+                            f"{L}", f"{p:.3g}", f"{T:.3g}", geo[:3], c)
     slanzarvopt = f"--jobname {jobname} "
     if nomail:
         slanzarvopt += "--nomail "
