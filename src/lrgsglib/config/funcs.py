@@ -1966,8 +1966,6 @@ def reconstruct_from_projections(projections: List[float], basis: List[np.ndarra
         reconstructed_matrix += projections[i] * B_i
     return reconstructed_matrix
 
-import numpy as np
-from typing import Union, Sequence
 
 def elements_within_eta_numpy(array: Union[np.ndarray, Sequence[float]], eta: float) -> np.ndarray:
     """
@@ -1990,3 +1988,85 @@ def elements_within_eta_numpy(array: Union[np.ndarray, Sequence[float]], eta: fl
     mask = (array - min_val) <= eta
     filtered_elements = array[mask]
     return filtered_elements
+
+def random_combination(basis):
+    """
+    Generate a random binary combination of the given basis vectors,
+    ensuring that the product involves an odd number (at least 3) of factors.
+
+    Each basis vector is assumed to have entries in {+1, -1}. Instead of
+    selecting each coefficient independently, this function chooses a random
+    odd number k (with k ≥ 3) and then randomly selects k distinct basis vectors.
+    The resulting vector is computed as the elementwise product of the chosen vectors.
+
+    Parameters
+    ----------
+    basis : list of numpy.ndarray or numpy.matrix
+        A list of basis vectors, each represented as a NumPy array or matrix with
+        entries +1 or -1. The list must contain at least 3 vectors.
+
+    Returns
+    -------
+    tuple
+        A tuple (result, coeffs) where:
+          - result is a NumPy array containing the resulting vector.
+          - coeffs is a NumPy array of binary coefficients (0 or 1) indicating
+            which basis vectors were selected (with an odd count ≥ 3).
+    
+    Raises
+    ------
+    ValueError
+        If the number of basis vectors is less than 3.
+    """
+    n = len(basis)
+    if n < 3:
+        raise ValueError("Basis must contain at least 3 vectors.")
+
+    # Determine possible odd numbers from 3 up to n (if n is even, max odd is n-1)
+    max_odd = n if n % 2 == 1 else n - 1
+    possible_counts = np.arange(3, max_odd + 1, 2)
+    k = int(np.random.choice(possible_counts))
+    
+    coeffs = np.zeros(n, dtype=int)
+    indices = np.random.choice(n, size=k, replace=False)
+    coeffs[indices] = 1
+
+    result = np.ones_like(np.asarray(basis[0]))
+    for c, vec in zip(coeffs, basis):
+        if c:
+            result *= np.asarray(vec)
+    return result, coeffs
+
+def obtain_coeffs(basis, vector):
+    """
+    Obtain the coefficients of the linear combination of the basis vectors that yields
+    the given vector.
+
+    This function assumes that the basis vectors form an invertible set. It converts
+    each basis vector to a NumPy array, constructs the matrix with these vectors as
+    columns, and then solves the linear system
+
+        B * c = vector
+
+    for the coefficient vector c.
+
+    Parameters
+    ----------
+    basis : list of numpy.ndarray or numpy.matrix
+        A list of basis vectors.
+    vector : numpy.ndarray
+        The target vector assumed to be a linear combination of the basis vectors.
+
+    Returns
+    -------
+    numpy.ndarray
+        A NumPy array containing the coefficients of the linear combination.
+
+    Raises
+    ------
+    numpy.linalg.LinAlgError
+        If the matrix formed by the basis vectors is singular (i.e., non-invertible).
+    """
+    basis_arrays = [np.asarray(vec) for vec in basis]
+    B = np.column_stack(basis_arrays)
+    return np.linalg.solve(B, vector)
