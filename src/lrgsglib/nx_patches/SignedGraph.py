@@ -311,15 +311,15 @@ class SignedGraph:
             self.compute_k_eigvV(k=which+1)
         return self.get_eigV_binarized(which)
     #
-    def get_bineigV_all(self):
-        try:
-            eigVbin = bin_sign(self.eigV)
-        except (AttributeError, IndexError):
-            self.compute_k_eigvV()
-            eigVbin = bin_sign(self.eigV)
-        for i in range(len(eigVbin)):
-            eigVbin[i] = flip_to_positive_majority(eigVbin[i])
-        return eigVbin
+    def get_eigV_bin_check_list(self, custom_slice: slice = slice(None)):
+        maxidx = (custom_slice.stop - 1) if custom_slice.stop is not None else self.N
+        assert maxidx <= self.N, SG_ERRMSG_MAXEIGVIDX
+        if not hasattr(self, f"eigV"):
+            if custom_slice == slice(None):
+                self.compute_full_laplacian_spectrum()
+            else:
+                self.compute_k_eigvV(k=maxidx)
+        return [self.get_eigV_bin_check(_) for _ in range(maxidx)]
     #
     def get_signed_laplacian_embedding(self, k: int = 2):
         return self.eigV[:k]
