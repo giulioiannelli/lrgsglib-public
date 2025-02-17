@@ -7,12 +7,12 @@ def initialize_l2d_dict_args(args):
 def initialize_ising_dict_args(args, out_suffix):
     return dict(T=args.T, ic=args.init_cond, runlang=args.runlang, 
                 NoClust=args.NoClust, rndStr=True,
-                out_suffix=out_suffix)
+                out_suffix=out_suffix, thrmSTEP=args.thrmsteps)
 
 def get_out_suffix(args, ic_gs, number):
     return args.out_suffix or "gs"+str(number)+args.cell_type if ic_gs else args.init_cond
 
-def run_simulation(args, l2dDictArgs, isingDictArgs, number, remove_files, min_gc_cond=True, val=-1):
+def run_simulation(args, l2dDictArgs, isingDictArgs, number, remove_files, val=-1):
     MAX_COUNT = 1e2
     LENGC_MIN = 0.33
     for _ in range(args.number_of_averages):
@@ -25,23 +25,23 @@ def run_simulation(args, l2dDictArgs, isingDictArgs, number, remove_files, min_g
                 lattice.flip_sel_edges(lattice.nwDict['randXERR']['G'])
                 lattice.compute_k_eigvV(number+1)
                 lattice.load_eigV_on_graph(number, binarize=True)
-                lattice.make_clustersYN(f"eigV{number}", val=val)
+                lattice.make_clustersYN(f'eigV{number}', val=val)
                 lengc = len(lattice.gc)/lattice.N
                 count += 1
             if count == MAX_COUNT:
-                LENGC_MIN -= 0.01
+                LENGC_MIN -= LENGC_MIN/args.number_of_averages
         else:
             lattice = Lattice2D(**l2dDictArgs)
             lattice.flip_sel_edges(lattice.nwDict[args.cell_type]['G'])
             lattice.compute_k_eigvV(k=number+1)
         #
         isdy = IsingDynamics(lattice, **isingDictArgs)
-        isdy.init_ising_dynamics()
-        if args.runlang == 'C4':
-            lattice.export_eigV(number, exName=isdy.id_string_isingdyn)
-        lattice.export_edgel_bin(exName=isdy.id_string_isingdyn)
-        isdy.export_ising_clust(which=number, val=val)
-        isdy.run(verbose=False, thrmSTEP=args.thrmsteps)
+        isdy.init_ising_dynamics(exName=isdy.id_string_isingdyn)
+        if args.runlang == 'C4' or args.runlang == 'C1':
+            isdy.export_ising_clust(which=number, val=val)
+            if args.runlang != 'C1':
+                lattice.export_eigV(number, exName=isdy.id_string_isingdyn)
+        isdy.run(verbose=False)
         if remove_files:
             isdy.remove_run_c_files(remove_stderr=True)
             lattice.remove_edgl_file()
