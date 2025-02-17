@@ -15,6 +15,9 @@ class IsingDynamics:
         ic: str = "uniform",
         runlang: str = "py",
         NoClust: int = 1,
+        thrmSTEP: int = 20, 
+        eqSTEP: int = 20, 
+        freq: int = 10,
         nstepsIsing: int = 100,
         save_magnetization: bool = False,
         upd_mode: str = "asynchronous",
@@ -28,6 +31,9 @@ class IsingDynamics:
         self.T = T
         self.ic = ic
         self.nstepsIsing = nstepsIsing
+        self.thrmSTEP = thrmSTEP
+        self.eqSTEP = eqSTEP
+        self.freq = freq
         self.save_magnetization = save_magnetization
         self.NoClust = NoClust
         self.NeigV = -1
@@ -67,11 +73,11 @@ class IsingDynamics:
                 -self.s[node] * self.neigh_ene(self.neigh_wghtmagn(node))
                 for node in range(self.sg.N)]).sum()
     #
-    def init_ising_dynamics(self, custom: Any = None):
+    def init_ising_dynamics(self, custom: Any = None, verbose: bool = False):
         match self.ic:
             case "uniform":
                 self.s = np.random.choice([-1, 1], size=self.sg.N)
-            case _ if self.ic.startswith("ground_state"):
+            case _ if self.ic.startswith("ground_state") or self.ic.startswith("gs"):
                 self.NeigV = int(self.ic.split("_")[-1])
                 bineigv = self.sg.get_eigV_bin_check(which=self.NeigV)
                 self.s = bineigv
@@ -82,9 +88,16 @@ class IsingDynamics:
                 self.s[np.random.randint(self.sg.N)] = 1
             case _:
                 raise ValueError("Invalid initial condition.")
-        if self.runlang.startswith("C") and not self.sg.import_on:
+        if self.runlang.startswith("C"):
+            self.build_cprogram_command()
+            self.setup_stderr_logging()
             self.export_s_init()
-            self.CbaseName = f"IsingSimulator{self.runlang[-1]}"
+            if verbose:
+                print("Initial state exported.")
+            self.sg.export_edgel_bin()
+            if verbose:
+                print("Edges exported.")
+            
         self.sini = self.s.copy()
     #
     def check_attribute(self):
@@ -97,23 +110,24 @@ class IsingDynamics:
         if T_ising:
             self.T = T_ising
 
-    def build_cprogram_command(self, thrmSTEP, eqSTEP, freq):
+    def build_cprogram_command(self):
         run_id = self.id_string_isingdyn
         self.run_id = f"_{run_id}" if run_id else ''
+        self.CbaseName = f"IsingSimulator{self.runlang[-1]}"
         match self.runlang:
             case "C5":
                 arglist = [
                     f"{self.N}",
                     f"{self.T:.3g}",
                     f"{self.sg.pflip:.3g}",
-                    f"{thrmSTEP:.3g}",
-                    f"{eqSTEP}",
+                    f"{self.thrmSTEP:.3g}",
+                    f"{self.eqSTEP}",
                     self.sg.sgdatpath,
                     self.sg.syshapePth,
                     self.run_id,
                     self.out_suffix,
                     self.upd_mode,
-                    f"{freq}",
+                    f"{self.freq}",
                 ]
             case _:
                 arglist = [
@@ -121,24 +135,27 @@ class IsingDynamics:
                     f"{self.T:.3g}",
                     f"{self.sg.pflip:.3g}",
                     f"{self.NoClust}",
-                    f"{thrmSTEP:.3g}",
-                    f"{eqSTEP}",
+                    f"{self.thrmSTEP:.3g}",
+                    f"{self.eqSTEP}",
                     self.sg.sgdatpath,
                     self.sg.syshapePth,
                     self.run_id,
                     self.out_suffix,
                     self.upd_mode,
-                    f"{freq}",
+                    f"{self.freq}",
                     f"{self.NeigV}"
                 ]
         self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
     #
     def setup_stderr_logging(self):
-        stderrFname = join_non_empty('_', f"err{self.CbaseName}", f"{self.N}",
-                                    f"{self.id_string_isingdyn}",
-                                    f"{self.out_suffix}") + LOG
-        stderrFname = os.path.join(LRGSG_LOG, stderrFname)
-        self.stderr = open(stderrFname, 'w')
+        self.stderrFname = LRGSG_LOG / (join_non_empty(
+                '_', 
+                f"err{self.CbaseName}",
+                f"{self.N}",
+                f"{self.id_string_isingdyn}",
+                f"{self.out_suffix}"
+            ) + LOG)
+        self.stderr = open(self.stderrFname, 'w')
     #
     def run_cprogram(self, verbose):
         if verbose:
@@ -168,14 +185,11 @@ class IsingDynamics:
             save_magn_array()
     #
     @time_function_accumulate
-    def run(self, tqdm_on: bool = True, thrmSTEP: int = 2, eqSTEP: int = 20, 
-            freq: int = 10, T_ising: float = None, verbose: bool = False):
+    def run(self, tqdm_on: bool = True, T_ising: float = None, verbose: bool = False):
         self.check_attribute()
         self.initialize_run_parameters(T_ising)
 
         if self.runlang.startswith("C"):
-            self.build_cprogram_command(thrmSTEP, eqSTEP, freq)
-            self.setup_stderr_logging()
             self.run_cprogram(verbose)
         else:
             self.metropolis_sampling(tqdm_on)
@@ -196,7 +210,7 @@ class IsingDynamics:
             return
         #
         self.sg.compute_k_eigvV(k=self.NoClust)
-        eigVbin = self.sg.get_bineigV_all()
+        eigVbin = self.sg.get_eigV_bin_check_list()
         #
         self.Ising_clusters = []
         for j in range(self.NoClust):
