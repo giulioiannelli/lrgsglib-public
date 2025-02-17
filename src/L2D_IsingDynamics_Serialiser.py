@@ -38,7 +38,7 @@ else:
         hl_memy = [args.slanzarv_minMB, args.slanzarv_maxMB]
         return np.interp(x, hl_side, hl_memy).astype(int)
 def slanzarv_str(mode, L, p, geo, c, T, 
-                 nomail=True, moretime=False, short=True):
+                 nomail=True, moretime=False, short=False):
     jobname = join_non_empty('_', progn_shrt, mode[:3],
                             f"{L}", f"{p:.3g}", f"{T:.3g}", geo[:3], c, 
                             out_suffix)
@@ -79,7 +79,6 @@ if exec_bool or prnt_bool:
                                 f"-ic {ic}", f"-rl {runlang}", instr,
                                 outstr, f"-nc {NoClust}", f"-ts {thrmsteps}", wdstr)
         slanzarvStr = slanzarv_str(runlang, L, p, geo, cell, T)
-        print(lnchStr, argstr, slanzarvStr)
         return ' '.join([slanzarvStr, lnchStr, argstr])
 
 else:
