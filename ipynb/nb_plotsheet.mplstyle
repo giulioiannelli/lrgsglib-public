@@ -328,7 +328,7 @@ text.usetex: True  # use latex for all text handling. The following fonts
                      # zapf chancery, charter, serif, sans-serif, helvetica,
                      # avant garde, courier, monospace, computer modern roman,
                      # computer modern sans serif, computer modern typewriter
-text.latex.preamble: \usepackage{mathtools}\usepackage{bm}\usepackage{physics}\DeclareMathOperator{\counts}{counts}\DeclareMathOperator{\freq}{frequency}\let\epsilon\varepsilon\let\vec\bm\usepackage{siunitx}\sisetup{inter-unit-product=\ensuremath{{\cdot}}}\DeclareSIUnit\counts{count}\DeclareSIUnit\au{a.u.}\DeclareSIUnit\pix{px}# IMPROPER USE OF THIS FEATURE WILL LEAD TO LATEX FAILURES
+text.latex.preamble: \usepackage{mathtools}\usepackage{bm}\usepackage{physics}\usepackage{xfrac}\DeclareMathOperator{\counts}{counts}\DeclareMathOperator{\freq}{frequency}\let\epsilon\varepsilon\let\vec\bm\usepackage{siunitx}\sisetup{inter-unit-product=\ensuremath{{\cdot}}}\DeclareSIUnit\counts{count}\DeclareSIUnit\au{a.u.}\DeclareSIUnit\pix{px}# IMPROPER USE OF THIS FEATURE WILL LEAD TO LATEX FAILURES
                     
                         # AND IS THEREFORE UNSUPPORTED. PLEASE DO NOT ASK FOR HELP
                         # IF THIS FEATURE DOES NOT DO WHAT YOU EXPECT IT TO.
