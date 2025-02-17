@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     out_id = argv[10];
     update_mode = argv[11];
     nSampleLog = atoi(argv[12]);
-    side = (size_t)sqrt(N);
+    side = (size_t) (sqrt(N));
     freq = (size_t) (T_STEPS / nSampleLog);
     logspc = logspace_int(log10(T_STEPS), &nSampleLog);
     /* init metropolis algorithm */

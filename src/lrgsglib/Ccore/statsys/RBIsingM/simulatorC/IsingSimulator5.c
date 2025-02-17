@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     int* logspc;
     double T, p;
     double *ene, *m;
-    size_t N, tmp, freq;
+    size_t N, tmp, freq, t_stop;
     spin_tp s;
     size_tp neigh_len;
     NodesEdges node_edges;
@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
     nSampleLog = atoi(argv[11]);
     freq = (size_t) (T_STEPS / nSampleLog);
     logspc = logspace_int(log10(T_STEPS), &nSampleLog);
+    t_stop = T_STEPS;
     /* init metropolis algorithm */
     initialize_glauberMetropolis(T);
     /* allocate spin, energy and mclust */
@@ -76,8 +77,7 @@ int main(int argc, char *argv[])
         if ((t + T_THERM_STEP) % freq == 0)
             fwrite(s, sizeof(*s), N, f_sout);
         if (glauber_isStableAtZeroTemp(N, s, neigh_len, node_edges)) {
-            fill_array_with_value(ene, T_THERM_STEP-t, T_STEPS, ene[T_THERM_STEP-1]);
-            fill_array_with_value(m, T_THERM_STEP-t, T_STEPS, m[T_THERM_STEP-1]);
+            t_stop = t + T_THERM_STEP;
             break;
         }
         ene[t + T_THERM_STEP] = calc_totEnergy(N, s, neigh_len, node_edges);
@@ -89,10 +89,10 @@ int main(int argc, char *argv[])
         case 0:
             sprintf(buf, ENE_FNAME, datdir, syshape, p, T, modified_out_id);
             __fopen(&f_ene, buf, "ab");
-            fwrite(ene, sizeof(*ene), T_STEPS, f_ene);
+            fwrite(ene, sizeof(*ene), t_stop, f_ene);
             sprintf(buf, MAGN_FNAME, datdir, syshape, p, T, modified_out_id);
             __fopen(&f_m, buf, "ab");
-            fwrite(m, sizeof(*m), T_STEPS, f_m);
+            fwrite(m, sizeof(*m), t_stop, f_m);
             break;
         case 1:
             if (out_id[0] != '\0') {
