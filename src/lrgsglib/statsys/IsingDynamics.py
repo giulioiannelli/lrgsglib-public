@@ -73,7 +73,7 @@ class IsingDynamics:
                 -self.s[node] * self.neigh_ene(self.neigh_wghtmagn(node))
                 for node in range(self.sg.N)]).sum()
     #
-    def init_ising_dynamics(self, custom: Any = None, verbose: bool = False):
+    def init_ising_dynamics(self, custom: Any = None, verbose: bool = False, exName: str = ""):
         match self.ic:
             case "uniform":
                 self.s = np.random.choice([-1, 1], size=self.sg.N)
@@ -92,12 +92,7 @@ class IsingDynamics:
             self.build_cprogram_command()
             self.setup_stderr_logging()
             self.export_s_init()
-            if verbose:
-                print("Initial state exported.")
-            self.sg.export_edgel_bin()
-            if verbose:
-                print("Edges exported.")
-            
+            self.sg.export_edgel_bin(exName=exName)
         self.sini = self.s.copy()
     #
     def check_attribute(self):
