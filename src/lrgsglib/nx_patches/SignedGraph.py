@@ -181,23 +181,23 @@ class SignedGraph:
     #
     # export graph tools
     #
-    def export_adj_bin(self, print_msg: bool = False) -> None:
+    def export_adj_bin(self, verbose: bool = False) -> None:
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
         exname = self.path_export / f"adj_{self.stdFname}.bin"
-        if print_msg:
-            print(f"exporting {exname}\n")
+        if verbose:
+            print(f"\nExporting {exname}")
         self.adjFile = open(exname, "wb")
         with self.adjFile as f:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)
     #
-    def export_eigV(self, which: int = 0,  exName: str = '', print_msg: bool = False, binarize: bool = True) -> None:
+    def export_eigV(self, which: int = 0,  exName: str = '', verbose: bool = False, binarize: bool = True) -> None:
         exname = '_'.join([self.pEqStr, exName]) if exName else self.pEqStr
         fname = '_'.join([f"eigV{which}", exname])+BIN
         self.eigVPname = self.path_export / fname
         #
-        if print_msg:
-            print(f"exporting {self.eigVPname}\n")
+        if verbose:
+            print(f"\nExporting {self.eigVPname}")
         with open(self.eigVPname, "wb") as f:
             if binarize:
                 self.get_eigV_bin_check(which).astype("int8").tofile(f)
@@ -698,6 +698,11 @@ class SignedGraph:
             raise ValueError("No connected components found with positive edges.")
         self.largest_cc = max(all_connected_components, key=len)
         self.largest_cc_subgraph = G_pos.subgraph(self.largest_cc).copy()
+    #
+    # cleaners
+    #
+    def clean_gclutil(self, k, val, on_g: str = SG_GRAPH_REPR):
+        self.gclutil[k][val][on_g] = None
     #
     # handlers
     #
