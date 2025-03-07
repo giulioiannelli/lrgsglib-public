@@ -1,7 +1,7 @@
 import numpy as np
 # General program arguments
 ## program helpers
-phelp_exc = "Option to exec the output of the Serialiser"
+phelp_exc = "Option to execute the output of the Serialiser"
 phelp_insuffix = "Suffix for input files"
 phelp_mMB = "Minimum MB quantity to be allocated for the single process"
 phelp_MMB = "Maximum MB quantity to be allocated for the single process"
@@ -11,6 +11,7 @@ phelp_print = "Option to print the output of the Serialiser"
 phelp_print_chrono = "Print the chronometer"
 phelp_remove_files = "Remove the input files after the computation"
 phelp_verbose = "Verbose mode"
+phelp_val = "Value for the clusters"
 phelp_workdir = "Working directory"
 ## default values
 DEFAULT_EXEC = False
@@ -22,6 +23,7 @@ DEFAULT_OUTSFFX = ''
 DEFAULT_PRINT = False
 DEFAULT_PRINT_CHRONO = False
 DEFAULT_REMOVE_FILES = True
+DEFAULT_VAL = +1
 DEFAULT_VERBOSE = False
 DEFAULT_WORKDIR = ''
 # SignedGraph program arguments

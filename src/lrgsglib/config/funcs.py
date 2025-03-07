@@ -3,6 +3,28 @@ from .const import *
 from .errwar import *
 from .tools import *
 #
+
+
+def _remove_if_empty(path):
+    """Checks if a directory contains no files (even in subdirectories) and removes it if empty."""
+    if not os.path.isdir(path):
+        return False  # Skip if not a directory
+
+    # Check if the directory contains any files (not just subdirectories)
+    for root, _, files in os.walk(path):
+        if files:  # If any files are found, the directory is not "empty"
+            return False
+
+    # If no files were found, remove the directory
+    try:
+        os.rmdir(path)  # Remove only the top-level directory, not subdirs
+        return True  # Indicate that it was removed
+    except OSError:
+        pass  # Ignore errors like permission issues
+
+    return False  # Directory wasn't removed
+
+
 def do_nothing(*args, **kwargs):
     pass
 # Global dictionary to store timing data
