@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
 #
-from matplotlib import gridspec, rc_context, cycler
+from matplotlib import gridspec, rc_context, cycler, colormaps
 from matplotlib.axes import Axes
 from matplotlib.cm import hsv, twilight, ScalarMappable, register_cmap
 from matplotlib.colorbar import ColorbarBase
