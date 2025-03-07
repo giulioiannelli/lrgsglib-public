@@ -73,7 +73,7 @@ class IsingDynamics:
                 -self.s[node] * self.neigh_ene(self.neigh_wghtmagn(node))
                 for node in range(self.sg.N)]).sum()
     #
-    def init_ising_dynamics(self, custom: Any = None, verbose: bool = False, exName: str = ""):
+    def init_ising_dynamics(self, custom: Any = None, exName: str = ""):
         match self.ic:
             case "uniform":
                 self.s = np.random.choice([-1, 1], size=self.sg.N)
@@ -152,13 +152,12 @@ class IsingDynamics:
             ) + LOG)
         self.stderr = open(self.stderrFname, 'w')
     #
-    def run_cprogram(self, verbose):
+    def run_cprogram(self, verbose: bool = False):
         if verbose:
             print('\rExecuting: ', ' '.join(self.cprogram), end='', flush=True)
         result = subprocess.run(self.cprogram, stderr=self.stderr,
                                 stdout=subprocess.PIPE)
-        output = result.stdout
-        self.s = np.frombuffer(output, dtype=np.int8)
+        self.s = np.frombuffer(result.stdout, dtype=np.int8)
     #
     def metropolis_sampling(self, tqdm_on):
         metropolis_1step = np.vectorize(self.metropolis, excluded="self")
@@ -244,7 +243,7 @@ class IsingDynamics:
             self.Ising_clusters.append(allclusters[0])
         self.numIsing_cl = len(self.Ising_clusters)
         if self.runlang.startswith("C"):
-            self.export_ising_clust()
+            self.sg.export_ising_clust()
 
     #
     def mapping_nodes_to_clusters(self):
@@ -279,33 +278,29 @@ class IsingDynamics:
         self.sfout = open(fname, "wb")
         self.s.astype("int8").tofile(self.sfout)
         self.s_0 = self.s.copy()
-    #
-    def export_ising_clust(self, val: Any = +1, which: int = 0, 
-                           on_g: str = SG_GRAPH_REPR, binarize: bool = True): 
-        self.sg.load_eigV_on_graph(which, on_g, binarize)
-        self.sg.make_clustersYN(f"eigV{which}", val, on_g=on_g)
-        try:
-            if self.NoClust > self.sg.numClustersBig:
-                raise NoClustError(
-                    "Requested number of Cluster files is bigger than the one"
-                    " in selected topology."
-                )
-        except NoClustError as excpt:
-            print(excpt)
-        for i in range(self.NoClust):
-            fname = os.path.join(self.sg.isingpath,
-                                 join_non_empty('_', f"cl{i}", self.in_suffix)+BIN)
-            self.clfout = open(fname, "wb")
-            np.array(list(self.sg.biggestClSet[i])).astype(int).tofile(self.clfout)
+    
+    # def export_ising_clust(self, val: Any = +1, which: int = 0, 
+    #                        binarize: bool = True, on_g: str = SG_GRAPH_REPR): 
+    #     self.sg.load_eigV_on_graph(which, on_g, binarize)
+    #     self.sg.make_clustersYN(f"eigV{which}", val, on_g=on_g)
+    #     try:
+    #         if self.NoClust > self.sg.numClustersBig:
+    #             raise NoClustError(
+    #                 "Requested number of Cluster files is bigger than the one"
+    #                 " in selected topology."
+    #             )
+    #     except NoClustError as excpt:
+    #         print(excpt)
+    #     for i in range(self.NoClust):
+    #         fname = os.path.join(self.sg.isingpath,
+    #                              join_non_empty('_', f"cl{i}", self.in_suffix)+BIN)
+    #         self.clfout = open(fname, "wb")
+    #         np.array(list(self.sg.biggestClSet[i])).astype(int).tofile(self.clfout)
 
     def remove_run_c_files(self, remove_stderr: bool = True):
         try:
             os.remove(self.sfout.name)
         except FileNotFoundError:
-            pass
-        try:
-            os.remove(self.clfout.name)
-        except:
             pass
         if remove_stderr:
             try:
