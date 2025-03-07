@@ -827,3 +827,158 @@ def eigv_for_lattice2D(side, **kwargs) -> NDArray:
     l.flip_random_fract_edges()
     l.compute_full_laplacian_spectrum()
     return l.eigv
+
+
+def compute_properties(G, tau=None):
+    """
+    Computes the Laplacian spectrum, Laplacian matrix, rho, and Trho for graph G.
+
+    Parameters:
+        G : networkx.Graph
+            The input graph.
+        tau : float, optional
+            Parameter used in the matrix exponential (default is 2).
+        h : float, optional
+            Unused parameter (default is 0.05).
+
+    Returns:
+        spectrum : ndarray
+            The Laplacian spectrum of G.
+        L : matrix
+            The dense Laplacian matrix of G.
+        rho : ndarray
+            Matrix computed as expm(-tau * L) normalized by its trace.
+        Trho : ndarray
+            Symmetric matrix obtained from the element-wise inverse of rho,
+            with its diagonal set to 0.
+    """
+    spectrum = nx.laplacian_spectrum(G)
+    L_sparse = nx.laplacian_matrix(G)
+    L = L_sparse.todense()
+    tau = tau or 1/max(spectrum)
+    num = expm(-tau * L)
+    den = np.trace(num)
+    rho = num / den
+    Trho = np.copy(1.0 / rho)
+    Trho = np.maximum(Trho, Trho.T)
+    np.fill_diagonal(Trho, 0)
+    
+    return spectrum, L, rho, Trho, tau
+
+def compute_normalized_linkage(dists, G, method="average", labelList: str = "names"):
+    """
+    Computes a normalized hierarchical clustering linkage matrix.
+    
+    Steps:
+      1. Compute the initial linkage matrix from the condensed distance array `dists` using the specified method.
+      2. Create a label list for the nodes of graph G.
+      3. Determine a normalization factor tmax from the maximum merge distance 
+         (last element of the third column of the linkage matrix) plus 1% of that value.
+      4. Normalize `dists` by tmax and recompute the linkage matrix.
+    
+    Parameters:
+      dists : array-like
+          Condensed distance matrix (e.g., output from scipy.spatial.distance.pdist).
+      G : networkx.Graph
+          Graph whose nodes correspond to the distances in `dists`.
+      method : str, optional
+          Linkage method to use (default is "average").
+    
+    Returns:
+      linkage_matrix : ndarray
+          The normalized hierarchical clustering linkage matrix.
+      labelList : list
+          List of node labels (starting from 1).
+      tmax : float
+          The normalization factor used.
+    """
+    # Initial linkage computation.
+    linkage_matrix = linkage(dists, method)
+    
+    # Create labels for nodes.
+    if labelList == "names":
+        label_list = list(G.nodes())
+    elif labelList == "numbers":
+        label_list = [i + 1 for i in range(len(G.nodes()))]
+    
+    # Determine tmax as the maximum merge distance plus 1% of that distance.
+    max_distance = linkage_matrix[-1, 2]
+    tmax = max_distance + 0.01 * max_distance
+    
+    # Recompute the linkage matrix using normalized distances.
+    linkage_matrix = linkage(dists / tmax, method)
+    
+    return linkage_matrix, label_list, tmax
+
+
+def circular_layout_by_cluster(G, cluster_assignment):
+    """
+    Compute a circular layout where nodes are ordered by their cluster assignment.
+
+    Parameters:
+        G : networkx.Graph
+            The input graph.
+        cluster_assignment : dict
+            Mapping from node to its cluster id.
+
+    Returns:
+        pos : dict
+            Dictionary mapping node to (x, y) position.
+    """
+    # Sort nodes by cluster id (and optionally by node id for tie-breaking)
+    nodes_sorted = sorted(G.nodes(), key=lambda node: (cluster_assignment[node], node))
+    n = len(nodes_sorted)
+    pos = {}
+    for i, node in enumerate(nodes_sorted):
+        angle = 2 * np.pi * i / n
+        pos[node] = (np.cos(angle), np.sin(angle))
+    return pos
+
+def compute_optimal_threshold(linkage_matrix, scaling_factor=0.9):
+    """
+    Compute the optimal flat clustering threshold from a linkage matrix
+    using the partition stability index.
+
+    Parameters
+    ----------
+    linkage_matrix : np.ndarray
+        The linkage matrix from hierarchical clustering. It is assumed that 
+        the third column contains the merge distances.
+    scaling_factor : float, optional
+        A factor to scale the optimal threshold (default is 0.9).
+
+    Returns
+    -------
+    FlatClusteringTh : float
+        The computed threshold for flat clustering.
+    optimal_threshold : float
+        The optimal threshold derived from the dendrogram gap analysis.
+    stability_indices : np.ndarray
+        The array of computed stability indices for each branch.
+    optimal_branch_index : int
+        The index corresponding to the branch with the maximum stability index.
+    """
+    # Extract merge distances from the linkage matrix
+    dendro_thresholds = linkage_matrix[:, 2]
+    # Reverse order so that the first element corresponds to the initial split
+    D_values = dendro_thresholds[::-1]
+    
+    # Compute the normalization constant N using the first and last thresholds
+    N = 1 / (np.log10(D_values[0]) - np.log10(D_values[-1]))
+    
+    # Compute the stability index for each dendrogram gap
+    stability_indices = []
+    for i in range(len(D_values) - 1):
+        sigma = N * (np.log10(D_values[i]) - np.log10(D_values[i+1]))
+        stability_indices.append(sigma)
+    stability_indices = np.array(stability_indices)
+    
+    # Identify the branch with the highest stability index
+    optimal_branch_index = np.argmax(stability_indices)
+    # The optimal threshold is D_(n+1) corresponding to that branch
+    optimal_threshold = D_values[optimal_branch_index + 1]
+    
+    # Apply a scaling factor to determine the final flat clustering threshold
+    FlatClusteringTh = optimal_threshold * scaling_factor
+
+    return FlatClusteringTh, optimal_threshold, stability_indices, optimal_branch_index
