@@ -26,7 +26,7 @@ def run_simulation(args, erDictArgs, isingDictArgs, number, remove_files):
         isdy = IsingDynamics(er, **isingDictArgs)
         isdy.init_ising_dynamics()
         er.export_edgel_bin(exName=isdy.id_string_isingdyn)
-        isdy.export_ising_clust()
+        er.export_ising_clust()
         isdy.run(verbose=False, thrmSTEP=args.thrmsteps)
         if remove_files:
             isdy.remove_run_c_files(remove_stderr=True)
