@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 {
     /* check argc */
     if (argc < EXPECTED_ARGC) {
-        fprintf(stderr, "Usage: %s N T p Noclust thrmSTEP eqSTEP datdir run_id"\
+        fprintf(stderr, "Usage: %s N T p Noclust thrmSTEP eqSTEP datdir syshape run_id"\
             " out_id update_mode nSampleLog NeigV\n", argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -25,9 +25,9 @@ int main(int argc, char *argv[])
     char *ptr, *datdir, *syshape, *out_id, *mod_save;
     char *ext_save, *update_mode, *run_id;
     int nSampleLog, NeigV;
-    double T, p, thrmSTEP, *overlap;
-    double *ene;
-    size_t N, side, Noclust, tmp, eqSTEP;
+    double T, p, thrmSTEP, eqSTEP;
+    double *overlap, *ene;
+    size_t N, side, Noclust, tmp;
     spin_tp s, eigV;
     size_tp neigh_len, cl_l;
     size_tp *cl_i;
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     p = strtod(argv[3], &ptr);
     Noclust = strtozu(argv[4]);
     thrmSTEP = strtod(argv[5], &ptr);
-    eqSTEP = strtozu(argv[6]);
+    eqSTEP = strtod(argv[6], &ptr);
     datdir = argv[7];
     syshape = argv[8];
     run_id = argv[9];

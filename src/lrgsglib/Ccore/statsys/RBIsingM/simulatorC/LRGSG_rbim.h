@@ -24,6 +24,7 @@
 #define GRPH_DIR "%s/graph/%s/"
 #define EDGL_FNAME GRPH_DIR "edgelist_p=%.3g%s" BINX
 #define EIGV_FNAME GRPH_DIR "eigV%d_p=%.3g%s" BINX
+#define ADJ_FNAME GRPH_DIR "adj_p=%.3g%s" BINX
 
 typedef void (*glauberMetropolisFunc)(size_t, double, spin_tp, size_t, NodeEdges);
 
