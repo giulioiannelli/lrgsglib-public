@@ -13,10 +13,11 @@ int main(int argc, char *argv[])
             " out_id update_mode\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+    /* seed the SFMT RNG */
     __set_seed_SFMT();
+    srand(time(NULL));
     //
-    FILE *f_sini, *f_adj, *f_edgel;
-    FILE  *f_ene, *f_m;
+    FILE *f_sini, *f_ene, *f_m;
     char buf[STRL512];
     char *ptr, *datdir, *out_id,  *run_id, *syshape, *update_mode;
     double T, p, thrmSTEP, eqSTEP;
@@ -25,7 +26,6 @@ int main(int argc, char *argv[])
     size_t N, side;//, side;
     size_t tmp;
     size_tp neigh_len;
-    size_tp *neighs;
     NodesEdges node_edges;
     Edges edges;
     /* unused variables */
@@ -66,32 +66,25 @@ int main(int argc, char *argv[])
         m[t + T_THERM_STEP] = calc_magn(N, s);
         glauberMetropolis_Nstep(N, T, s, neigh_len, node_edges, update_mode);
     }
-
     sprintf(buf, ENE_FNAME, datdir, syshape, p, T, out_id);
     __fopen(&f_ene, buf, "wb");
     fwrite(ene, sizeof(*ene), T_STEPS, f_ene);
-
+    //
     sprintf(buf, MAGN_FNAME, datdir, syshape, p, T, out_id);
     __fopen(&f_m, buf, "wb");
     fwrite(m, sizeof(*m), T_STEPS, f_m);
+    //
     fflush(stdout);
     fwrite(s, sizeof(*s), N, stdout);
-
-
+    //
     fclose(f_m);
     fclose(f_ene);
     fclose(f_sini);
-    fclose(f_adj);
-
+    //
     free(neigh_len);
     free(m);
     free(ene);
     free(s);
-
-    tmp = N;
-    while (tmp)
-        free(neighs[--tmp]);
-    free(neighs);
     free(edges);
     tmp = N;
     while (tmp)
