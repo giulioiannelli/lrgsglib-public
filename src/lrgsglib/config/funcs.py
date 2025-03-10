@@ -2092,3 +2092,4 @@ def obtain_coeffs(basis, vector):
     basis_arrays = [np.asarray(vec) for vec in basis]
     B = np.column_stack(basis_arrays)
     return np.linalg.solve(B, vector)
+
