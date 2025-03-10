@@ -38,7 +38,7 @@ def main():
                 opts.append(f"--time {args.moretime}")
             opts.append("--jobname")
             opts.append(f"{join_non_empty('_', progn_shrt, args.slanzarv_id, *progargs)}")
-            cmd = ['python', LRGSG_SRC, f'{progn}.py'] + progargs + unknown
+            cmd = ['python', str(LRGSG_SRC / f'{progn}.py')] + progargs + unknown
             slanz_cmd = ["slanzarv"] + opts + cmd
             #
             if prnt_bool:
