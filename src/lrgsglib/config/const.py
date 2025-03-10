@@ -195,3 +195,13 @@ DEFAULT_MAX_THRESHOLD = 2 * DEFAULT_SPIKE_THRESHOLD
 
 
 COUNT_XERR_PATTERNS = True
+
+
+op_map = {
+    "<":  operator.lt,
+    "<=": operator.le,
+    ">":  operator.gt,
+    ">=": operator.ge,
+    "==": operator.eq,
+    "!=": operator.ne
+}
