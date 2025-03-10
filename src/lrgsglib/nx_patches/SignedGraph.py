@@ -387,8 +387,9 @@ class SignedGraph:
     def get_nodes_subgraph_by_kv(self, k, val, on_g: str = SG_GRAPH_REPR):
         G = self.gr[on_g]
         G_yes, G_no = G.copy(), G.copy()
+        predicate = val if callable(val) else lambda x: x == val
         for node, v in G.nodes(data=k):
-            if v != val:
+            if predicate(v):
                 G_yes.remove_node(node)
             else:
                 G_no.remove_node(node)
@@ -655,15 +656,15 @@ class SignedGraph:
             )
             self.resLp = self.resLp - new_eigv0 * np.identity(self.N)
     #
-    def make_graphYN(self, k, val, on_g: str = SG_GRAPH_REPR):
-        self.gclutil[k][val][on_g] = self.get_nodes_subgraph_by_kv(k, val, on_g)
+    def make_graphYN(self, k, val: ConditionalPartitioning, on_g: str = SG_GRAPH_REPR):
+        self.gclutil[k][val.key][on_g] = self.get_nodes_subgraph_by_kv(k, val.cond_func, on_g)
     #
-    def make_clustersYN(self, k, val, on_g: str = SG_GRAPH_REPR):
+    def make_clustersYN(self, k, val: ConditionalPartitioning, on_g: str = SG_GRAPH_REPR):
         try:
-            graphY, graphN = self.gclutil[k][val][on_g]
+            graphY, graphN = self.gclutil[k][val.key][on_g]
         except:
             self.make_graphYN(k, val, on_g)
-            graphY, graphN = self.gclutil[k][val][on_g]
+            graphY, graphN = self.gclutil[k][val.key][on_g]
         #
         self.clustersY = list(nx.connected_components(graphY))
         self.clustersN = list(nx.connected_components(graphN))
@@ -682,6 +683,12 @@ class SignedGraph:
         self.numClustersBig = len(self.biggestClSet)
 
         self.gc = max(self.biggestClSet, key=len)
+    #
+    #
+    def make_eigVclustersYN(self, val: ConditionalPartitioning, which: int = 0, 
+                            on_g: str = SG_GRAPH_REPR, binarize: bool = True):
+        self.load_eigV_on_graph(which, on_g, binarize)
+        self.make_clustersYN(f'eigV{which}', val, on_g)
     #
     def make_connected_component_by_edge(self, edge_attr='weight', value=1, 
                                          on_g: str = SG_GRAPH_REPR):
