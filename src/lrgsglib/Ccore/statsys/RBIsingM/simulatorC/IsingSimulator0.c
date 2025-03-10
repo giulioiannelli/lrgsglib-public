@@ -2,41 +2,32 @@
 #include "LRGSG_customs.h"
 #include "sfmtrng.h"
 #include "LRGSG_rbim.h"
-
-#define ISNG_DIR "%sising/"
-#define SINI_FNAME ISNG_DIR "N=%zu/s_%s" BINX
-#define ENE_FNAME ISNG_DIR "N=%zu/ene_%s_T=%.3g_%s" BINX
-#define MAGN_FNAME ISNG_DIR "N=%zu/magn_%s_T=%.3g_%s" BINX
-
-
-#define GRPH_DIR "%sgraphs/"
-#define ADJ_FNAME GRPH_DIR "N=%zu/adj_%s" BINX
-#define EDGL_FNAME GRPH_DIR "N=%zu/edgel_%s" TXTX
-
-#define T_THERM_STEP (thrmSTEP * N)
-#define T_EQ_STEP (eqSTEP * N)
-
-sfmt_t sfmt;
-uint32_t *seed_rand;
-
+//
+#define EXPECTED_ARGC 10+1
+//
 int main(int argc, char *argv[])
 {
+    /* check argc */
+    if (argc < EXPECTED_ARGC) {
+        fprintf(stderr, "Usage: %s N T p thrmSTEP eqSTEP datdir syshape run_id "\
+            " out_id update_mode\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
     __set_seed_SFMT();
     //
     FILE *f_sini, *f_adj, *f_edgel;
-    FILE  *f_ene, *f_magn;
+    FILE  *f_ene, *f_m;
     char buf[STRL512];
-    char *ptr, *datdir, *out_id,  *code_id;
-    double T, p;
+    char *ptr, *datdir, *out_id,  *run_id, *syshape, *update_mode;
+    double T, p, thrmSTEP, eqSTEP;
     double *m, *ene;
-    char *updStr = argv[10];
     spin_tp s;
-    size_t N, side, thrmSTEP, eqSTEP;//, side;
+    size_t N, side;//, side;
     size_t tmp;
     size_tp neigh_len;
     size_tp *neighs;
-    double_p *adj;
-    double_p *edgl;
+    NodesEdges node_edges;
+    Edges edges;
     /* unused variables */
     UNUSED(p);
     UNUSED(argc);
@@ -46,62 +37,48 @@ int main(int argc, char *argv[])
     side = (size_t)sqrt(N);
     T = strtod(argv[2], &ptr);
     p = strtod(argv[3], &ptr);
-    code_id = argv[4];
-    // we miss argv[5]
-    thrmSTEP = strtozu(argv[6]);
-    eqSTEP = strtozu(argv[7]);
-    datdir = argv[8];
+    thrmSTEP = strtod(argv[4], &ptr);
+    eqSTEP = strtod(argv[5], &ptr);
+    datdir = argv[6];
+    syshape = argv[7];
+    run_id = argv[8];
     out_id = argv[9];
+    update_mode = argv[10];
     //
-    sprintf(buf, ADJ_FNAME, datdir, N, argv[4]);
-    __fopen(&f_adj, buf, "rb");
-    sprintf(buf, SINI_FNAME, datdir, N, argv[4]);
-    __fopen(&f_sini, buf, "rb");
-
-
-    
-    sprintf(buf, ENE_FNAME, datdir, N, code_id, T, out_id);
-    __fopen(&f_ene, buf, "wb");
-    sprintf(buf, MAGN_FNAME, datdir, N, code_id, T, out_id);
-    __fopen(&f_magn, buf, "wb");
-    /* fill adjacency matrix */
-    adj = __chMalloc(N * sizeof(*adj));
-    for (size_t i = 0; i < N; i++)
-        *(adj + i) = __chMalloc(N * sizeof(**adj));
-    __fill_adj__(&f_adj, N, &adj);
-    /* fill initial condition */
     s = __chMalloc(N * sizeof(*s));
+    m = __chMalloc(sizeof(*m) * T_STEPS);
+    ene = __chMalloc(sizeof(*ene) * T_STEPS);
+    //
+    sprintf(buf, SINI_FNAME, datdir, syshape, p, run_id);
+    __fopen(&f_sini, buf, "rb");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
-    // questo forse potremo farlo da python...
-    /* fill edge list, neighbours list and neighbours lengths */
-    edgl = __chMalloc(N * sizeof(*edgl));
-    neighs = __chMalloc(N * sizeof(*neighs));
-    neigh_len = __chMalloc(N * sizeof(*neigh_len));
-    sprintf(buf, EDGL_FNAME, datdir, N, code_id);
-    if (__feexist(buf)) {
-        __fopen(&f_edgel, buf, "r+");
-        __fill_edgl_read__(&f_edgel, N, &edgl, &neighs, &neigh_len);
-    } else {
-        __fopen(&f_edgel, buf, "w+");
-        __fill_edgl_make__(&f_edgel, N, &adj, &edgl, &neighs, &neigh_len);
-    }
-
-    m = __chMalloc(sizeof(*m) * (T_THERM_STEP + T_EQ_STEP));
-    ene = __chMalloc(sizeof(*ene) * (T_EQ_STEP + T_THERM_STEP));
-
-    for (size_t t = 0; t < T_EQ_STEP + T_THERM_STEP; t++)
-    {
+    //
+    sprintf(buf, EDGL_FNAME, datdir, syshape, p, run_id);
+    process_edges(buf, N, &edges, &node_edges, &neigh_len);
+    //
+    for (size_t t = 0; t < T_THERM_STEP; t++) {
+        ene[t] = calc_totEnergy(N, s, neigh_len, node_edges);
         m[t] = calc_magn(N, s);
-        ene[t] = calc_energy_full(N, s, neigh_len, neighs, edgl);
-        // glauber_metropolis_Nstep(N, T, s, neigh_len, neighs, edgl);
-        // printf("t=%zu, ene=%.4g, magn=%.4g\n", t, ene[t], m[t]);
-        glauber_metropolis_Nstep_mode(N, T, s, neigh_len, neighs, edgl, updStr);
+        glauberMetropolis_Nstep(N, T, s, neigh_len, node_edges, update_mode);
     }
-    fwrite(ene, sizeof(*ene), (T_EQ_STEP + T_THERM_STEP), f_ene);
-    fwrite(m, sizeof(*m), (T_EQ_STEP + T_THERM_STEP), f_magn);
+    for (size_t t = 0; t < T_EQ_STEP; t++) {
+        ene[t + T_THERM_STEP] = calc_totEnergy(N, s, neigh_len, node_edges);
+        m[t + T_THERM_STEP] = calc_magn(N, s);
+        glauberMetropolis_Nstep(N, T, s, neigh_len, node_edges, update_mode);
+    }
+
+    sprintf(buf, ENE_FNAME, datdir, syshape, p, T, out_id);
+    __fopen(&f_ene, buf, "wb");
+    fwrite(ene, sizeof(*ene), T_STEPS, f_ene);
+
+    sprintf(buf, MAGN_FNAME, datdir, syshape, p, T, out_id);
+    __fopen(&f_m, buf, "wb");
+    fwrite(m, sizeof(*m), T_STEPS, f_m);
+    fflush(stdout);
+    fwrite(s, sizeof(*s), N, stdout);
 
 
-    fclose(f_magn);
+    fclose(f_m);
     fclose(f_ene);
     fclose(f_sini);
     fclose(f_adj);
@@ -113,16 +90,14 @@ int main(int argc, char *argv[])
 
     tmp = N;
     while (tmp)
-        free(adj[--tmp]);
-    free(adj);
-
-    tmp = N;
-    while (tmp)
-        free(edgl[--tmp]);
-    free(edgl);
-
-    tmp = N;
-    while (tmp)
         free(neighs[--tmp]);
     free(neighs);
+    free(edges);
+    tmp = N;
+    while (tmp)
+    {
+        free(node_edges[--tmp].neighbors);
+        free(node_edges[tmp].weights);
+    }
+    free(node_edges);
 }

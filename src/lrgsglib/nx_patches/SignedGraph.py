@@ -125,7 +125,8 @@ class SignedGraph:
         self.spectpath = str(self.path_spect)
     #
     def __make_dirs__(self, exist_ok: bool = True):
-        for _ in self.dirMakeList: os.makedirs(_, exist_ok=exist_ok)
+        for _ in self.dirMakeList: 
+            os.makedirs(_, exist_ok=exist_ok)
     #
     def __make_graphCl_util__(self):
         self.gclutil = NestedDict()
@@ -146,10 +147,10 @@ class SignedGraph:
                 pass
         self.GraphReprs = list(self.gr.keys())
     #
-    def __init_weights__(self, values: Union[float, List] = 1) -> None:
-        nx.set_edge_attributes(self.gr[self.onGraph], values, 'weight')
-        if type(values) is list:
-            self.upd_GraphRepr_All(self.onGraph)
+    def __init_weights__(self, values: Union[float, List, dict] = 1, on_g: str = '') -> None:
+        on_g = on_g or self.onGraph
+        nx.set_edge_attributes(self.gr[on_g], values, 'weight')
+        self.upd_GraphRepr_All(on_g)
     #
     def __init_nNodesEdges__(self) -> None:
         self.N = self.gr[self.onGraph].number_of_nodes()
@@ -180,51 +181,76 @@ class SignedGraph:
     #
     # export graph tools
     #
-    def export_adj_bin(self, print_msg: bool = False) -> None:
+    def export_adj_bin(self, verbose: bool = False) -> None:
         rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
         exname = self.path_export / f"adj_{self.stdFname}.bin"
-        if print_msg:
-            print(f"exporting {exname}\n")
-        with open(exname, "wb") as f:
+        if verbose:
+            print(f"\nExporting {exname}")
+        self.adjFile = open(exname, "wb")
+        with self.adjFile as f:
             for i in range(len(rowarr)):
                 rowarr[i].astype("float64").tofile(f)
     #
-    def export_eigV(self, which: int = 0,  exName: str = "", print_msg: bool = False, binarize: bool = True) -> None:
+    def export_eigV(self, which: int = 0,  exName: str = '', verbose: bool = False, binarize: bool = True) -> None:
         exname = '_'.join([self.pEqStr, exName]) if exName else self.pEqStr
         fname = '_'.join([f"eigV{which}", exname])+BIN
-        self.exported_eigV = self.path_export / fname
-        if print_msg:
-            print(f"exporting {exname}\n")
-        with open(self.exported_eigV, "wb") as f:
+        self.eigVPname = self.path_export / fname
+        #
+        if verbose:
+            print(f"\nExporting {self.eigVPname}")
+        with open(self.eigVPname, "wb") as f:
             if binarize:
                 self.get_eigV_bin_check(which).astype("int8").tofile(f)
             else:
                 self.eigV[which].astype("float64").tofile(f)
     #
-    def export_edgel_bin(self, on_g: str = SG_GRAPH_REPR, exName: str = "",
-                         print_msg: bool = False, mode: str = 'numpy') -> None:
-        edges = self.gr[on_g].edges(data='weight')
+    def export_edgel_bin(self, on_g: str = SG_GRAPH_REPR, exName: str = '',
+                         mode: str = 'numpy') -> None:
         exname = '_'.join([self.pEqStr, exName]) if exName else self.pEqStr
         fname = '_'.join(["edgelist", exname])+BIN
-        edglFname = self.path_export / fname
+        self.edglPname = self.path_export / fname
+        #
+        edges = self.gr[on_g].edges(data='weight')
         match mode:
             case 'numpy':
                 edge_array = np.array(list(edges), 
                                  dtype=[('i', np.uint64),
                                         ('j', np.uint64),
                                         ('w_ij', np.float64)])
-                self.edglFile = open(edglFname, "wb")
-                edge_array.tofile(self.edglFile)
+                with open(self.edglPname, "wb") as f:
+                    edge_array.tofile(f)
             case 'struct':
-                with open(edglFname, "wb") as f:
+                with open(self.edglPname, "wb") as f:
                     for edge in edges:
                         f.write(struct.pack("QQd", edge[0], edge[1], edge[2]))
     #
+    def export_ising_clust(self, NoClust: int = 1, exName: str = '') -> None: 
+        self.clPname = []
+        for i in range(NoClust):
+            exname = '_'.join([self.pEqStr, exName]) if exName else self.pEqStr
+            fname = join_non_empty('_', f"cl{i}", exname)+BIN
+            self.clPname.append(self.path_ising / fname)
+            with open(self.clPname[i], "wb") as f:
+                np.array(list(self.biggestClSet[i])).astype(int).tofile(f)
+    #
+    def remove_ising_clust_files(self):
+        for pname in self.clPname:
+            os.remove(pname)
+    #
     def remove_edgl_file(self):
-        os.remove(self.edglFile.name)
+        os.remove(self.edglPname)
+    #
     def remove_eigV_file(self):
-        os.remove(self.exported_eigV)
-    
+        os.remove(self.eigVPname)
+    #
+    def remove_exported_files(self):
+        if hasattr(self, "edglPname"):
+            self.remove_edgl_file()
+        if hasattr(self, "eigVPname"):
+            self.remove_eigV_file()
+        if hasattr(self, "clPname"):
+            self.remove_ising_clust_files()
+    #
     def export_graphPKL(self):
         pk.dump(self.G, open(self.graphPath+PKL, "wb"), pk.HIGHEST_PROTOCOL)
     #
@@ -237,6 +263,25 @@ class SignedGraph:
                 self.export_graphPKL()
             case 'gml':
                 self.export_graphGML()
+    # 
+    def set_edgel_from_bin(self, file_path, mode='numpy', on_g: str = SG_GRAPH_REPR):
+        match mode:
+            case 'numpy':
+                dtype = np.dtype([('i', np.uint64), ('j', np.uint64), ('w_ij', np.float64)])
+                edge_array = np.fromfile(file_path, dtype=dtype)
+                edges = [(int(edge['i']), int(edge['j']), float(edge['w_ij'])) for edge in edge_array]
+            case 'struct':
+                edges = []
+                with open(file_path, "rb") as f:
+                    while chunk := f.read(24):  # 2 * uint64 (8 bytes each) + 1 * float64 (8 bytes) = 24 bytes
+                        i, j, w_ij = struct.unpack("QQd", chunk)
+                        edges.append((i, j, w_ij))
+            case _:
+                raise ValueError("Invalid mode. Choose 'numpy' or 'struct'.")
+        self.gr[on_g].add_weighted_edges_from(edges)
+        self.upd_edge_sets(on_g)
+        self.upd_GraphRepr_All(on_g)
+        self.upd_graph_matrices(on_g)
     #
     # graph get attributes
     #
@@ -302,24 +347,36 @@ class SignedGraph:
             case '-'|'negative'|'-1'|'minus':
                 return random.sample(tuple(self.fleset[on_g]), n)
     #
+    def get_eigV(self, which: int = 0, binarize: bool = False):
+        if binarize:
+            return self.get_eigV_binarized(which)
+        else:
+            eigV = self.eigV[which].squeeze()
+            return flip_to_positive_majority_adapted(eigV).squeeze()
+    #
+    def get_eigV_check(self, which: int = 0, binarize: bool = False):
+        if not hasattr(self, f"eigV") or which >= len(self.eigV):
+            self.compute_k_eigvV(k=which+1)
+        return self.get_eigV(which, binarize)
+    #
     def get_eigV_binarized(self, which: int = 0):
-        eigV = self.eigV[which].squeeze()
-        return flip_to_positive_majority(bin_sign(eigV)).squeeze()
+        eigV = bin_sign(self.eigV[which].squeeze())
+        return flip_to_positive_majority(eigV).squeeze()
     #
     def get_eigV_bin_check(self, which: int = 0):
         if not hasattr(self, f"eigV") or which >= len(self.eigV):
             self.compute_k_eigvV(k=which+1)
         return self.get_eigV_binarized(which)
     #
-    def get_bineigV_all(self):
-        try:
-            eigVbin = bin_sign(self.eigV)
-        except (AttributeError, IndexError):
-            self.compute_k_eigvV()
-            eigVbin = bin_sign(self.eigV)
-        for i in range(len(eigVbin)):
-            eigVbin[i] = flip_to_positive_majority(eigVbin[i])
-        return eigVbin
+    def get_eigV_bin_check_list(self, custom_slice: slice = slice(None)):
+        maxidx = (custom_slice.stop - 1) if custom_slice.stop is not None else self.N
+        assert maxidx <= self.N, SG_ERRMSG_MAXEIGVIDX
+        if not hasattr(self, f"eigV"):
+            if custom_slice == slice(None):
+                self.compute_full_laplacian_spectrum()
+            else:
+                self.compute_k_eigvV(k=maxidx)
+        return [self.get_eigV_bin_check(_) for _ in range(maxidx)]
     #
     def get_signed_laplacian_embedding(self, k: int = 2):
         return self.eigV[:k]
@@ -489,10 +546,17 @@ class SignedGraph:
     def unflip_all(self, on_g: str = SG_GRAPH_REPR):
         self.flip_sel_edges(1, on_g)
     #
-    def set_edge_weights_wij(self, wij: NDArray, on_g: str = SG_GRAPH_REPR):
-        weights = {
-            (u, v): wij[u, v] for u, v in self.gr[on_g].edges()
-        }
+    def set_edge_weights_wij(self, wij: np.ndarray, on_g: str = SG_GRAPH_REPR, 
+                             node_to_index: dict = None):
+        if node_to_index is None:
+            weights = {
+                (u, v): wij[u, v] for u, v in self.gr[on_g].edges()
+            }
+        else:
+            weights = {
+                (u, v): wij[node_to_index[u], node_to_index[v]]
+                for u, v in self.gr[on_g].edges()
+            }
         nx.set_edge_attributes(self.gr[on_g], values=weights, name="weight")
         #
         self.upd_edge_sets(on_g)
@@ -505,10 +569,7 @@ class SignedGraph:
             edge: random.normalvariate(mu, sigma) 
             for edge in self.gr[on_g].edges()
         }
-        nx.set_edge_attributes(self.gr[on_g], values=weights, name='weight')
-        self.upd_edge_sets(on_g)
-        self.upd_GraphRepr_All(on_g)
-        self.upd_graph_matrices(on_g)
+        self.set_edge_weights_wij(weights, on_g)
     
     #
     def load_vec_on_nodes(self, vec: NDArray, attr: str,
@@ -524,11 +585,12 @@ class SignedGraph:
             try:
                 eigV = self.eigV[which]
             except (IndexError, AttributeError):
-                self.compute_k_eigvV(k=which + 1)
+                self.compute_k_eigvV(k=which+1)
                 eigV = self.eigV[which]
-        # print(eigV, self.gr[on_g].nodes)
-        eigV_val_nd = {nd: v for v, nd in zip(eigV, self.gr[on_g].nodes)}
-        nx.set_node_attributes(self.gr[on_g], eigV_val_nd, f"eigV{which}")
+        # # print(eigV, self.gr[on_g].nodes)
+        self.load_vec_on_nodes(eigV, f"eigV{which}", on_g)
+        # eigV_val_nd = {nd: v for v, nd in zip(eigV, self.gr[on_g].nodes)}
+        # nx.set_node_attributes(self.gr[on_g], eigV_val_nd, f"eigV{which}")
     #
     # computations
     #
@@ -609,8 +671,16 @@ class SignedGraph:
         self.numClustersY = len(self.clustersY)
         self.numClustersN = len(self.clustersN)
         #
+        if not self.clustersY:  
+            print("Warning: No clusters found in graphY.")
+            self.biggestClSet = []
+            self.numClustersBig = 0
+            self.gc = None  # Set to None or a default value
+            return
+        #
         self.biggestClSet = sorted(self.clustersY, key=len, reverse=True)
         self.numClustersBig = len(self.biggestClSet)
+
         self.gc = max(self.biggestClSet, key=len)
     #
     def make_connected_component_by_edge(self, edge_attr='weight', value=1, 
@@ -628,3 +698,24 @@ class SignedGraph:
             raise ValueError("No connected components found with positive edges.")
         self.largest_cc = max(all_connected_components, key=len)
         self.largest_cc_subgraph = G_pos.subgraph(self.largest_cc).copy()
+    #
+    # cleaners
+    #
+    def clean_gclutil(self, k, val, on_g: str = SG_GRAPH_REPR):
+        self.gclutil[k][val][on_g] = None
+    #
+    # handlers
+    #
+    def handle_no_clust(self, NoClust: int) -> int | None:
+        try:
+            if self.numClustersBig == 0:
+                raise NoClustError(SG_ERRMSG_ZEROCLUST)
+            elif NoClust > self.numClustersBig:
+                raise NoClustError(SG_ERRMSG_NOCLUST_GTR_NCB)
+        except NoClustError as exception:
+            print(exception)
+            if str(exception) == SG_ERRMSG_NOCLUST_GTR_NCB:
+                return len(self.biggestClSet)  # Correct NoClust
+            elif str(exception) == SG_ERRMSG_ZEROCLUST:
+                return None  # Indicate the caller should skip
+        return NoClust  # If no errors, return the original value

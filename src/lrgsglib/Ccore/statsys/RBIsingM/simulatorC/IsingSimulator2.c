@@ -5,13 +5,6 @@
 //
 #define EXPECTED_ARGC 12
 //
-#define T_THERM_STEP (thrmSTEP * N)
-#define T_EQ_STEP (eqSTEP * N)
-#define T_STEPS (T_THERM_STEP + T_EQ_STEP)
-//
-sfmt_t sfmt;
-uint32_t *seed_rand;
-//
 int main(int argc, char *argv[])
 {
     /* check argc */

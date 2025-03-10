@@ -90,11 +90,14 @@ SG_LIST_REPR = ['H']
 SG_GRAPH_REPR = 'G'
 SG_GRAPHINT_REPR = SG_GRAPH_REPR
 SG_GRAPHGEO_REPR = 'H'
-SG_ERRMSG_PFLIP = f""" pflip must be between {LB_PFLIP} and {UB_PFLIP}, inclusive."""
+SG_ERRMSG_MAXEIGVIDX = """The maximum eigenvalue index is out of bounds."""
 SG_ERRMSG_NW_DICT = f"Inheriting class must have attribute 'nwContainer'"
 SG_ERRMSG_NFLIP = """The probability of flipping an edge times the 
                              number of edges is < 1, then no edges would be
                              flipped. No flip will be performed."""
+SG_ERRMSG_PFLIP = f""" pflip must be between {LB_PFLIP} and {UB_PFLIP}, inclusive."""
+SG_ERRMSG_NOCLUST_GTR_NCB = """Requested number of Cluster files is bigger than the one in selected topology."""
+SG_ERRMSG_ZEROCLUST = """No clusters were found."""
 # erdos renyi default values
 WS_PHTABB = "ws"
 WS_ONREP = 'G'

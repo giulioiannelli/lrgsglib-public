@@ -3,6 +3,28 @@ from .const import *
 from .errwar import *
 from .tools import *
 #
+
+
+def _remove_if_empty(path):
+    """Checks if a directory contains no files (even in subdirectories) and removes it if empty."""
+    if not os.path.isdir(path):
+        return False  # Skip if not a directory
+
+    # Check if the directory contains any files (not just subdirectories)
+    for root, _, files in os.walk(path):
+        if files:  # If any files are found, the directory is not "empty"
+            return False
+
+    # If no files were found, remove the directory
+    try:
+        os.rmdir(path)  # Remove only the top-level directory, not subdirs
+        return True  # Indicate that it was removed
+    except OSError:
+        pass  # Ignore errors like permission issues
+
+    return False  # Directory wasn't removed
+
+
 def do_nothing(*args, **kwargs):
     pass
 # Global dictionary to store timing data
@@ -1802,3 +1824,271 @@ def compute_energy_sum(spins, edges):
     w = np.array(w)
     energy_sum = -np.sum(w * spins[ui] * spins[vi])
     return energy_sum
+
+def compute_delta_energies(spins, edges):
+    """
+    Computes the change in energy (ΔE) for each node when flipping its spin.
+
+    Parameters:
+        spins (np.ndarray): Array of spins, where each spin is +1 or -1.
+        edges (list of tuples): List of edges with weights. Each edge is represented as
+                                (node1, node2, weight).
+
+    Returns:
+        np.ndarray: Array of ΔE values for each spin flip.
+    """
+    # Extract the edges and weights
+    ui, vi, w = zip(*edges)
+
+    # Convert to numpy arrays for efficient computation
+    ui = np.array(ui, dtype=int)
+    vi = np.array(vi, dtype=int)
+    w = np.array(w)
+
+    # Compute ΔE for each node flip
+    delta_E = np.zeros_like(spins, dtype=float)
+    for i in range(len(spins)):
+        mask = (ui == i) | (vi == i)  # Select edges connected to node i
+        delta_E[i] = -2 * np.sum(w[mask] * spins[ui[mask]] * spins[vi[mask]])
+
+    return delta_E
+
+
+def coarsen_bins_with_padding(x: np.ndarray, y: np.ndarray, factor: int) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Coarsen binned data by a given factor with padding.
+
+    This function groups consecutive bins by the specified factor. The new bin centers are the
+    mean of each group, and the new bin values are the sum of each group. If the length of the input
+    arrays is not divisible by the factor, they are padded accordingly.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        1D array of bin centers.
+    y : np.ndarray
+        1D array of bin values.
+    factor : int
+        Factor by which to reduce the number of bins.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        Tuple containing:
+        - new_x: 1D array of coarsened bin centers.
+        - new_y: 1D array of coarsened bin values.
+
+    Notes
+    -----
+    If len(x) is not a multiple of factor, x is padded using its edge value and y is padded with zeros.
+    """
+    remainder = len(x) % factor
+    if remainder != 0:
+        pad_width = factor - remainder
+        x = np.pad(x, (0, pad_width), mode='edge')
+        y = np.pad(y, (0, pad_width), mode='constant', constant_values=0)
+    
+    new_x = x.reshape(-1, factor).mean(axis=1)
+    new_y = y.reshape(-1, factor).sum(axis=1)
+    return new_x, new_y
+
+
+def spin_overlap(S1: np.ndarray, S2: np.ndarray) -> float:
+    """
+    Compute the maximum overlap between two spin configurations.
+
+    This function calculates the overlap between two spin matrices by computing
+    both the direct overlap and the flipped overlap (accounting for spin inversion).
+    The overlap is defined as the average of the product of corresponding spins.
+
+    Parameters
+    ----------
+    S1 : np.ndarray
+        A 2D numpy array representing the first spin configuration.
+    S2 : np.ndarray
+        A 2D numpy array representing the second spin configuration.
+
+    Returns
+    -------
+    float
+        The maximum overlap value between the two spin configurations.
+
+    Raises
+    ------
+    AssertionError
+        If S1 and S2 do not have the same shape.
+
+    Notes
+    -----
+    The function assumes that the spin values are numerical (e.g., +1 and -1).
+    """
+    assert S1.shape == S2.shape, "Matrices must have the same shape!"
+
+    direct_overlap = np.sum(S1 * S2) / S1.size
+    flipped_overlap = np.sum(S1 * (-S2)) / S1.size
+
+    return max(direct_overlap, flipped_overlap)
+
+
+def matrix_projection(M: np.ndarray, basis: List[np.ndarray]) -> List[float]:
+    """
+    Compute the projection of a matrix onto a set of basis matrices.
+
+    This function computes the projection of matrix M onto each matrix in the provided
+    basis. The projection onto a basis matrix is defined as the normalized inner product,
+    where the normalization is performed using the Frobenius norm of the basis matrix.
+
+    Parameters
+    ----------
+    M : np.ndarray
+        2D array representing the matrix to be projected.
+    basis : List[np.ndarray]
+        List of 2D arrays representing the basis matrices.
+
+    Returns
+    -------
+    List[float]
+        A list of projection values, one for each basis matrix in the input list.
+
+    Notes
+    -----
+    The projection for each basis matrix B_i is computed as:
+        projection_i = (sum(M * B_i)) / ||B_i||_F,
+    where ||B_i||_F denotes the Frobenius norm of B_i.
+    """
+    projections = []
+    for B_i in basis:
+        inner_product = np.sum(M * B_i)
+        norm_Bi = np.linalg.norm(B_i)
+        projection_i = inner_product / norm_Bi
+        projections.append(projection_i)
+    return projections
+
+def reconstruct_from_projections(projections: List[float], basis: List[np.ndarray]) -> np.ndarray:
+    """
+    Reconstruct a matrix from its projections onto a basis.
+
+    This function reconstructs a matrix by summing the product of each projection
+    coefficient with its corresponding basis matrix.
+
+    Parameters
+    ----------
+    projections : List[float]
+        List of projection coefficients for each basis matrix.
+    basis : List[np.ndarray]
+        List of basis matrices. All basis matrices must have the same shape.
+
+    Returns
+    -------
+    np.ndarray
+        The reconstructed matrix obtained by summing the scaled basis matrices.
+    """
+    reconstructed_matrix = np.zeros_like(basis[0])
+    for i, B_i in enumerate(basis):
+        reconstructed_matrix += projections[i] * B_i
+    return reconstructed_matrix
+
+
+def elements_within_eta_numpy(array: Union[np.ndarray, Sequence[float]], eta: float) -> np.ndarray:
+    """
+    Return elements that are within a threshold eta from the minimum value in the array.
+
+    Parameters
+    ----------
+    array : array-like
+        Input array of numerical values. It will be converted to a NumPy array.
+    eta : float
+        Threshold value. Elements whose difference from the minimum value is less than or equal to eta are returned.
+
+    Returns
+    -------
+    np.ndarray
+        Array of elements that are within eta of the minimum value.
+    """
+    array = np.array(array)
+    min_val = np.min(array)
+    mask = (array - min_val) <= eta
+    filtered_elements = array[mask]
+    return filtered_elements
+
+def random_combination(basis):
+    """
+    Generate a random binary combination of the given basis vectors,
+    ensuring that the product involves an odd number (at least 3) of factors.
+
+    Each basis vector is assumed to have entries in {+1, -1}. Instead of
+    selecting each coefficient independently, this function chooses a random
+    odd number k (with k ≥ 3) and then randomly selects k distinct basis vectors.
+    The resulting vector is computed as the elementwise product of the chosen vectors.
+
+    Parameters
+    ----------
+    basis : list of numpy.ndarray or numpy.matrix
+        A list of basis vectors, each represented as a NumPy array or matrix with
+        entries +1 or -1. The list must contain at least 3 vectors.
+
+    Returns
+    -------
+    tuple
+        A tuple (result, coeffs) where:
+          - result is a NumPy array containing the resulting vector.
+          - coeffs is a NumPy array of binary coefficients (0 or 1) indicating
+            which basis vectors were selected (with an odd count ≥ 3).
+    
+    Raises
+    ------
+    ValueError
+        If the number of basis vectors is less than 3.
+    """
+    n = len(basis)
+    if n < 3:
+        raise ValueError("Basis must contain at least 3 vectors.")
+
+    # Determine possible odd numbers from 3 up to n (if n is even, max odd is n-1)
+    max_odd = n if n % 2 == 1 else n - 1
+    possible_counts = np.arange(3, max_odd + 1, 2)
+    k = int(np.random.choice(possible_counts))
+    
+    coeffs = np.zeros(n, dtype=int)
+    indices = np.random.choice(n, size=k, replace=False)
+    coeffs[indices] = 1
+
+    result = np.ones_like(np.asarray(basis[0]))
+    for c, vec in zip(coeffs, basis):
+        if c:
+            result *= np.asarray(vec)
+    return result, coeffs
+
+def obtain_coeffs(basis, vector):
+    """
+    Obtain the coefficients of the linear combination of the basis vectors that yields
+    the given vector.
+
+    This function assumes that the basis vectors form an invertible set. It converts
+    each basis vector to a NumPy array, constructs the matrix with these vectors as
+    columns, and then solves the linear system
+
+        B * c = vector
+
+    for the coefficient vector c.
+
+    Parameters
+    ----------
+    basis : list of numpy.ndarray or numpy.matrix
+        A list of basis vectors.
+    vector : numpy.ndarray
+        The target vector assumed to be a linear combination of the basis vectors.
+
+    Returns
+    -------
+    numpy.ndarray
+        A NumPy array containing the coefficients of the linear combination.
+
+    Raises
+    ------
+    numpy.linalg.LinAlgError
+        If the matrix formed by the basis vectors is singular (i.e., non-invertible).
+    """
+    basis_arrays = [np.asarray(vec) for vec in basis]
+    B = np.column_stack(basis_arrays)
+    return np.linalg.solve(B, vector)

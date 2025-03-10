@@ -2,6 +2,135 @@
 #include "LRGSG_rbim.h"
 #include "sfmtrng.h"
 
+sfmt_t sfmt;
+uint32_t *seed_rand;
+double thrmSTEP;
+double eqSTEP;
+glauberMetropolisFunc glauberMetropolis_1step_ptr = NULL;
+
+/**-----------------------------------------------------------------------------
+|==============================================================================|
+|========================= FUNCTIONS IMPLEMENTATION ===========================|
+|==============================================================================|
+-----------------------------------------------------------------------------**/
+/** 
+ * @brief Initializes the Glauber-Metropolis function pointer based on 
+ * temperature.
+ * 
+ * @param T           (double) Temperature.
+ */
+void initialize_glauberMetropolis(double T) {
+    if (T == 0.0) {
+        glauberMetropolis_1step_ptr = glauberMetropolis_1step_T0;
+    } else {
+        glauberMetropolis_1step_ptr = glauberMetropolis_1step;
+    }
+}
+/** 
+ * @brief Applies the Glauber-Metropolis dynamics to an Ising system (1 step).
+ * 
+ * @param nd         (size_t) Index of the spin in the system.
+ * @param T          (double) Temperature of the system.
+ * @param s          (spin_tp) Array of spins representing the system.
+ * @param nlen       (size_t) Number of neighbors for each spin.
+ * @param ne         (NodeEdges) Data structure containing neighbor information.
+ * 
+ * @return           None.
+ */
+void glauberMetropolis_1step(size_t nd, double T, spin_tp s, size_t nlen,
+                             NodeEdges ne) {
+    double nene = neighWeight_magn(ne, s, nlen);
+    double DE = 2 * s[nd] * nene;
+    if (DE < 0) {
+        flip_spin(nd, s);
+    } else if (RNG_dbl() < BOLTZMANN_FACTOR(DE, T)) {
+        flip_spin(nd, s);
+    }
+}
+/** 
+ * @brief Applies the Glauber-Metropolis dynamics to an Ising system (1 step) 
+ * for T = 0.
+ * 
+ * @param nd         (size_t) Index of the spin in the system.
+ * @param T          (double) Temperature of the system (0 in this version).
+ * @param s          (spin_tp) Array of spins representing the system.
+ * @param nlen       (size_t) Number of neighbors for each spin.
+ * @param ne         (NodeEdges) Data structure containing neighbor information.
+ * 
+ * @return           None.
+ */
+void glauberMetropolis_1step_T0(size_t nd, double T, spin_tp s, size_t nlen,
+                              NodeEdges ne) {
+    UNUSED(T);
+    double nene = neighWeight_magn(ne, s, nlen);
+    double DE = 2 * s[nd] * nene;
+    if (DE < 0) {
+        flip_spin(nd, s);
+    }
+}
+/** 
+ * @brief Applies the Glauber-Metropolis dynamics to an Ising system for N steps.
+ * 
+ * @param N           (size_t) Number of steps to apply the dynamics.
+ * @param T           (double) Temperature of the system.
+ * @param s           (spin_tp) Array of spins representing the system.
+ * @param nlen        (size_tp) Array containing the number of neighbors for each spin.
+ * @param ne          (NodesEdges) Array of data structures containing neighbor information for each spin.
+ * @param update_mode (const char*) Update mode: "sequential" (default) or "asynchronous".
+ *                     - "sequential": Updates spins in order from 0 to N-1.
+ *                     - "asynchronous": Updates spins randomly.
+ * 
+ * @return            None.
+ */
+void glauberMetropolis_Nstep(size_t N, double T, spin_tp s, size_tp nlen,
+                             NodesEdges ne, const char *update_mode) {
+    if (update_mode == NULL || strcmp(update_mode, "sequential") == 0) {
+        for (size_t i = 0; i < N; i++) {
+            glauberMetropolis_1step_ptr(i, T, s, nlen[i], ne[i]);
+        }
+    } else if (strcmp(update_mode, "asynchronous") == 0) {
+        size_t *random_indices = __gen_rand_u64_array(N);
+        for (size_t i = 0; i < N; i++) {
+            size_t random_index = (random_indices[i] % N);
+            glauberMetropolis_1step_ptr(random_index, T, s, nlen[random_index], ne[random_index]);
+        }
+        free(random_indices);
+    } else {
+        // Handle invalid update mode (consider error handling)
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /** 
  * @brief applies the Glauber-Metropolis dynamics to an Ising system (1 step).
  * 
@@ -29,56 +158,7 @@ void glauber_metropolis_1step(size_t nd, double T, spin_tp s, size_tp nlen,
         exit(1);
     }
 }
-/** 
- * @brief applies the Glauber-Metropolis dynamics to an Ising system (1 step).
- * 
- * @return           None
- */
-void glauberMetropolis_1step(size_t nd, double T, spin_tp s, size_t nlen,
-                         NodeEdges ne) {
-    double nene = neighWeight_magn(ne, s, nlen);
-    double DE = 2 * s[nd] * nene;
-    if (DE < 0) {
-        flip_spin(nd, s);
-    } else if (RNG_dbl() < BOLTZMANN_FACTOR(DE, T)) {
-        flip_spin(nd, s);
-    }
-}
-/**
- * @brief Applies the Glauber-Metropolis dynamics to an Ising system (N steps).
- *
- * @return           None
- */
-void glauberMetropolis_Nstep(size_t N, double T, spin_tp s, size_tp nlen,
-                       NodesEdges ne, const char *update_mode) {
-    if (update_mode == NULL || strcmp(update_mode, "sequential") == 0) {
-        for (size_t i = 0; i < N; i++) {
-            glauberMetropolis_1step(i, T, s, nlen[i], ne[i]);
-        }
-    } else if (strcmp(update_mode, "asynchronous") == 0) {
-        // Generate random indices
-        size_t *random_indices = __gen_rand_u64_array(N);
 
-        for (size_t i = 0; i < N; i++) {
-            size_t random_index = (random_indices[i] % N);
-            // // printf("Random index: %ld, %zu\n", i, random_index);
-            // printf("update random index: %zu, %zu\nneighs: ", random_index, nlen[i]);
-            // for (size_t j = 0; j < nlen[i]; j++)
-            // {
-            //     printf("%zu ", ne[i].neighbors[j]);
-            // }
-            //             for (size_t j = 0; j < nlen[i]; j++)
-            // {
-            //     printf("%zu ", ne[i].neighbors[j]);
-            // }
-            glauberMetropolis_1step(random_index, T, s, nlen[random_index], ne[random_index]);
-            // printf("\n");
-        }
-        free(random_indices);
-    } else {
-        // Handle invalid update mode (consider error handling)
-    }
-}
 
 /** 
  * @brief applies the Glauber-Metropolis dynamics to an Ising system (N steps).
