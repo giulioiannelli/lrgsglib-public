@@ -6,18 +6,11 @@
 #define EXPECTED_ARGC 13
 #define MOD_SAVE 1
 //
-#define T_THERM_STEP  (size_t)(thrmSTEP * N)
-#define T_EQ_STEP (size_t)(eqSTEP * N)
-#define T_STEPS (T_THERM_STEP + T_EQ_STEP)
-//
-sfmt_t sfmt;
-uint32_t *seed_rand;
-//
 int main(int argc, char *argv[])
 {
     /* check argc */
     if (argc < EXPECTED_ARGC) {
-        fprintf(stderr, "Usage: %s N T p Noclust thrmSTEP eqSTEP datdir run_id"\
+        fprintf(stderr, "Usage: %s N T p Noclust thrmSTEP eqSTEP datdir syshape run_id"\
             " out_id update_mode nSampleLog NeigV\n", argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -32,9 +25,9 @@ int main(int argc, char *argv[])
     char *ptr, *datdir, *syshape, *out_id, *mod_save;
     char *ext_save, *update_mode, *run_id;
     int nSampleLog, NeigV;
-    double T, p, thrmSTEP, *overlap;
-    double *ene;
-    size_t N, side, Noclust, tmp, eqSTEP;
+    double T, p, thrmSTEP, eqSTEP;
+    double *overlap, *ene;
+    size_t N, side, Noclust, tmp;
     spin_tp s, eigV;
     size_tp neigh_len, cl_l;
     size_tp *cl_i;
@@ -51,7 +44,7 @@ int main(int argc, char *argv[])
     p = strtod(argv[3], &ptr);
     Noclust = strtozu(argv[4]);
     thrmSTEP = strtod(argv[5], &ptr);
-    eqSTEP = strtozu(argv[6]);
+    eqSTEP = strtod(argv[6], &ptr);
     datdir = argv[7];
     syshape = argv[8];
     run_id = argv[9];
@@ -60,6 +53,8 @@ int main(int argc, char *argv[])
     nSampleLog = atoi(argv[12]);
     NeigV = atoi(argv[13]);
     side = (size_t)sqrt(N);
+    /* init metropolis algorithm */
+    initialize_glauberMetropolis(T);
     /* open out files */
     switch (MOD_SAVE)
     {
@@ -82,7 +77,6 @@ int main(int argc, char *argv[])
         mclus[i] = __chMalloc(sizeof(**mclus) * T_EQ_STEP);
     /* open spin initial condition  */
     sprintf(buf, SINI_FNAME, datdir, syshape, p, run_id);
-    printf("buf: %s\n", buf);
     __fopen(&f_sini, buf, "rb");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     /* open cluster indices files */

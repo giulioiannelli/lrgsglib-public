@@ -1,6 +1,7 @@
 #
 import argparse
 import glob
+import itertools
 import lmfit
 import os
 import powerlaw
@@ -31,8 +32,10 @@ from pathlib import Path
 from operator import itemgetter
 from os import chdir, getcwd
 from os.path import join as pth_join
+from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster, dendrogram, linkage
 from scipy.interpolate import griddata, pchip
+from scipy.io import loadmat
 from scipy.linalg import expm, fractional_matrix_power
 from scipy.linalg import eigvalsh as seigvalsh
 from scipy.ndimage import gaussian_filter1d, gaussian_filter, zoom

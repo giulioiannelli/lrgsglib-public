@@ -16,7 +16,8 @@
 
 /* utils.c */
 
-extern void print_stdout_cwd(void);
+extern void print_cwd(FILE *output_stream);
+extern void fill_array_with_value(double *arr, size_t start, size_t end, double value);
 extern double* logspace(double start, double stop, int num);
 extern int* logspace_int(double stop, int* num);
 extern double sum_vs(size_t n, double *v);
@@ -70,5 +71,7 @@ double calc_ext_magn2(size_t N, spin_tp s);
 void flip_spin(size_t nd, spin_tp s);
 double calc_clust_magn(size_t cli_l, size_tp cli, spin_tp s);
 double calc_totEnergy(size_t N, spin_tp s, size_tp nlen, NodesEdges ne);
+bool glauber_isStableAtZeroTemp(size_t N, spin_tp s, size_tp nlen, 
+    NodesEdges ne);
 
 #endif /* __LRSGLIB_H_INC__ */

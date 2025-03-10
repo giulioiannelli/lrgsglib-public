@@ -50,6 +50,7 @@ FN_RBIMSIM1 = IsingSimulator1
 FN_RBIMSIM2 = IsingSimulator2
 FN_RBIMSIM3 = IsingSimulator3
 FN_RBIMSIM4 = IsingSimulator4
+FN_RBIMSIM5 = IsingSimulator5
 FN_VMSIM0   = voter_model
 FN_LRGSGLIB = LRGSG_utils sfmtrng 
 SRC_RBIM    = LRGSG_rbim
@@ -61,6 +62,7 @@ RBIMSIM1.c = $(addsuffix .c, $(FN_RBIMSIM1))
 RBIMSIM2.c = $(addsuffix .c, $(FN_RBIMSIM2))
 RBIMSIM3.c = $(addsuffix .c, $(FN_RBIMSIM3))
 RBIMSIM4.c = $(addsuffix .c, $(FN_RBIMSIM4))
+RBIMSIM5.c = $(addsuffix .c, $(FN_RBIMSIM5))
 VMSIM0.c   = $(addsuffix .c, $(FN_VMSIM0))
 #
 SRCCFILES.c     = $(addsuffix .c, $(FN_LRGSGLIB))
@@ -78,6 +80,7 @@ PATHSRS1.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM1.c)) $(PATH_SRCC_FILES) $
 PATHSRS2.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM2.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
 PATHSRS3.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM3.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
 PATHSRS4.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM4.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
+PATHSRS5.c := $(addprefix $(PATH_RBIM_SIMC), $(RBIMSIM5.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_RBIM) $(PATH_SFMT_FILES)
 PATHSRSVM0.c := $(addprefix $(PATH_VM), $(VMSIM0.c)) $(PATH_SRCC_FILES) $(PATH_SRCC_VM) $(PATH_SFMT_FILES)
 #
 # FILES.o = ${FILES.c:.c=.o}
@@ -87,6 +90,7 @@ PROGRAMN1 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM1))
 PROGRAMN2 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM2))
 PROGRAMN3 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM3))
 PROGRAMN4 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM4))
+PROGRAMN5 = $(addprefix $(PATH_CCORE_BIN), $(FN_RBIMSIM5))
 PROGRAMNVM0 = $(addprefix $(PATH_CCORE_BIN), $(FN_VMSIM0))
 #
 GCC := $(CONDA_PREFIX)/bin/gcc
@@ -106,7 +110,7 @@ INC_PATHS     = ${INC_PATH1} ${INC_PATH_SFMT}
 ALLFLAGS      = ${GFLAGS} ${OFLAGS} ${WFLAGS} ${DSFMTFLAG} ${INC_PATHS} ${OPENMPFLAG}
 
 configure: setup chmod_scripts echo_paths create_dirs
-c_make: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} ${PROGRAMN3} ${PROGRAMN4}
+c_make: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} ${PROGRAMN3} ${PROGRAMN4} ${PROGRAMN5}
 all: configure c_make #sub_make chmod_scripts
 
 generate_config_script:
@@ -194,6 +198,9 @@ ${PROGRAMN3}: ${PATHSRS3.c}
 ${PROGRAMN4}: ${PATHSRS4.c}
 	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
 
+${PROGRAMN5}: ${PATHSRS5.c}
+	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
+
 chmod_scripts:
 	find $(PATH_SH) -type f -name '*.sh' -exec chmod +x {} \;
 
@@ -216,6 +223,7 @@ clean_programs:
 	${RM_FR} ${PROGRAMN2}
 	${RM_FR} ${PROGRAMN3}
 	${RM_FR} ${PROGRAMN4}
+	${RM_FR} ${PROGRAMN5}
 
 clean_directories:
 	$(MAKE) -C $(PATH_GTPTCH_CPP) clean
@@ -231,8 +239,6 @@ clean_activations:
 	@rm -rf $(ACTIVATE_D) $(DEACTIVATE_D)
 
 clean: clean_programs clean_directories clean_files clean_activations
-
-
 
 # Prevent duplication of 'all' and 'clean' by removing previous definitions
 .PHONY: all clean setup chmod_scripts create_dirs make_rootf sub_make

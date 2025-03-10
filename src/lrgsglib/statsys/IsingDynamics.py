@@ -15,6 +15,9 @@ class IsingDynamics:
         ic: str = "uniform",
         runlang: str = "py",
         NoClust: int = 1,
+        thrmSTEP: int = 20, 
+        eqSTEP: int = 20, 
+        freq: int = 10,
         nstepsIsing: int = 100,
         save_magnetization: bool = False,
         upd_mode: str = "asynchronous",
@@ -28,6 +31,9 @@ class IsingDynamics:
         self.T = T
         self.ic = ic
         self.nstepsIsing = nstepsIsing
+        self.thrmSTEP = thrmSTEP
+        self.eqSTEP = eqSTEP
+        self.freq = freq
         self.save_magnetization = save_magnetization
         self.NoClust = NoClust
         self.NeigV = -1
@@ -67,11 +73,11 @@ class IsingDynamics:
                 -self.s[node] * self.neigh_ene(self.neigh_wghtmagn(node))
                 for node in range(self.sg.N)]).sum()
     #
-    def init_ising_dynamics(self, custom: Any = None):
+    def init_ising_dynamics(self, custom: Any = None, exName: str = ""):
         match self.ic:
             case "uniform":
                 self.s = np.random.choice([-1, 1], size=self.sg.N)
-            case _ if self.ic.startswith("ground_state"):
+            case _ if self.ic.startswith("ground_state") or self.ic.startswith("gs"):
                 self.NeigV = int(self.ic.split("_")[-1])
                 bineigv = self.sg.get_eigV_bin_check(which=self.NeigV)
                 self.s = bineigv
@@ -82,9 +88,12 @@ class IsingDynamics:
                 self.s[np.random.randint(self.sg.N)] = 1
             case _:
                 raise ValueError("Invalid initial condition.")
-        if self.runlang.startswith("C") and not self.sg.import_on:
+        if self.runlang.startswith("C"):
+            self.build_cprogram_command()
+            self.setup_stderr_logging()
             self.export_s_init()
-            self.CbaseName = f"IsingSimulator{self.runlang[-1]}"
+            self.sg.export_edgel_bin(exName=exName)
+        self.sini = self.s.copy()
     #
     def check_attribute(self):
         try:
@@ -96,40 +105,59 @@ class IsingDynamics:
         if T_ising:
             self.T = T_ising
 
-    def build_cprogram_command(self, thrmSTEP, eqSTEP, freq):
+    def build_cprogram_command(self):
         run_id = self.id_string_isingdyn
         self.run_id = f"_{run_id}" if run_id else ''
-        arglist = [
-            f"{self.N}",
-            f"{self.T:.3g}",
-            f"{self.sg.pflip:.3g}",
-            f"{self.NoClust}",
-            f"{thrmSTEP:.3g}",
-            f"{eqSTEP}",
-            self.sg.sgdatpath,
-            self.sg.syshapePth,
-            self.run_id,
-            self.out_suffix,
-            self.upd_mode,
-            f"{freq}",
-            f"{self.NeigV}"
-        ]
+        self.CbaseName = f"IsingSimulator{self.runlang[-1]}"
+        match self.runlang:
+            case "C5":
+                arglist = [
+                    f"{self.N}",
+                    f"{self.T:.3g}",
+                    f"{self.sg.pflip:.3g}",
+                    f"{self.thrmSTEP:.3g}",
+                    f"{self.eqSTEP}",
+                    self.sg.sgdatpath,
+                    self.sg.syshapePth,
+                    self.run_id,
+                    self.out_suffix,
+                    self.upd_mode,
+                    f"{self.freq}",
+                ]
+            case _:
+                arglist = [
+                    f"{self.N}",
+                    f"{self.T:.3g}",
+                    f"{self.sg.pflip:.3g}",
+                    f"{self.NoClust}",
+                    f"{self.thrmSTEP:.3g}",
+                    f"{self.eqSTEP}",
+                    self.sg.sgdatpath,
+                    self.sg.syshapePth,
+                    self.run_id,
+                    self.out_suffix,
+                    self.upd_mode,
+                    f"{self.freq}",
+                    f"{self.NeigV}"
+                ]
         self.cprogram = [pth_join(LRGSG_LIB_CBIN, self.CbaseName)] + arglist
     #
     def setup_stderr_logging(self):
-        stderrFname = join_non_empty('_', f"err{self.CbaseName}", f"{self.N}",
-                                    f"{self.id_string_isingdyn}",
-                                    f"{self.out_suffix}") + LOG
-        stderrFname = os.path.join(LRGSG_LOG, stderrFname)
-        self.stderr = open(stderrFname, 'w')
+        self.stderrFname = LRGSG_LOG / (join_non_empty(
+                '_', 
+                f"err{self.CbaseName}",
+                f"{self.N}",
+                f"{self.id_string_isingdyn}",
+                f"{self.out_suffix}"
+            ) + LOG)
+        self.stderr = open(self.stderrFname, 'w')
     #
-    def run_cprogram(self, verbose):
+    def run_cprogram(self, verbose: bool = False):
         if verbose:
             print('\rExecuting: ', ' '.join(self.cprogram), end='', flush=True)
         result = subprocess.run(self.cprogram, stderr=self.stderr,
                                 stdout=subprocess.PIPE)
-        output = result.stdout
-        self.s = np.frombuffer(output, dtype=np.int8)
+        self.s = np.frombuffer(result.stdout, dtype=np.int8)
     #
     def metropolis_sampling(self, tqdm_on):
         metropolis_1step = np.vectorize(self.metropolis, excluded="self")
@@ -151,14 +179,11 @@ class IsingDynamics:
             save_magn_array()
     #
     @time_function_accumulate
-    def run(self, tqdm_on: bool = True, thrmSTEP: int = 2, eqSTEP: int = 20, 
-            freq: int = 10, T_ising: float = None, verbose: bool = False):
+    def run(self, tqdm_on: bool = True, T_ising: float = None, verbose: bool = False):
         self.check_attribute()
         self.initialize_run_parameters(T_ising)
 
         if self.runlang.startswith("C"):
-            self.build_cprogram_command(thrmSTEP, eqSTEP, freq)
-            self.setup_stderr_logging()
             self.run_cprogram(verbose)
         else:
             self.metropolis_sampling(tqdm_on)
@@ -179,7 +204,7 @@ class IsingDynamics:
             return
         #
         self.sg.compute_k_eigvV(k=self.NoClust)
-        eigVbin = self.sg.get_bineigV_all()
+        eigVbin = self.sg.get_eigV_bin_check_list()
         #
         self.Ising_clusters = []
         for j in range(self.NoClust):
@@ -218,7 +243,7 @@ class IsingDynamics:
             self.Ising_clusters.append(allclusters[0])
         self.numIsing_cl = len(self.Ising_clusters)
         if self.runlang.startswith("C"):
-            self.export_ising_clust()
+            self.sg.export_ising_clust()
 
     #
     def mapping_nodes_to_clusters(self):
@@ -253,35 +278,30 @@ class IsingDynamics:
         self.sfout = open(fname, "wb")
         self.s.astype("int8").tofile(self.sfout)
         self.s_0 = self.s.copy()
-    #
-    def export_ising_clust(self, val: Any = +1, which: int = 0, 
-                           on_g: str = SG_GRAPH_REPR, binarize: bool = True): 
-        self.sg.load_eigV_on_graph(which, on_g, binarize)
-        self.sg.make_clustersYN(f"eigV{which}", val, on_g=on_g)
-        try:
-            if self.NoClust > self.sg.numClustersBig:
-                raise NoClustError(
-                    "Requested number of Cluster files is bigger than the one"
-                    " in selected topology."
-                )
-        except NoClustError as excpt:
-            print(excpt)
-        for i in range(self.NoClust):
-            fname = os.path.join(self.sg.isingpath,
-                                 join_non_empty('_', f"cl{i}", self.in_suffix)+BIN)
-            self.clfout = open(fname, "wb")
-            np.array(list(self.sg.biggestClSet[i])).astype(int).tofile(self.clfout)
+    
+    # def export_ising_clust(self, val: Any = +1, which: int = 0, 
+    #                        binarize: bool = True, on_g: str = SG_GRAPH_REPR): 
+    #     self.sg.load_eigV_on_graph(which, on_g, binarize)
+    #     self.sg.make_clustersYN(f"eigV{which}", val, on_g=on_g)
+    #     try:
+    #         if self.NoClust > self.sg.numClustersBig:
+    #             raise NoClustError(
+    #                 "Requested number of Cluster files is bigger than the one"
+    #                 " in selected topology."
+    #             )
+    #     except NoClustError as excpt:
+    #         print(excpt)
+    #     for i in range(self.NoClust):
+    #         fname = os.path.join(self.sg.isingpath,
+    #                              join_non_empty('_', f"cl{i}", self.in_suffix)+BIN)
+    #         self.clfout = open(fname, "wb")
+    #         np.array(list(self.sg.biggestClSet[i])).astype(int).tofile(self.clfout)
 
     def remove_run_c_files(self, remove_stderr: bool = True):
         try:
             os.remove(self.sfout.name)
         except FileNotFoundError:
             pass
-        if self.runlang == "C1":
-            try:
-                os.remove(self.clfout.name)
-            except FileNotFoundError:
-                pass
         if remove_stderr:
             try:
                 os.remove(self.stderr.name)

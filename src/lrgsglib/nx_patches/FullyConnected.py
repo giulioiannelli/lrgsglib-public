@@ -8,7 +8,7 @@ class FullyConnected(SignedGraph):
         self, 
         N: int = FC_N,
         with_positions: bool = False,
-        mode_positions: Union[str, Callable] = "circular",
+        mode_positions: Union[str, Callable] = 'circular',
         anigemb: str = "sle",
         **kwargs
     ) -> None:
@@ -23,7 +23,7 @@ class FullyConnected(SignedGraph):
         self.G = nx.complete_graph(self.N)
         if self.with_positions:
             match self.mode_positions:
-                case "circular":
+                case 'circular':
                     pos = nx.circular_layout(self.G)
                 case "sspectral":
                     pos = signed_spectral_layout(self.G)
@@ -75,7 +75,7 @@ class FullyConnected(SignedGraph):
         ]
         if self.animation_graph_embedding == "sle":
             pos = signed_spectral_layout(self.G)
-        elif self.animation_graph_embedding == "circular":
+        elif self.animation_graph_embedding == 'circular':
             pos = nx.circular_layout(self.G)
         # nx.draw(G, ax=ax, pos=pos, edge_color=G_edgecol, node_color=G_nodecol, cmap='viridis')
         nodes = nx.draw_networkx_nodes(
