@@ -1065,7 +1065,7 @@ def set_color_cycle(
     # Apply the color cycle to the Axes
     ax.set_prop_cycle(color_cycle)
 
-def plot_honeycomb_grid(data: NDArray, fig: Any, ax: Any, triangle_size: float = 1.0) -> None:
+def plot_honeycomb_grid(data: NDArray, fig: Any, ax: Any, triangle_size: float = 1.0, cmap: Union[Colormap, str] = credcblu) -> None:
     """
     Plot a triangular grid representing the honeycomb structure based on the provided 2D array data.
 
@@ -1087,7 +1087,10 @@ def plot_honeycomb_grid(data: NDArray, fig: Any, ax: Any, triangle_size: float =
     import matplotlib.patches as patches
     # Determine number of rows and columns from data
     n_rows, n_cols = data.shape
-
+    if isinstance(cmap, str):
+        cmap_fun = plt.get_cmap(cmap)
+    else:
+        cmap_fun = cmap
     # Height of an equilateral triangle
     triangle_height = (np.sqrt(3) / 2) * triangle_size
 
@@ -1115,7 +1118,7 @@ def plot_honeycomb_grid(data: NDArray, fig: Any, ax: Any, triangle_size: float =
                 ]
 
             # Get color based on data
-            color = credcblu(data[row, col])
+            color = cmap_fun(data[row, col])
 
             # Create and add the triangle patch to the axis
             triangle = patches.Polygon(vertices, facecolor=color)
@@ -1128,3 +1131,171 @@ def plot_honeycomb_grid(data: NDArray, fig: Any, ax: Any, triangle_size: float =
 
     # Hide the axes for better visualization
     ax.axis('off')
+
+# def plot_tiangular_grid(data, fig, ax, triangle_size: float = 1.0) -> None:
+#     """
+#     Plot a planar triangular grid by placing a hexagon at each node.
+#     Each hexagon is colored based on the corresponding value in the provided 2D array.
+    
+#     The centers of the hexagons are arranged on a triangular (offset) grid. For a pointy-topped
+#     hexagon tiling the horizontal distance between adjacent centers is defined by:
+#         distance = √3 * R,  with  R = triangle_size / √3.
+#     This yields centers computed as:
+#         x_center = col * triangle_size + (row % 2) * (triangle_size / 2)
+#         y_center = row * ((√3)/2 * triangle_size)
+    
+#     Parameters
+#     ----------
+#     data : np.ndarray
+#         A 2D numpy array representing values at each node of the triangular grid.
+#     fig : matplotlib.figure.Figure
+#         A matplotlib figure object to plot on.
+#     ax : matplotlib.axes._axes.Axes
+#         A matplotlib axes object to plot on.
+#     triangle_size : float, optional
+#         The grid spacing parameter. It is used both to determine the positions of nodes and
+#         to set the size of each hexagon (with the hexagon circumradius being triangle_size/√3).
+#         Default is 1.0.
+    
+#     Returns
+#     -------
+#     None
+#     """
+#     import numpy as np
+#     import matplotlib.patches as patches
+
+#     # Determine number of rows and columns in the data array.
+#     n_rows, n_cols = data.shape
+
+#     # For a pointy-topped hexagon, the distance between centers horizontally equals √3 * R.
+#     # We choose R so that √3 * R = triangle_size.
+#     hex_radius = triangle_size / np.sqrt(3)
+
+#     # Loop over the grid and add a hexagon at each node.
+#     for row in range(n_rows):
+#         for col in range(n_cols):
+#             # Calculate the center of the hexagon.
+#             x_center = col * triangle_size + (row % 2) * (triangle_size / 2)
+#             y_center = row * ((np.sqrt(3) / 2) * triangle_size)
+            
+#             # Get color based on the data value (assuming credcblu is defined elsewhere).
+#             color = credcblu(data[row, col])
+            
+#             # Create a pointy-topped hexagon (using orientation=π/2 so that one vertex is at the top).
+#             hexagon = patches.RegularPolygon(
+#                 (x_center, y_center),
+#                 numVertices=6,
+#                 radius=hex_radius,
+#                 orientation=np.pi/2,
+#                 facecolor=color
+#             )
+#             ax.add_patch(hexagon)
+
+#     # Compute plot limits to ensure all hexagons are visible.
+#     # For x: the leftmost hexagon (from an even row) is at 0 - hex_radius;
+#     # for rows with an offset (odd rows) the rightmost center is at (n_cols-1)*triangle_size + triangle_size/2.
+#     x_min = -hex_radius
+#     if n_rows > 1:
+#         x_max = (n_cols - 1) * triangle_size + (triangle_size / 2) + hex_radius
+#     else:
+#         x_max = (n_cols - 1) * triangle_size + hex_radius
+
+#     # For y: the lowest center is at 0, so subtract hex_radius;
+#     # the highest center is at (n_rows-1) * ((√3)/2 * triangle_size) plus hex_radius.
+#     y_min = -hex_radius
+#     y_max = (n_rows - 1) * ((np.sqrt(3) / 2) * triangle_size) + hex_radius
+
+#     ax.set_xlim(x_min, x_max)
+#     ax.set_ylim(y_min, y_max)
+#     ax.set_aspect('equal')
+#     ax.axis('off')
+
+def plot_hex_tiling_from_nodes(x, y, vals, ax=None, cmap='viridis'):
+    """
+    Creates a tiling of pointy-topped hexagons (one per node) on a rectangular grid.
+    
+    The tiling is computed so that the overall pattern exactly fits the bounding box
+    defined by the input x and y coordinates.
+    
+    For pointy-topped hexagons:
+      - Width = √3 * R, Height = 2 * R.
+      - Horizontal spacing = √3 * R.
+      - Vertical spacing = 1.5 * R.
+      - Even rows: center_x = x_min + (√3/2)*R + col*(√3*R)
+      - Odd rows:  center_x = x_min + √3*R + col*(√3*R)
+      - For all rows: center_y = y_min + R + row*(1.5*R)
+    
+    Parameters:
+      x, y : array-like
+          Node coordinates.
+      vals : array-like
+          A value per node used for coloring.
+      ax : matplotlib.axes.Axes, optional
+          Axis to plot on; a new figure is created if None.
+      cmap : str or Colormap, optional
+          Colormap for the hexagons.
+    
+    Returns:
+      ax : matplotlib.axes.Axes
+          The axis with the hexagon tiling.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 8))
+    
+    # Bounding box of input data.
+    x_min, x_max = np.min(x), np.max(x)
+    y_min, y_max = np.min(y), np.max(y)
+    
+    # Determine grid shape.
+    unique_x = np.unique(x)
+    unique_y = np.unique(y)
+    cols = len(unique_x)
+    rows = len(unique_y)
+    
+    # For pointy-topped hexagons:
+    # Overall tiling width (if any odd row exists) will be (cols + 0.5)*√3*R.
+    # Overall tiling height = (1.5*(rows-1) + 2)*R.
+    R_width = (x_max - x_min) / ((cols + 0.5) * np.sqrt(3))
+    R_height = (y_max - y_min) / (1.5*(rows-1) + 2)
+    R = min(R_width, R_height)
+    
+    # Compute hexagon centers.
+    hex_centers = []
+    for r in range(rows):
+        for c in range(cols):
+            if r % 2 == 0:
+                cx = x_min + (np.sqrt(3)/2)*R + c*(np.sqrt(3)*R)
+            else:
+                cx = x_min + np.sqrt(3)*R + c*(np.sqrt(3)*R)
+            cy = y_min + R + r*(1.5*R)
+            hex_centers.append((cx, cy))
+    hex_centers = np.array(hex_centers)
+    
+    # Sort centers and node data lexicographically (by x then y).
+    hex_sort_idx = np.lexsort((hex_centers[:,1], hex_centers[:,0]))
+    node_sort_idx = np.lexsort((np.array(y), np.array(x)))
+    hex_centers_sorted = hex_centers[hex_sort_idx]
+    vals_sorted = np.array(vals)[node_sort_idx]
+    
+    norm = Normalize(vmin=np.min(vals), vmax=np.max(vals))
+    colormap = plt.get_cmap(cmap)
+    
+    # Draw each hexagon.
+    for (cx, cy), v in zip(hex_centers_sorted, vals_sorted):
+        hexagon = RegularPolygon(
+            (cx, cy), numVertices=6, radius=R,
+            orientation=np.pi/3,  # pointy-topped: vertex at the top
+            facecolor=colormap(norm(v)), edgecolor='w', linewidth=0.05
+        )
+        ax.add_patch(hexagon)
+    
+    # Compute overall extents.
+    left = np.min(hex_centers[:,0] - (np.sqrt(3)/2)*R)
+    right = np.max(hex_centers[:,0]/2 + (np.sqrt(3)/2)*R)
+    bottom = np.min(hex_centers[:,1] - R)
+    top = np.max(hex_centers[:,1] + R)
+    
+    ax.set_xlim(left, right)
+    ax.set_ylim(bottom, top)
+    ax.set_aspect('equal')
+    return ax
