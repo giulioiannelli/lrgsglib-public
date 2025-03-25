@@ -354,19 +354,25 @@ class SignedGraph:
             eigV = self.eigV[which].squeeze()
             return flip_to_positive_majority_adapted(eigV).squeeze()
     #
-    def get_eigV_check(self, which: int = 0, binarize: bool = False):
+    def get_eigV_check(self, which: int = 0, binarize: bool = False, reshaped: bool = False):
         if not hasattr(self, f"eigV") or which >= len(self.eigV):
             self.compute_k_eigvV(k=which+1)
-        return self.get_eigV(which, binarize)
+        if reshaped:
+            return self.get_eigV(which, binarize).reshape(*self.syshape)
+        else:
+            return self.get_eigV(which, binarize)
     #
     def get_eigV_binarized(self, which: int = 0):
         eigV = bin_sign(self.eigV[which].squeeze())
         return flip_to_positive_majority(eigV).squeeze()
     #
-    def get_eigV_bin_check(self, which: int = 0):
+    def get_eigV_bin_check(self, which: int = 0, reshaped: bool = False):
         if not hasattr(self, f"eigV") or which >= len(self.eigV):
             self.compute_k_eigvV(k=which+1)
-        return self.get_eigV_binarized(which)
+        if reshaped:
+            return self.get_eigV_binarized(which).reshape(*self.syshape)
+        else:
+            return self.get_eigV_binarized(which)
     #
     def get_eigV_bin_check_list(self, custom_slice: slice = slice(None)):
         maxidx = (custom_slice.stop - 1) if custom_slice.stop is not None else self.N

@@ -15,6 +15,7 @@ class Lattice2D(SignedGraph):
         stdFnameSFFX: str = L2D_STDFN,
         sgpathn: str = L2D_SGPATH,
         with_positions: bool = L2D_WITH_POS,
+        bend_positions: bool = L2D_BEND_POS,
         prew: float = L2D_PREW,
         **kwargs,
     ) -> None:
@@ -29,6 +30,7 @@ class Lattice2D(SignedGraph):
         #
         self.sgpathn = pth_join(sgpathn, L2D_PATH_DICT[self.geo]) if sgpathn else L2D_PATH_DICT[self.geo]
         self.with_positions = with_positions
+        self.bend_positions = bend_positions
         #
         self.__init_lattice__()
         super(Lattice2D, self).__init__(self.G, **kwargs)
@@ -110,7 +112,7 @@ class Lattice2D(SignedGraph):
         self.r_c = np.sqrt(self.eta_c/(np.pi*self.p_c))
         #
         self.H = nxfunc(self.side1, self.side2, periodic=self.pbc, 
-                        with_positions=self.with_positions)
+                        with_positions=self.with_positions, bend_positions=self.bend_positions)
         self.G = nx.convert_node_labels_to_integers(self.H)
     #
     def degree_check(self, degree):
