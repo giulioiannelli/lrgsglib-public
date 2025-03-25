@@ -6,7 +6,7 @@ def initialize_l2d_dict_args(args):
 
 def initialize_ising_dict_args(args, out_suffix, NoClust):
     return dict(T=args.T, ic=args.init_cond, runlang=args.runlang, 
-                NoClust=NoClust, rndStr=True,
+                NoClust=NoClust, rndStr=True, freq=args.freq,
                 out_suffix=out_suffix, thrmSTEP=args.thrmsteps)
 
 def get_out_suffix(args):
@@ -15,12 +15,13 @@ def get_out_suffix(args):
 def run_simulation(args):
     ic_gs = args.init_cond.startswith('ground_state') or args.init_cond.startswith('gs')
     number = int(args.init_cond.split('_')[-1]) if ic_gs else 0
+    val = ConditionalPartitioning(args.val)
     for _ in range(args.number_of_averages):
         lattice = Lattice2D(**initialize_l2d_dict_args(args))
         lattice.flip_sel_edges(lattice.nwDict[args.cell_type]['G'])
         lattice.compute_k_eigvV(number+1)
         lattice.load_eigV_on_graph(number, binarize=True)
-        lattice.make_clustersYN(f'eigV{number}', val=args.val)
+        lattice.make_clustersYN(f'eigV{number}', val=val)
         #
         NoClust = lattice.handle_no_clust(NoClust=args.NoClust)
         isingDictArgs = initialize_ising_dict_args(args, get_out_suffix(args), NoClust)
