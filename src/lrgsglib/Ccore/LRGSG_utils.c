@@ -99,7 +99,7 @@ double calc_totEnergy(size_t N, spin_tp s, size_tp nlen, NodesEdges ne) {
         double tmp = *(s + i) * neighWeight_magn(ne[i], s, nlen[i]);
         sum += tmp;
     }
-    return - sum / N;
+    return - sum / (2 * N);
 }
 double calc_energy_full(size_t N, spin_tp s, size_tp nlen, size_tp *neighs,
                         double_p *edgl) {
