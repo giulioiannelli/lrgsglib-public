@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Export directories
-export LRGSG_ROOT="/home/opisthofulax/PhD/projects/complex-networks/lrgsglib"
-export LRGSG_ROOT="/home/opisthofulax/PhD/projects/complex-networks/lrgsglib"
+export LRGSG_ROOT="/home/opisthofulax/Documents/PhD/projects/complex-networks/lrgsglib"
+export LRGSG_ROOT="/home/opisthofulax/Documents/PhD/projects/complex-networks/lrgsglib"
 export LRGSG_BUILD="./build"
 export LRGSG_LOG="./log"
 export LRGSG_DATA="./data"
