@@ -380,7 +380,7 @@ def triangular_lattice_graph_modified(
     return G
 
 
-def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None) -> nx.Graph:
+def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None, bend_positions: bool = False) -> nx.Graph:
     """
     Generates a triangular lattice graph with optional periodic boundary conditions (PBC). 
     This function creates a graph representing a triangular lattice with `m` rows and `n` columns.
@@ -449,7 +449,7 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
         jj = (j for i in rows for j in cols)
         xx = (0.5 * (i % 2) + j for i in rows for j in cols)
         h = np.sqrt(3) / 2
-        if periodic:
+        if periodic and bend_positions:
             yy = (h * i + 0.01 * j * j for i in rows for j in cols)
         else:
             yy = (h * i for i in rows for j in cols)
@@ -459,7 +459,7 @@ def triangular_lattice_graph_FastPatch(m: int, n: int, periodic: bool = False, w
 
 
 
-def hexagonal_lattice_graph_FastPatch(n: int, m: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None) -> nx.Graph:
+def hexagonal_lattice_graph_FastPatch(n: int, m: int, periodic: bool = False, with_positions: bool = True, create_using: Any = None, bend_positions: bool = False) -> nx.Graph:
     """
     Generate a hexagonal lattice graph with optional periodic boundary conditions.
     
@@ -504,7 +504,7 @@ def hexagonal_lattice_graph_FastPatch(n: int, m: int, periodic: bool = False, wi
         jj = (j for i in cols for j in rows)
         xx = (0.5 + i + i // 2 + (j % 2) * ((i % 2) - 0.5) for i in cols for j in rows)
         h = np.sqrt(3) / 2
-        if periodic:
+        if periodic and bend_positions:
             yy = (h * j + 0.01 * i * i for i in cols for j in rows)
         else:
             yy = (h * j for i in cols for j in rows)
@@ -514,7 +514,7 @@ def hexagonal_lattice_graph_FastPatch(n: int, m: int, periodic: bool = False, wi
 
     return G
 
-def squared_lattice_graph_FastPatch(m, n, periodic=False, create_using=None, with_positions: bool = True):
+def squared_lattice_graph_FastPatch(m, n, periodic=False, create_using=None, with_positions: bool = True, bend_positions: bool = False):
     """Returns the two-dimensional grid graph.
 
     The grid graph has each node connected to its four nearest neighbors.
@@ -570,7 +570,7 @@ def squared_lattice_graph_FastPatch(m, n, periodic=False, create_using=None, wit
         jj = (j for i in rows for j in cols)
         xx = (i for i in rows for j in cols)
         yy = (j for i in rows for j in cols)
-        if periodic:
+        if periodic and bend_positions:
             xx = (i for i in rows for j in cols)  # x position matches column index
             yy = (j for i in rows for j in cols)
             xx = (i + 0.02 * j * j for i in rows for j in cols)  # x position matches column index
@@ -843,3 +843,191 @@ def fast_set_weights_from_matrix(G: nx.Graph, weight_matrix: np.ndarray) -> None
 
     # Update the graph's edge attributes in one efficient call
     nx.set_edge_attributes(G, edge_weights, "weight")
+
+def get_giant_component(graph: nx.Graph, remove_selfloops: bool = True) -> nx.Graph:
+    """
+    Remove self-loops (optional) from the input graph and return its largest connected component.
+    
+    Parameters
+    ----------
+    graph : nx.Graph
+        The input graph from which self-loops are removed.
+    
+    Returns
+    -------
+    nx.Graph
+        A copy of the largest connected component of the cleaned graph.
+    """
+    G_clean = graph.copy()
+    if remove_selfloops:
+        G_clean.remove_edges_from(nx.selfloop_edges(G_clean))
+    components = sorted(nx.connected_components(G_clean), key=len, reverse=True)
+    return G_clean.subgraph(components[0]).copy()
+
+def get_giant_component_leftoff(graph: nx.Graph, remove_selfloops: bool = True) -> Tuple[nx.Graph, List]:
+    """
+    Remove self-loops (optional) from the input graph and return its largest connected component,
+    along with the list of nodes that are not part of the giant component.
+
+    Parameters
+    ----------
+    graph : nx.Graph
+        The input graph from which self-loops are optionally removed.
+    remove_selfloops : bool, optional
+        Whether to remove self-loops from the graph (default is True).
+
+    Returns
+    -------
+    Tuple[nx.Graph, List]
+        A tuple containing:
+          - A copy of the largest connected component of the cleaned graph.
+          - A list of node names that are not included in the giant component.
+    """
+    G_clean = graph.copy()
+    if remove_selfloops:
+        G_clean.remove_edges_from(nx.selfloop_edges(G_clean))
+    
+    components = sorted(nx.connected_components(G_clean), key=len, reverse=True)
+    if components:
+        giant_nodes = components[0]
+    else:
+        giant_nodes = set()
+    
+    giant_component = G_clean.subgraph(giant_nodes).copy()
+    left_off_nodes = list(set(G_clean.nodes()) - giant_nodes)
+    
+    return giant_component, left_off_nodes
+
+def compute_threshold_stats(G0: nx.Graph) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute threshold values and connectivity statistics for a weighted graph.
+
+    The function generates a logarithmically spaced array of threshold values between 1e-5 and the 
+    logarithm of the maximum edge weight. For each threshold, it removes edges below the threshold 
+    and calculates:
+      - Pinf: the fraction of nodes in the largest connected component relative to G0.
+      - Einf: the fraction of edges in the largest connected component relative to G0.
+      
+    Parameters
+    ----------
+    G0 : nx.Graph
+        A weighted graph (assumed to be the largest connected component) where each edge 
+        has a "weight" attribute.
+
+    Returns
+    -------
+    Th : np.ndarray
+        Array of threshold values.
+    Einf : np.ndarray
+        Array of fractions of edges in the giant component at each threshold.
+    Pinf : np.ndarray
+        Array of fractions of nodes in the giant component at each threshold.
+    """
+    weights = [data["weight"] for _, _, data in G0.edges(data=True)]
+    min_weight = min(weights)
+    max_weight = max(weights)
+    Th = np.logspace(np.log10(min_weight), np.log10(max_weight), 400)
+    Pinf = np.zeros(len(Th))
+    Einf = np.zeros(len(Th))
+    E0 = len(G0.edges())
+    
+    for i, threshold in enumerate(tqdm(Th, desc="Computing threshold stats")):
+        F = G0.copy()
+        F.remove_edges_from([(u, v) for u, v, w in F.edges(data="weight") if w < threshold])
+        if F.number_of_edges() == 0:
+            Pinf[i] = 0
+            Einf[i] = 0
+        else:
+            components = sorted(nx.connected_components(F), key=len, reverse=True)
+            giant = F.subgraph(components[0]).copy()
+            Pinf[i] = len(giant.nodes()) / len(G0.nodes())
+            Einf[i] = len(giant.edges()) / E0
+    return Th, Einf, Pinf
+
+def select_threshold_and_graph(G0: nx.Graph, Th: np.ndarray, Pinf: np.ndarray, percentage: float = 0.9) -> Tuple[float, nx.Graph]:
+    """
+    Select the optimal threshold based on the fraction of nodes in the giant component and return the thresholded graph.
+
+    The function identifies the first threshold in `Th` where the fraction of nodes in the giant component (`Pinf`)
+    drops below the specified `percentage`. This indicates the point where the network starts to fragment. If such 
+    a threshold is found, it is chosen as the optimal threshold; otherwise, the maximum threshold value is used.
+    The graph is then thresholded by removing all edges with weights below the optimal threshold.
+
+    Parameters
+    ----------
+    G0 : nx.Graph
+        The original weighted graph (assumed to be the largest connected component).
+    Th : np.ndarray
+        Array of threshold values.
+    Pinf : np.ndarray
+        Array containing the fraction of nodes in the giant component at each threshold.
+    percentage : float, optional
+        The fraction threshold (between 0 and 1) for nodes in the giant component that determines the optimal 
+        threshold, by default 0.9.
+
+    Returns
+    -------
+    Tuple[float, nx.Graph]
+        A tuple containing:
+            - The selected optimal threshold (float).
+            - The thresholded graph (nx.Graph) with edges having weights below the optimal threshold removed.
+    """
+    indices = np.where(Pinf < percentage)[0]
+    if indices.size > 0:
+        best_threshold = Th[indices[0]]
+    else:
+        best_threshold = Th[-1]
+    
+    G_thresh = G0.copy()
+    G_thresh.remove_edges_from([(u, v) for u, v, w in G_thresh.edges(data="weight") if w < best_threshold])
+    return best_threshold, G_thresh
+
+
+def threshold_graph(G: nx.Graph, percentage: float = 0.9) -> Tuple[float, nx.Graph, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Process a weighted graph by extracting its largest connected component, computing threshold-based 
+    connectivity statistics, and selecting an optimal threshold to sparsify the graph.
+
+    The function performs the following steps:
+      1. Verifies that the graph contains no negative weights.
+      2. Extracts the giant component from the input graph (after removing self-loops). Only this giant 
+         component is considered for further analysis.
+      3. Computes a logarithmically spaced array of threshold values and the corresponding connectivity 
+         statistics (fraction of nodes and edges in the giant component) for each threshold.
+      4. Selects the first threshold in which the fraction of nodes in the giant component (Pinf) drops 
+         below a specified percentage.
+      5. Returns the optimal threshold along with the thresholded graph.
+
+    Parameters
+    ----------
+    G : nx.Graph
+        The input weighted graph with a "weight" attribute for each edge.
+    percentage : float, optional
+        The fraction threshold (between 0 and 1) for nodes in the giant component that determines the optimal 
+        threshold, by default 0.9.
+
+    Returns
+    -------
+    Tuple[float, nx.Graph, np.ndarray, np.ndarray, np.ndarray]
+        A tuple containing:
+          - best_threshold (float): The optimal threshold value selected.
+          - G_thresh (nx.Graph): The thresholdedgraph with edges having weights below 
+            best_threshold removed.
+          - Th (np.ndarray): Array of threshold values used.
+          - Einf (np.ndarray): Array of the fraction of edges in the giant component at each threshold.
+          - Pinf (np.ndarray): Array of the fraction of nodes in the giant component at each threshold.
+    
+    Raises
+    ------
+    ValueError
+        If the graph contains negative weights.
+    """
+    # Ensure no negative weights are present
+    if any(data["weight"] < 0 for _, _, data in G.edges(data=True)):
+        raise ValueError("Graph contains negative weights, which is not allowed.")
+    
+    G0 = get_giant_component(G)
+    Th, Einf, Pinf = compute_threshold_stats(G0)
+    best_threshold, G_thresh = select_threshold_and_graph(G0, Th, Pinf, percentage)
+
+    return best_threshold, G_thresh, Th, Einf, Pinf
