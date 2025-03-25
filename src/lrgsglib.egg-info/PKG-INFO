@@ -1,0 +1,13 @@
+Metadata-Version: 2.2
+Name: lrgsglib
+Version: 0.0.1
+Summary: A package containing useful classes and functions for stting up the theoretical apparatus of the Laplacian Renormalizazion Group for Signed Graph
+Author-email: Giulio Iannelli <giulioiannelli.w@gmail.com>, Pablo Villegas <pablo.villegas@cref.it>
+Project-URL: Homepage, https://github.com/giulioiannelli/lrgsglib
+Project-URL: Bug Tracker, https://github.com/giulioiannelli/lrgsglib/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENCE
