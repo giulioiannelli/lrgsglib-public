@@ -606,7 +606,7 @@ def get_graph_lspectrum(G, is_signed=False):
         A = nx.adjacency_matrix(G).toarray()
         D = np.diag(np.abs(A).sum(axis=1))
         L = D - A
-        w = np.eigvals(L)
+        w = np.linalg.eigvals(L)
     else:
         L = nx.laplacian_matrix(G).todense()
         w = nx.laplacian_spectrum(G)
@@ -620,7 +620,7 @@ def get_graph_lspectrum_rw(G, is_signed=False):
         D, -0.5
     ) @ A @ fractional_matrix_power(D, -0.5)
     if is_signed:
-        w = np.eigvals(L)
+        w = np.linalg.eigvals(L)
     else:
         w = nx.laplacian_spectrum(G)
     return L, w
@@ -829,7 +829,7 @@ def eigv_for_lattice2D(side, **kwargs) -> NDArray:
     return l.eigv
 
 
-def compute_properties(G, tau=None):
+def compute_laplacian_properties(G, tau=None):
     """
     Computes the Laplacian spectrum, Laplacian matrix, rho, and Trho for graph G.
 
