@@ -23,9 +23,9 @@ int main(int argc, char *argv[])
     char *ptr, *datdir, *syshape, *out_id, *update_mode, *run_id;
     int nSampleLog;
     int* logspc;
-    double T, p, thrmSTEP;
+    double T, p, thrmSTEP, eqSTEP;
     double *ene;
-    size_t N, side, Noclust, eqSTEP, tmp, freq;
+    size_t N, side, Noclust, tmp, freq;
     spin_tp s;
     size_tp neigh_len;
     NodesEdges node_edges;
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     p = strtod(argv[3], &ptr);
     Noclust = strtozu(argv[4]);
     thrmSTEP = strtod(argv[5], &ptr);
-    eqSTEP = strtozu(argv[6]);
+    eqSTEP = strtod(argv[6], &ptr);
     datdir = argv[7];
     syshape = argv[8];
     run_id = argv[9];
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     __fopen(&f_sini, buf, "rb");
     __fread_check(fread(s, sizeof(*s), N, f_sini), N);
     sprintf(buf, SOUT_FNAME, datdir, syshape, p, T, out_id);
-    __fopen(&f_s, buf, "wb");
+    __fopen(&f_s, buf, "ab");
     sprintf(buf, EDGL_FNAME, datdir, syshape, p, run_id);
     process_edges(buf, N, &edges, &node_edges, &neigh_len);
     //  
