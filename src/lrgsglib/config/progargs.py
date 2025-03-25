@@ -3,6 +3,7 @@ import numpy as np
 # General program arguments
 ## program helpers
 phelp_exc = "Option to execute the output of the Serialiser"
+phelp_freq = "Frequency of the saved spin output"
 phelp_insuffix = "Suffix for input files"
 phelp_L = "Size of the square lattice"
 phelp_mMB = "Minimum MB quantity to be allocated for the single process"
@@ -23,6 +24,7 @@ phelp_val = "Value for the clusters"
 phelp_workdir = "Working directory"
 ## default values
 DEFAULT_EXEC = False
+DEFAULT_FREQ = 2
 DEFAULT_INSFFX = ''
 DEFAULT_mMB = 2**11
 DEFAULT_MMB = 2**11
@@ -35,7 +37,7 @@ DEFAULT_PRINT_CHRONO = False
 DEFAULT_REMOVE_FILES = True
 DEFAULT_SHORT = False
 DEFAULT_SLANZARV_ID = ""
-DEFAULT_VAL = +1
+DEFAULT_VAL = "=1"
 DEFAULT_VERBOSE = False
 DEFAULT_WORKDIR = ''
 # SignedGraph program arguments
@@ -112,6 +114,11 @@ L2D_IsingDynamics_optional_args_dict = {
         'type': str,
         'default': DEFAULT_CELL
     },
+    tuple(['-fq', '--freq']): {
+        'help': phelp_freq,
+        'type': int,
+        'default': DEFAULT_FREQ
+    },
     tuple(['-g', '--geometry']): {
         'help': phelp_geo,
         'type': str,
@@ -154,7 +161,7 @@ L2D_IsingDynamics_optional_args_dict = {
     },
     tuple(['-vl', '--val']): {
         'help': phelp_val,
-        'type': float,
+        'type': str,
         'default': DEFAULT_VAL
     },
     tuple(['-wd', '--workdir']): {

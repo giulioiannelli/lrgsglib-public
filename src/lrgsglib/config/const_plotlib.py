@@ -12,7 +12,7 @@ from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm, \
     LightSource, LinearSegmentedColormap, Normalize, SymLogNorm, to_rgb,\
     rgb2hex, to_hex
 from matplotlib.lines import Line2D
-from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch, ConnectionPatch
+from matplotlib.patches import Circle, Rectangle, Ellipse, PathPatch, ConnectionPatch,RegularPolygon
 from matplotlib.path import Path
 from matplotlib.text import Text
 from matplotlib.ticker import ScalarFormatter, MultipleLocator, \

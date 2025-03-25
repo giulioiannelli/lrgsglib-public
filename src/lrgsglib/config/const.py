@@ -111,6 +111,7 @@ ER_ONREP = 'G'
 ER_STDFN = ""
 ER_SGPATH = ""
 # 2D Lattice default values
+L2D_BEND_POS = False
 L2D_FBCV = 1.
 L2D_PREW = 0.
 L2D_PBC = True

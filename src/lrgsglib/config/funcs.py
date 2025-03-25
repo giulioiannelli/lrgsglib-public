@@ -86,6 +86,30 @@ def join_non_empty(symb: str, *args):
     else:
         return symb.join(non_empty_args)
 
+def versor(state_time: np.ndarray) -> np.ndarray:
+    """
+    Compute and return the unit vector (versor) of the input vector.
+
+    Parameters
+    ----------
+    state_time : np.ndarray
+        The input vector to be normalized.
+
+    Returns
+    -------
+    np.ndarray
+        The normalized vector (unit vector) in the direction of state_time.
+
+    Raises
+    ------
+    ValueError
+        If the input vector is a zero vector.
+    """
+    norm = np.linalg.norm(state_time)
+    if norm == 0:
+        raise ValueError("Zero vector cannot be normalized.")
+    return state_time / norm
+
 def conditional_print(message, verbose, **kwargs):
     if verbose:
         print(message, **kwargs)
@@ -323,10 +347,10 @@ def extract_values_from_filenames(file_names: List[str], value_pattern: str, sor
         for file_name in file_names
         if (match := re.search(value_pattern, file_name))
     ]
-    if sort:
-        values.sort()
     if unique:
         values = uniques(values)
+    if sort:
+        values.sort()
     return np.array(values)
 
 # def extract_values_from_filenames(filenames, pattern):
@@ -1989,6 +2013,27 @@ def reconstruct_from_projections(projections: List[float], basis: List[np.ndarra
     return reconstructed_matrix
 
 
+def compute_recon(vector: np.ndarray, basis: List[np.ndarray]) -> np.ndarray:
+    """
+    Compute the reconstruction from a given vector and basis.
+
+    Parameters
+    ----------
+    vector : np.ndarray
+        The input vector.
+    basis : List[np.ndarray]
+        List of basis matrices.
+
+    Returns
+    -------
+    np.ndarray
+        The sign of the reconstructed matrix.
+    """
+    projections = np.array(matrix_projection(vector, basis))
+    recon = np.sign(reconstruct_from_projections(projections, basis))
+    return recon
+
+
 def elements_within_eta_numpy(array: Union[np.ndarray, Sequence[float]], eta: float) -> np.ndarray:
     """
     Return elements that are within a threshold eta from the minimum value in the array.
@@ -2093,3 +2138,39 @@ def obtain_coeffs(basis, vector):
     B = np.column_stack(basis_arrays)
     return np.linalg.solve(B, vector)
 
+def marchenko_pastur(l, g):
+    """
+    Compute the Marchenko-Pastur distribution density.
+
+    Parameters
+    ----------
+    l : array_like
+        Input eigenvalue(s) at which the density is evaluated.
+    g : float
+        Aspect ratio parameter, typically defined as N/M or M/N.
+
+    Returns
+    -------
+    ndarray
+        The Marchenko-Pastur density evaluated at `l`.
+
+    Notes
+    -----
+    The density is defined as:
+
+        p(l) = (1 / (2 * π * g * l)) * sqrt( max((1+√g)² - l, 0) * max(l - (1-√g)², 0) )
+
+    Reference
+    ---------
+    Marchenko, V. A. and Pastur, L. A. (1967). "Distribution of eigenvalues for some sets 
+    of random matrices." Mathematics of the USSR-Sbornik, 1(4), 457-483.
+    """
+    def m0(a):
+        """Compute the element-wise maximum of the array `a` and 0."""
+        return np.maximum(a, 0)
+
+    g_plus = (1 + np.sqrt(g))**2
+    g_minus = (1 - np.sqrt(g))**2
+
+    density = np.sqrt(m0(g_plus - l) * m0(l - g_minus)) / (2 * np.pi * g * l)
+    return density
