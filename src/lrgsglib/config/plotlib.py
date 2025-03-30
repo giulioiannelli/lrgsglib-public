@@ -1299,3 +1299,27 @@ def plot_hex_tiling_from_nodes(x, y, vals, ax=None, cmap='viridis'):
     ax.set_ylim(bottom, top)
     ax.set_aspect('equal')
     return ax
+
+def plot_hex_tiling_from_pos(pos, vals, ax=None, cmap='viridis'):
+    """
+    Extracts x and y coordinates from a position dictionary and calls
+    plot_hex_tiling_from_nodes to create a hexagon tiling.
+
+    Parameters:
+      pos : dict
+          Dictionary of node positions (e.g. {node: (x, y), ...}).
+      vals : array-like
+          A value per node used for coloring.
+      ax : matplotlib.axes.Axes, optional
+          Axis to plot on; if None, a new figure is created.
+      cmap : str or Colormap, optional
+          Colormap for the hexagons.
+
+    Returns:
+      ax : matplotlib.axes.Axes
+          The axis with the hexagon tiling.
+    """
+    points = np.array(list(pos.values()))
+    x, y = points.T
+    return plot_hex_tiling_from_nodes(x, y, vals, ax=ax, cmap=cmap)
+
