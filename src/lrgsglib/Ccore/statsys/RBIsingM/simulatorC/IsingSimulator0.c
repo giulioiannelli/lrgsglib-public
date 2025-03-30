@@ -37,13 +37,15 @@ int main(int argc, char *argv[])
     side = (size_t)sqrt(N);
     T = strtod(argv[2], &ptr);
     p = strtod(argv[3], &ptr);
-    thrmSTEP = strtod(argv[4], &ptr);
-    eqSTEP = strtod(argv[5], &ptr);
-    datdir = argv[6];
-    syshape = argv[7];
-    run_id = argv[8];
-    out_id = argv[9];
-    update_mode = argv[10];
+    thrmSTEP = strtod(argv[5], &ptr);
+    eqSTEP = strtod(argv[6], &ptr);
+    datdir = argv[7];
+    syshape = argv[8];
+    run_id = argv[9];
+    out_id = argv[10];
+    update_mode = argv[11];
+    /* init metropolis algorithm */
+    initialize_glauberMetropolis(T);
     //
     s = __chMalloc(N * sizeof(*s));
     m = __chMalloc(sizeof(*m) * T_STEPS);
