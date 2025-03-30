@@ -75,7 +75,7 @@ class IsingDynamics:
     #
     def init_ising_dynamics(self, custom: Any = None, exName: str = ""):
         match self.ic:
-            case "uniform":
+            case "uniform"|"random":
                 self.s = np.random.choice([-1, 1], size=self.sg.N)
             case _ if self.ic.startswith("ground_state") or self.ic.startswith("gs"):
                 self.NeigV = int(self.ic.split("_")[-1])
@@ -83,6 +83,9 @@ class IsingDynamics:
                 self.s = bineigv
             case "custom":
                 self.s = custom
+            case _ if self.ic.startswith("all"):
+                val = float(self.ic.split("_")[-1])
+                self.s = val*np.ones(self.sg.N)
             case "delta":
                 self.s = np.zeros(self.sg.N)
                 self.s[np.random.randint(self.sg.N)] = 1
