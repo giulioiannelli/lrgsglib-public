@@ -1917,7 +1917,7 @@ def coarsen_bins_with_padding(x: np.ndarray, y: np.ndarray, factor: int) -> Tupl
     return new_x, new_y
 
 
-def spin_overlap(S1: np.ndarray, S2: np.ndarray) -> float:
+def spin_overlap(S1: np.ndarray, S2: np.ndarray, max_overlap: bool = True) -> float:
     """
     Compute the maximum overlap between two spin configurations.
 
@@ -1949,9 +1949,11 @@ def spin_overlap(S1: np.ndarray, S2: np.ndarray) -> float:
     assert S1.shape == S2.shape, "Matrices must have the same shape!"
 
     direct_overlap = np.sum(S1 * S2) / S1.size
-    flipped_overlap = np.sum(S1 * (-S2)) / S1.size
-
-    return max(direct_overlap, flipped_overlap)
+    if max_overlap:
+        flipped_overlap = np.sum(S1 * (-S2)) / S1.size
+        return max(direct_overlap, flipped_overlap)
+    else:
+        return direct_overlap
 
 
 def matrix_projection(M: np.ndarray, basis: List[np.ndarray]) -> List[float]:
