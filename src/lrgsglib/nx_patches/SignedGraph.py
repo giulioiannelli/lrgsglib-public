@@ -182,7 +182,7 @@ class SignedGraph:
     # export graph tools
     #
     def export_adj_bin(self, verbose: bool = False) -> None:
-        rowarr = [row[i:] for i, row in enumerate(self.Adj.todense())]
+        rowarr = [row[i:] for i, row in enumerate(self.Adj.toarray())]
         exname = self.path_export / f"adj_{self.stdFname}.bin"
         if verbose:
             print(f"\nExporting {exname}")
@@ -379,7 +379,7 @@ class SignedGraph:
         assert maxidx <= self.N, SG_ERRMSG_MAXEIGVIDX
         if not hasattr(self, f"eigV"):
             if custom_slice == slice(None):
-                self.compute_full_laplacian_spectrum()
+                self.compute_laplacian_spectrum_weigV()
             else:
                 self.compute_k_eigvV(k=maxidx)
         return [self.get_eigV_bin_check(_) for _ in range(maxidx)]
@@ -603,16 +603,16 @@ class SignedGraph:
     #
     def compute_laplacian_spectrum(self, typf: type = np.float64):
         # NOT WORKING, NEEDS FIX
-        self.eigv = np.linalg.eigvalsh(self.Lap.astype(typf).todense())
+        self.eigv = np.linalg.eigvalsh(self.Lap.astype(typf).toarray())
     #
-    def compute_full_laplacian_spectrum(self, typf: type = np.float64):
-        self.eigv, self.eigV = np.linalg.eigh(self.sLp.astype(typf).todense())
+    def compute_laplacian_spectrum_weigV(self, typf: type = np.float64):
+        self.eigv, self.eigV = np.linalg.eigh(self.sLp.astype(typf).toarray())
         self.make_eigV_transposed()
     #
     def compute_k_eigvV(self, k: int = 1, with_routine: str = "scipy",
         which: str = "SM", typf: type = np.float64):
         if with_routine == "numpy" or k > self.N//2:
-            self.compute_full_laplacian_spectrum(typf)
+            self.compute_laplacian_spectrum_weigV(typf)
         elif with_routine.startswith("scipy"):
             mode = with_routine.split("_")
             mode = mode[-1] if len(mode) > 1 else "caley"
