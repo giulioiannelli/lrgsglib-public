@@ -62,15 +62,16 @@ class Lattice3D(SignedGraph):
             self.syshapePth = '_'.join([f"L{i}={side}" 
                                         for i, side in enumerate(self.dim)])        
         
-        self.G = nxfunc(self.dim, periodic=self.pbc)
+        self.H = nxfunc(self.dim, periodic=self.pbc)
+        self.G = nx.convert_node_labels_to_integers(self.H)
         if self.with_positions:
             self._set_positions()
 
 
     def _set_positions(self):
         pos = {node: project_3d_to_2d(*node, self.theta, self.phi) 
-               for node in self.G.nodes()}
-        nx.set_node_attributes(self.G, pos, 'pos')
+               for node in self.H.nodes()}
+        nx.set_node_attributes(self.H, pos, 'pos')
 
 
     def _generate_bcc_lattice(self, dim):
