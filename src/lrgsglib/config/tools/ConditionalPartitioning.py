@@ -13,12 +13,12 @@ class ConditionalPartitioning:
             A condition as a lambda (e.g., lambda x: x < threshold), a key string (e.g., "<10"), or a direct value.
         """
         self._original = condition
-        if (isinstance(condition, str) and condition and condition[0] in "<=>!") or isinstance(condition, Number):
+        if (isinstance(condition, str) and condition and condition[0] in "<=>!"):
             self.key = condition
             self.cond_func = self.key_to_cond()
-        else:
+        elif isinstance(condition, Number):
             # Direct value: use its string representation as key and treat condition as equality.
-            self.key = condition
+            self.key = f"={condition}"
             self.cond_func = lambda x, v=condition: x == v
 
     def key_to_cond(self) -> Callable[[Any], bool]:
