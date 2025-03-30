@@ -825,7 +825,7 @@ def eigV_for_lattice2D_ptch(**kwargs) -> NDArray:
 def eigv_for_lattice2D(side, **kwargs) -> NDArray:
     l = Lattice2D(side, **kwargs)
     l.flip_random_fract_edges()
-    l.compute_full_laplacian_spectrum()
+    l.compute_laplacian_spectrum_weigV()
     return l.eigv
 
 
