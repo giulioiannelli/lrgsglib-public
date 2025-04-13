@@ -2015,7 +2015,7 @@ def reconstruct_from_projections(projections: List[float], basis: List[np.ndarra
     return reconstructed_matrix
 
 
-def compute_recon(vector: np.ndarray, basis: List[np.ndarray]) -> np.ndarray:
+def compute_recon(vector: np.ndarray, basis: List[np.ndarray], binarize: bool = False) -> np.ndarray:
     """
     Compute the reconstruction from a given vector and basis.
 
@@ -2032,7 +2032,9 @@ def compute_recon(vector: np.ndarray, basis: List[np.ndarray]) -> np.ndarray:
         The sign of the reconstructed matrix.
     """
     projections = np.array(matrix_projection(vector, basis))
-    recon = np.sign(reconstruct_from_projections(projections, basis))
+    recon = reconstruct_from_projections(projections, basis)
+    if binarize:
+        recon = np.sign(recon)
     return recon
 
 
