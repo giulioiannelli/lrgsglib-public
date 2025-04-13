@@ -8,9 +8,9 @@ def main():
     path_plotchladni = PATHPLOT / 'chladni'
 
     number_of_averages = 500
-    side = 16
-    geo = 'sqr'
-    pflip = 0.25
+    side = 48
+    geo = 'tri'
+    pflip = 1
     kwargs_TriL2D = dict(
         side1=side, geo=geo, pflip=pflip, with_positions=True,
         path_data=path_plotchladni
@@ -27,13 +27,9 @@ def main():
     ])
 
     # Dynamics parameters
-    T = 0
-    how_many = 6
-    # ic_list = [
-    #     f"gs_{ltmp.N // how_many + i - 1}"
-    #     for i in range(0, (how_many-1) * ltmp.N // how_many + 1, ltmp.N // (how_many*2))
-    # ]
-    ic_list = [f'gs_{i}' for i in range(0, ltmp.N // 2, ltmp.N // (how_many*2))]
+    T_list = np.linspace(0., 2.2, 10)
+    how_many = 3
+    icc = 'uniform'
     runlang = 'C3'
     thrmSTEP = 1
     eqSTEP = 1
@@ -41,10 +37,10 @@ def main():
     remove_files = True
 
     # Initialize storage
-    spinovp = {icc: [] for icc in ic_list}
+    spinovp = {T: [] for T in T_list}
 
     # Main loop
-    for icc in ic_list:
+    for T in T_list:
         for _ in range(number_of_averages):
             kwargs_ISDY = dict(
                 T=T, ic=icc, runlang=runlang,
@@ -63,12 +59,12 @@ def main():
                 spin_overlap(compute_recon(isdy.s, basis[:i + 1]), isdy.s)
                 for i in range(ltmp.N // 2)
             ])
-            spinovp[icc].append(spinovp_tmp)
-        save_path = ltmp.path_lrgsg / f'spinovp_{icc}_avg_std_p={pflip:.3g}_{side}_{geo}_T{T}.pkl'
+            spinovp[T].append(spinovp_tmp)
+        save_path = ltmp.path_lrgsg / f'spinovp_{icc}_avg_std_{side}_{geo}_T{T:.3g}.pkl'
         save_path.parent.mkdir(parents=True, exist_ok=True)
         data = [
-            np.mean(np.stack(spinovp[icc]), axis=0),
-            np.std(np.stack(spinovp[icc]), axis=0)
+            np.mean(np.stack(spinovp[T]), axis=0),
+            np.std(np.stack(spinovp[T]), axis=0)
         ]
         with open(save_path, 'wb') as f:
             pk.dump(data, f)
