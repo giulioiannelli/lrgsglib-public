@@ -631,9 +631,9 @@ class SignedGraph:
         else:
             self.Pinf_dict = {which: (self.Pinf, self.Pinf_var)}
     #
-    def compute_rbim_energy_eigV(self, which: int = 0):
+    def compute_rbim_energy_eigV(self, which: int = 0, on_g: str = SG_GRAPH_REPR):
         spins = self.get_eigV_bin_check(which)
-        edges = self.gr[SG_GRAPH_REPR].edges(data='weight')
+        edges = self.gr[on_g].edges(data='weight')
         if not hasattr(self, "energy_eigV_RBIM"):
             self.energy_eigV_RBIM = {}
         self.energy_eigV_RBIM[which] = compute_energy_sum(spins, edges)
