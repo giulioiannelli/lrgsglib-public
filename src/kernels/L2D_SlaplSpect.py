@@ -1,5 +1,48 @@
 from lrgsglib.core import *
 
+def initialize_l2d_dict_args(args):
+    match args.cell_type:
+        case 'rand':
+            return dict(side1=args.L, geo=args.geometry, sgpathn=args.workdir, 
+                    pflip=args.p)
+        case _:
+            return dict(side1=args.L, geo=args.geometry, sgpathn=args.workdir, 
+                    pflip=args.p, init_nw_dict=True)
+
+def perform_spectral_calculations(args):
+    """Main function to parse arguments and run the process."""
+    # Determine the filename base based on the mode
+    if args.mode.endswith("dist"):
+        if args.mode == "eigvec_dist":
+            fname_base = f"dist{args.howmany}_{args.p:.3g}_{args.eigen_mode}"
+            initial_fn = eigvec_initial_data
+            update_fn = eigvec_update_data
+        elif args.mode == "eigval_dist":
+            fname_base = f"dist_eigval_{args.p:.3g}_{args.cell_type}"
+            initial_fn = eigval_initial_data
+            update_fn = eigval_update_data
+        # Process the eigen distribution
+        process_eigen_distribution(fname_base, initial_fn, update_fn, save_data,
+                                args)
+    if args.mode == "eigvals":
+        fname_base = f"eigvals_{args.p:.3g}_{args.cell_type}"
+        #
+        eigvlist = []
+        for _ in range(args.number_of_averages):
+            eigv = eigv_for_lattice2D(side=args.L, pflip=args.p, geo=args.geo, 
+                           mode='_'.join(["some", str(args.howmany)]))
+            eigvlist.append(eigv)
+            if _ % args.period == 0:
+                path_fname_base = Lattice2D(
+                    side1=args.L, pflip=args.p, geo=args.geo, path_data=args.workDir
+                ).path_spect
+                path_fname = path_fname_base / Path(f"{fname_base}_{_}.pkl")
+                path_fname_1 = path_fname_base / Path(f"{fname_base}_{_ - args.period}.pkl")
+                if os.path.exists(path_fname_1):
+                    os.remove(path_fname_1)
+                with open(path_fname, "wb") as f:
+                    pk.dump(eigvlist, f)
+
 def process_eigen_distribution(
         fname_base, initial_data_fn, update_data_fn, save_data_fn, args):
     """
@@ -11,7 +54,9 @@ def process_eigen_distribution(
 
     # Check for existing files and determine the number of averages already done
     navg_done = 0
-    working_path = args.workDir
+    working_path = Lattice2D(
+        side1=args.L, pflip=args.p, geo=args.geo, path_data=args.workDir
+    ).path_spect
     search_str = f"{fname_base}_*.pkl"
     existing_files = sorted(glob.glob(str(working_path / Path(search_str))))
     #
@@ -128,6 +173,16 @@ def eigval_update_data(batch_size, bins, bin_centers, bin_counter, args):
     if args.verbose:
         print("Updated eigenvalue data.")
     return bin_counter
+
+def compute_eigval(args):
+    """Computes the eigenvalues for the lattice."""
+    if args.verbose:
+        print("Computing eigenvalues...")
+    result = eigv_for_lattice2D(
+        side=args.L, pflip=args.p, geo=args.geo)
+    if args.verbose:
+        print(f"Computed eigenvalues of size {result.shape}")
+    return result
 
 def save_data(args, data, fname):
     """Saves the computed data to a file."""
