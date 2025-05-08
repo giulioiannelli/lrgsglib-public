@@ -25,4 +25,4 @@ data/plot/*/
 *.pickle
 .DS_Store
 
-.codegpt
+.codegptipynb/
