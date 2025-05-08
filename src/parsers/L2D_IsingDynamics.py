@@ -2,6 +2,7 @@ from lrgsglib.core import *
 from lrgsglib.config.progargs import *
 #
 optionalaction_args_dict = {
+    **L2D_opt_args,
     **L2D_IsingDynamics_optional_args_dict, 
     **L2D_IsingDynamics_action_args_dict
 }
