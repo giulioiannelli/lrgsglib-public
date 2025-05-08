@@ -1,8 +1,13 @@
 from lrgsglib.core import *
 
 def initialize_l2d_dict_args(args):
-    return dict(side1=args.L, geo=args.geometry, sgpathn=args.workdir, 
-                pflip=args.p, init_nw_dict=True)
+    match args.cell_type:
+        case 'rand':
+            return dict(side1=args.L, geo=args.geometry, sgpathn=args.workdir, 
+                    pflip=args.p)
+        case _:
+            return dict(side1=args.L, geo=args.geometry, sgpathn=args.workdir, 
+                    pflip=args.p, init_nw_dict=True)
 
 def initialize_ising_dict_args(args, out_suffix, NoClust):
     return dict(T=args.T, ic=args.init_cond, runlang=args.runlang, 
@@ -18,7 +23,10 @@ def run_simulation(args):
     val = ConditionalPartitioning(args.val)
     for _ in range(args.number_of_averages):
         lattice = Lattice2D(**initialize_l2d_dict_args(args))
-        lattice.flip_sel_edges(lattice.nwDict[args.cell_type]['G'])
+        if lattice.init_nw_dict:
+            lattice.flip_sel_edges(lattice.nwDict[args.cell_type]['G'])
+        else:
+            lattice.flip_random_fract_edges()
         lattice.compute_k_eigvV(number+1)
         lattice.load_eigV_on_graph(number, binarize=True)
         lattice.make_clustersYN(f'eigV{number}', val=val)
