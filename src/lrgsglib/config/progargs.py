@@ -2,6 +2,9 @@ from parsers.shared import *
 import numpy as np
 # General program arguments
 ## program helpers
+phelp_binsc = "Number of bins for the distribution sampling"
+phelp_data_save_freq = "Frequency of the saved data"
+phelp_eigMode = "Library for spectral computations"
 phelp_exc = "Option to execute the output of the Serialiser"
 phelp_freq = "Frequency of the saved spin output"
 phelp_insuffix = "Suffix for input files"
@@ -23,6 +26,8 @@ phelp_verbose = "Verbose mode"
 phelp_val = "Value for the clusters"
 phelp_workdir = "Working directory"
 ## default values
+DEFAULT_BINSC = 500
+DEFAULT_EIGMODE = 'scipy'
 DEFAULT_EXEC = False
 DEFAULT_FREQ = 2
 DEFAULT_INSFFX = ''
@@ -40,6 +45,8 @@ DEFAULT_SLANZARV_ID = ""
 DEFAULT_VAL = "=1"
 DEFAULT_VERBOSE = False
 DEFAULT_WORKDIR = ''
+## default values depending on default arguments
+DEFAULT_DATA_SAVE_FREQ = DEFAULT_NAVG // 10
 # SignedGraph program arguments
 ## program helpers
 phelp_cell = "Topological defect class: 'rand', 'randXERR', 'randZERR', \
@@ -130,6 +137,52 @@ L2D_opt_args = {
         'default': DEFAULT_WORKDIR
     }
 }
+# Signed Laplacian Spectra program arguments
+## program helpers
+phelp_howmany_eigs = "Number of eigenvalues to compute"
+phelp_l2dsspect_mode = "Mode of operation, either 'eigvec_dist' for \
+    eigenvector distribution or 'eigval_dist' for eigenvalue distribution \
+    or 'eigvals' for eigenvalues"
+## default values
+DEFAULT_HOWMANY_EIGS = 1
+DEFAULT_L2DSSPECT_MODE = 'eigvec_dist'
+## names and descriptions
+L2D_SlaplSpect_progName = 'L2D_SlaplSpect'
+L2D_SlaplSpect_progNameShrt = 'L2DSS'
+L2D_SlaplSpect_description = f"""
+    Computational resourses regarding the Signed Laplacian spectrum of 2D 
+    lattices: {L2D_SlaplSpect_progName}.py
+"""
+## arg parsers dict
+L2D_SlaplSpect_args = {**L2D_args}
+L2D_SlaplSpect_optional_args_dict = {
+    tuple(['-bc', '--bins_count']): {
+        'help': phelp_binsc,
+        'type': int,
+        'default': DEFAULT_BINSC
+    },
+    tuple(['-em', '--eigen_mode']): {
+        'help': phelp_eigMode,
+        'type': str,
+        'default': DEFAULT_EIGMODE
+    },
+    tuple(['-hm', '--howmany']): {
+        'help': phelp_howmany_eigs,
+        'type': int,
+        'default': DEFAULT_HOWMANY_EIGS
+    },
+    tuple(['-m', '--mode']): {
+        'help': phelp_l2dsspect_mode,
+        'type': str,
+        'default': DEFAULT_L2DSSPECT_MODE
+    },
+    tuple(['-prd', '--period']): {
+        'help': phelp_data_save_freq,
+        'type': int,
+        'default': DEFAULT_DATA_SAVE_FREQ
+    }
+}
+L2D_SlaplSpect_action_args_dict = {}
 # IsingDynamics program arguments
 ## program helpers
 phelp_ic = "Initial condition for the Ising model"
@@ -159,7 +212,6 @@ L2D_IsingDynamics_args = {
 }
 L2D_IsingDynamics_action_args_dict = {**action_args_dict}
 L2D_IsingDynamics_optional_args_dict = {
-    **L2D_opt_args,
     tuple(['-fq', '--freq']): {
         'help': phelp_freq,
         'type': int,
@@ -245,23 +297,3 @@ L2D_IsingDynamicsSerializer_optional_args_dict = {
     },
 }
 L2D_IsingDynamicsSerializer_action_args_dict = {**Serializer_action_args_dict}
-# Signed Laplacian Spectra program arguments
-## program helpers
-phelp_ic = "Initial condition for the Ising model"
-## default values
-DEFAULT_INIT_COND = 'ground_state_0'
-## names and descriptions
-L2D_SlaplSpect_progName = 'L2D_SlaplSpect'
-L2D_SlaplSpect_progNameShrt = 'L2DSS'
-L2D_SlaplSpect_description = f"""
-    Computational resourses regarding the Signed Laplacian spectrum of 2D 
-    lattices: {L2D_IsingDynamics_progName}.py
-"""
-## arg parsers dict
-L2D_IsingDynamics_args = {
-    **L2D_args, 
-    'T': {
-        'help': phelp_T,
-        'type': float
-    }
-}
