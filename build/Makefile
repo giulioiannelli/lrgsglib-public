@@ -57,7 +57,7 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/LRGSG_package/SFMT
+CMAKE_SOURCE_DIR = /home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/src/lrgsglib/SFMT
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/opisthofulax/PhD/projects/complex-networks/LRG-Signed/build

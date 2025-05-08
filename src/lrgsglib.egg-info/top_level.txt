@@ -1,0 +1,16 @@
+ER_IsingDynamics
+ER_IsingDynamics_Serialiser
+L2D_IsingDynamics
+L2D_IsingDynamics_Serialiser
+L2D_SlaplSpect
+L2D_SlaplSpect_Serialiser
+L2D_SlaplSpect_old
+L2D_TransCluster
+L2D_TransCluster_Serialiser
+L3D_TransCluster
+L3D_TransCluster_Serialiser
+build
+dist
+kernels
+lrgsglib
+parsers

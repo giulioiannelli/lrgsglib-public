@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Unset directories
+unset LRGSG_ROOT
+unset LRGSG_BUILD
+unset LRGSG_LOG
+unset LRGSG_DATA
+unset LRGSG_IPYNB
+unset LRGSG_SRC
+unset LRGSG_LIB
+unset LRGSG_LIB_CCORE
+unset LRGSG_LIB_CBIN
+unset LRGSG_LIB_CONFIG
+unset LRGSG_LIB_GT_PATCHES
+unset LRGSG_LIB_NX_PATCHES
+unset LRGSG_LIB_STOCPROC
+unset LRGSG_TEST
+unset LRGSG_TOOLS
+unset LRGSG_TOOLS_SCRPT

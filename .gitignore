@@ -1,9 +1,28 @@
 #paths
+# Ignore everything in the data directory
 data/*
+src/lrgsglib/Ccore/bin/*
+
+# But not these directories (though their contents are still ignored by default)
+!data/plot/
+!data/plot/paper/
+
+# Explicitly ignore everything in data and data/plot, except the paper directory
+data/*/
+data/plot/*/
+!data/plot/paper/
 .trash/*
+.vscode/*
 #extensions
 *.pdf
 *.bin
 *.png
 *.mp4
+*.pkl
+*.pyc
+*.log
+*.cpython-39.pyc
 *.pickle
+.DS_Store
+
+.codegpt

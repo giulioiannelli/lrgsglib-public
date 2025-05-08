@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Export directories
+export LRGSG_ROOT="/home/opisthofulax/Documents/PhD/projects/complex-networks/lrgsglib"
+export LRGSG_ROOT="/home/opisthofulax/Documents/PhD/projects/complex-networks/lrgsglib"
+export LRGSG_BUILD="./build"
+export LRGSG_LOG="./log"
+export LRGSG_DATA="./data"
+export LRGSG_IPYNB="./ipynb"
+export LRGSG_SRC="./src"
+export LRGSG_LIB="./src/lrgsglib"
+export LRGSG_LIB_CCORE="./src/lrgsglib/Ccore"
+export LRGSG_LIB_CBIN="./src/lrgsglib/Ccore/bin"
+export LRGSG_LIB_CONFIG="./src/lrgsglib/config"
+export LRGSG_LIB_GT_PATCHES="./src/lrgsglib/gt_patches"
+export LRGSG_LIB_NX_PATCHES="./src/lrgsglib/nx_patches"
+export LRGSG_LIB_STOCPROC="./src/lrgsglib/stocproc"
+export LRGSG_TEST="./test"
+export LRGSG_TOOLS="./tools"
+export LRGSG_TOOLS_SCRPT="./tools/bash"
