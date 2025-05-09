@@ -358,6 +358,3 @@ dependencies:
   - zlib=1.2.13
   - zstandard=0.19.0
   - zstd=1.5.6
-  - pip:
-      - lrgsg-package==0.0.1
-      - lrgsglib==0.0.1
