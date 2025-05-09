@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Define configuration file names
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -40,10 +40,21 @@ cat << EOF > $CONFIG_ENV_PATH
 export LRGSG_ROOT="$LRGSG_ROOT"
 EOF
 
+# for path in $(grep -o '^[^#]*' "$ENV_FILE" | grep '=' | cut -d '=' -f 1); do
+#     value=$(eval echo \$$path)
+#     echo "export $path=\"$value\"" >> $CONFIG_ENV_PATH
+# done
+
 for path in $(grep -o '^[^#]*' "$ENV_FILE" | grep '=' | cut -d '=' -f 1); do
-    value=$(eval echo \$$path)
-    echo "export $path=\"$value\"" >> $CONFIG_ENV_PATH
+    if [ "$path" != "LRGSG_ROOT" ]; then
+        raw=$(grep "^$path=" "$ENV_FILE" | cut -d '=' -f2-)
+        # replace any literal ${LRGSG_ROOT} or $LRGSG_ROOT with the computed one
+        value="${raw//\$\{LRGSG_ROOT\}/$LRGSG_ROOT}"
+        value="${value//\$LRGSG_ROOT/$LRGSG_ROOT}"
+        echo "export $path=\"$value\"" >> $CONFIG_ENV_PATH
+    fi
 done
+
 
 # Generate unconfig_env.sh
 cat << EOF > $UNCONFIG_ENV_PATH
