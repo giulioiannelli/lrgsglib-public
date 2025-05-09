@@ -30,7 +30,7 @@ PATH_SRW_LATT   = $(PATH_SRW)Lattices/
 #
 DIRS_TO_MAKE = $(PATH_DAT) $(PATH_CCORE_BIN)
 # conda paths
-CONDA_PREFIX = $(shell conda info --root)/envs/lrgsgenv
+CONDA_PREFIX = $(shell conda info --root)/envs/$(CONDA_ENV_NAME)
 CONDA_BIN    = $(CONDA_PREFIX)/bin
 # conda activation
 ACTIVATE_D   = $(CONDA_PREFIX)/etc/conda/activate.d
