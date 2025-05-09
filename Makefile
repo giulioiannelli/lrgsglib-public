@@ -1,3 +1,5 @@
+# conda environment name
+CONDA_ENV_NAME ?= lrgsgenv
 # paths
 PATH_BUILD = build/
 PATH_DOCS  = docs/
@@ -5,7 +7,7 @@ PATH_DAT   = data/
 PATH_SRC   = src/
 PATH_TEST  = test/
 PATH_TOOLS = tools/
-
+#
 PATH_LRGSGLIB = $(PATH_SRC)lrgsglib/
 PATH_SH       = $(PATH_TOOLS)bash/
 #
@@ -25,6 +27,8 @@ PATH_RBIM_BASE  = $(PATH_RBIM)base/
 PATH_RBIM_SIMC  = $(PATH_RBIM)simulatorC/
 PATH_RBIM_STORE = $(PATH_RBIM)storer/
 PATH_SRW_LATT   = $(PATH_SRW)Lattices/
+#
+DIRS_TO_MAKE = $(PATH_DAT) $(PATH_CCORE_BIN)
 # conda paths
 CONDA_PREFIX = $(shell conda info --root)/envs/lrgsgenv
 CONDA_BIN    = $(CONDA_PREFIX)/bin
@@ -37,14 +41,11 @@ CONFIG_SCRIPT_PATH       = $(PATH_SH)config_env.sh
 UNCONFIG_SCRIPT_PATH     = $(PATH_SH)unconfig_env.sh
 CUSTOM_ACTIVATE_SCRIPT   = $(ACTIVATE_D)/custom_env_setup.sh
 CUSTOM_DEACTIVATE_SCRIPT = $(DEACTIVATE_D)/custom_env_cleanup.sh
-# Python includes and libraries
+# python includes and libraries
 PYTHON_INC = $(shell python3 -m pybind11 --includes)
 PYTHON_LIB = $(shell python3-config --ldflags)
 export PKG_CONFIG_PATH := $(CONDA_PREFIX)/lib/pkgconfig#:$(PKG_CONFIG_PATH)
-#
-# directories
-DIRS_TO_MAKE = $(PATH_DAT) $(PATH_CCORE_BIN)
-#
+# C filenames
 FN_RBIMSIM0 = IsingSimulator0
 FN_RBIMSIM1 = IsingSimulator1
 FN_RBIMSIM2 = IsingSimulator2
@@ -56,7 +57,7 @@ FN_LRGSGLIB = LRGSG_utils sfmtrng
 SRC_RBIM    = LRGSG_rbim
 SRC_VM      = LRGSG_vm
 SFMTSRC     = SFMT
-#
+# 
 RBIMSIM0.c = $(addsuffix .c, $(FN_RBIMSIM0))
 RBIMSIM1.c = $(addsuffix .c, $(FN_RBIMSIM1))
 RBIMSIM2.c = $(addsuffix .c, $(FN_RBIMSIM2))
@@ -164,8 +165,6 @@ setup: make_rootf generate_config_script setup_conda_activate setup_conda_deacti
 	@if [ -z "$(GCC_BIN)" ] || [ -z "$(GPP_BIN)" ]; then \
 		echo "Error: Unable to find required compilers in $(CONDA_BIN)"; exit 1; \
 	fi
-
-
 
 echo_paths:
 	@echo "LRGSG_ROOT = $$LRGSG_ROOT"
