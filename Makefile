@@ -114,6 +114,10 @@ configure: setup chmod_scripts echo_paths create_dirs
 c_make: ${PROGRAMN0} ${PROGRAMN1} ${PROGRAMN2} ${PROGRAMN3} ${PROGRAMN4} ${PROGRAMN5}
 all: configure c_make #sub_make chmod_scripts
 
+print_conda_prefix:
+	@echo "Conda prefix: $(CONDA_PREFIX)"
+	@echo "Conda bin: $(CONDA_BIN)"
+
 generate_config_script:
 	@echo "Generating config script..."
 	@chmod +x $(CONFIG_SCRIPT_GEN)
@@ -142,7 +146,7 @@ setup_conda_deactivate:
 	@chmod +x $(CUSTOM_DEACTIVATE_SCRIPT)
 	@echo "Setup conda environment deactivate.d complete."
 
-setup: make_rootf generate_config_script setup_conda_activate setup_conda_deactivate create_dirs
+setup: print_conda_prefix make_rootf generate_config_script setup_conda_activate setup_conda_deactivate create_dirs
 	@# Find the gcc compiler binary
 	$(eval GCC_BIN := $(shell find $(CONDA_BIN) -name 'x86_64-conda_cos*-linux-gnu-cc' | head -n 1))
 	@# Find the g++ compiler binary
