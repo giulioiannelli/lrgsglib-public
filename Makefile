@@ -168,20 +168,20 @@ setup: make_rootf generate_config_script setup_conda_activate setup_conda_deacti
 
 
 echo_paths:
-	@echo "LRGSG_ROOT = $(LRGSG_ROOT)"
-	@echo "LRGSG_BUILD = $(LRGSG_BUILD)"
-	@echo "LRGSG_DATA = $(LRGSG_DATA)"
-	@echo "LRGSG_IPYNB = $(LRGSG_IPYNB)"
-	@echo "LRGSG_SRC = $(LRGSG_SRC)"
-	@echo "LRGSG_LIB = $(LRGSG_LIB)"
-	@echo "LRGSG_LIB_CCORE = $(LRGSG_LIB_CCORE)"
-	@echo "LRGSG_LIB_CBIN = $(LRGSG_LIB_CBIN)"
-	@echo "LRGSG_LIB_CONFIG = $(LRGSG_LIB_CONFIG)"
-	@echo "LRGSG_LIB_GT_PATCHES = $(LRGSG_LIB_GT_PATCHES)"
-	@echo "LRGSG_LIB_NX_PATCHES = $(LRGSG_LIB_NX_PATCHES)"
-	@echo "LRGSG_LIB_STOCPROC = $(LRGSG_LIB_STOCPROC)"
-	@echo "LRGSG_TEST = $(LRGSG_TEST)"
-	@echo "LRGSG_TOOLS = $(LRGSG_TOOLS)"
+	@echo "LRGSG_ROOT = $$LRGSG_ROOT"
+	@echo "LRGSG_BUILD = $$LRGSG_BUILD"
+	@echo "LRGSG_DATA = $$LRGSG_DATA"
+	@echo "LRGSG_IPYNB = $$LRGSG_IPYNB"
+	@echo "LRGSG_SRC = $$LRGSG_SRC"
+	@echo "LRGSG_LIB = $$LRGSG_LIB"
+	@echo "LRGSG_LIB_CCORE = $$LRGSG_LIB_CCORE"
+	@echo "LRGSG_LIB_CBIN = $$LRGSG_LIB_CBIN"
+	@echo "LRGSG_LIB_CONFIG = $$LRGSG_LIB_CONFIG"
+	@echo "LRGSG_LIB_GT_PATCHES = $$LRGSG_LIB_GT_PATCHES"
+	@echo "LRGSG_LIB_NX_PATCHES = $$LRGSG_LIB_NX_PATCHES"
+	@echo "LRGSG_LIB_STOCPROC = $$LRGSG_LIB_STOCPROC"
+	@echo "LRGSG_TEST = $$LRGSG_TEST"
+	@echo "LRGSG_TOOLS = $$LRGSG_TOOLS"
 
 ${PROGRAMN0}: ${PATHSRS0.c}
 	${GCC} ${ALLFLAGS} -o $@ $^ ${LMFLAG}
